@@ -1,0 +1,35 @@
+--s_ehzh -> pth_rmp 表切换以及缺失表
+
+--重要关联方
+app_map.rel_shareholde  ->  hds.t_ods_ckg_am_rel_shareholder
+hds.tr_ods_rmp_fi_x_news_tcrnwitcode  ok
+rmp_company_id_relevance  ok
+rmp_company_info_main  ok
+hds.t_ods_fic_hb_corp_actual_controller  ok
+hds.t_ods_fic_ic_sec_basic_info ok
+hds.t_ods_fic_hb_sec_basic_info ok
+app_map.hive_cmp_corp_map_new  ->  hds.t_ods_ckg_am_hive_cmp_corp_map_new;
+app_map.hive_corp_detail_new  ->  hds.t_ods_ckg_am_hive_corp_detail_new;
+
+
+
+--新闻舆情
+hds.tr_ods_rmp_fi_x_news_tcrnw0001  ok 
+hds.tr_ods_rmp_fi_x_news_tcrnw0003_all_v2  ok 
+hds.tr_ods_rmp_fi_x_news_tcrnwitcode ok 
+hds.tr_ods_rmp_fi_x_news_index_tree_v2  ok
+
+
+
+--司法诚信
+hds.tr_ods_rmp_fi_TIT0026_V2_1  ok
+hds.tr_ods_rmp_fi_TCR0033_V2 ok 
+hds.tr_ods_rmp_fi_TCR0037_V2  ok 
+hds.tr_ods_rmp_fi_TCR0014_V3  ok 
+hds.tr_ods_rmp_fi_TCR0055_V3  ok 
+hds.tr_ods_rmp_fi_TCR0081_V3
+hds.tr_ods_rmp_fi_TCR0168   无数据！！！
+hds.tr_ods_rmp_fi_TCR0169  ok 
+hds.tr_ods_rmp_fi_TCR0122  ok 
+hds.tr_ods_rmp_fi_TCR0123  ok
+hds.tr_ods_rmp_fi_TCR0164  ok

@@ -1,0 +1,41 @@
+--设置计算引擎
+set hive.execution.engine=mr;  --默认引擎
+set hive.execution.engine=spark;  --编排很好mr
+set hive.execution.engine=tez;  --基于内存
+
+--设置分区表(内部表)
+	--建立分复合区表
+	create table if not exists test
+	(
+		c1 string,
+		c2 timestamp,
+		c3 int
+	)partitioned by (str_ string,day_id timestamp)
+	 stored as Parquet;
+	--使用动态分区（此处建议，初始化大批量动态分区数据，使用impala处理）
+	set hive.exec.dynamic.partition=true;  --开启动态分区功能
+	set hive.exec.dynamic.partition.mode=nostrick;  --允许全部分区都为动态
+	set hive.exec.max.dynamic.partitions.pernode=10000;
+	set hive.optimize.sort.dynamic.partition=true;
+	set hive.exec.max.dynamic.partitions=10000;
+	set hive.exec.max.created.files=10000;
+	--向动态分区表覆盖插入数据
+		--半动态
+		insert overwrite table test partition(str_='实际控制人',day_id)
+			select *,relation_dt as day_id from skr where c1='实际控制人';
+		--全动态
+		insert overwrite table test partition(str_,day_id)
+			select *,relation_type_l2 as str_,relation_dt as day_id from skr;
+	--向动态分区追加插入数据
+	insert into test partition(str_='实际控制人',day_id) 
+		select *,relation_dt as day_id  from skr where c2='2022-07-01';
+	--删除分区表
+	alter table test drop partition(str_='实际控制人')
+
+--spark引擎执行优化
+	--将Join转成普通的Map Join  默认值： false
+	set hive.auto.convert.join=false;
+	--忽略mapjoin hint ，即mapjoin标记  默认值： true
+	set hive.ignore.mapjoin.hint=false;
+	--是否并行提交任务  默认值：false
+	set hive.exec.PARALLEL=true;
