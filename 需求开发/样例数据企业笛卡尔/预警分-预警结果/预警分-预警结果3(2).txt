@@ -1,0 +1,739 @@
+create table pth_rmp.rmp_warning_score_model_HIS3 as
+
+select '2021-09-07' as score_date,'-1' as synth_warnlevel,16 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-09-08' as score_date,'-1' as synth_warnlevel,14 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-09-09' as score_date,'-1' as synth_warnlevel,3 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-09-10' as score_date,'-1' as synth_warnlevel,16 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-09-11' as score_date,'-1' as synth_warnlevel,5 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-09-12' as score_date,'-1' as synth_warnlevel,10 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-09-13' as score_date,'-1' as synth_warnlevel,11 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-09-14' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-09-15' as score_date,'-1' as synth_warnlevel,9 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-09-16' as score_date,'-1' as synth_warnlevel,20 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-09-17' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-09-18' as score_date,'-1' as synth_warnlevel,13 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-09-19' as score_date,'-1' as synth_warnlevel,19 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-09-20' as score_date,'-2' as synth_warnlevel,33 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-09-21' as score_date,'-2' as synth_warnlevel,38 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-09-22' as score_date,'-2' as synth_warnlevel,27 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-09-23' as score_date,'-2' as synth_warnlevel,24 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-09-24' as score_date,'-2' as synth_warnlevel,37 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-09-25' as score_date,'-2' as synth_warnlevel,40 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-09-26' as score_date,'-2' as synth_warnlevel,30 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-09-27' as score_date,'-2' as synth_warnlevel,23 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-09-28' as score_date,'-2' as synth_warnlevel,21 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-09-29' as score_date,'-2' as synth_warnlevel,39 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-09-30' as score_date,'-2' as synth_warnlevel,36 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-01' as score_date,'-2' as synth_warnlevel,37 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-02' as score_date,'-2' as synth_warnlevel,27 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-03' as score_date,'-2' as synth_warnlevel,21 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-04' as score_date,'-2' as synth_warnlevel,34 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-05' as score_date,'-2' as synth_warnlevel,28 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-06' as score_date,'-2' as synth_warnlevel,31 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-07' as score_date,'-2' as synth_warnlevel,31 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-08' as score_date,'-2' as synth_warnlevel,29 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-09' as score_date,'-2' as synth_warnlevel,35 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-10' as score_date,'-2' as synth_warnlevel,23 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-11' as score_date,'-2' as synth_warnlevel,40 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-12' as score_date,'-2' as synth_warnlevel,38 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-13' as score_date,'-2' as synth_warnlevel,37 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-14' as score_date,'-2' as synth_warnlevel,35 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2021-10-15' as score_date,'-1' as synth_warnlevel,1 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-16' as score_date,'-1' as synth_warnlevel,12 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-17' as score_date,'-1' as synth_warnlevel,2 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-18' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-19' as score_date,'-1' as synth_warnlevel,11 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-20' as score_date,'-1' as synth_warnlevel,1 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-21' as score_date,'-1' as synth_warnlevel,7 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-22' as score_date,'-1' as synth_warnlevel,12 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-23' as score_date,'-1' as synth_warnlevel,16 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-24' as score_date,'-1' as synth_warnlevel,18 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-25' as score_date,'-1' as synth_warnlevel,13 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-26' as score_date,'-1' as synth_warnlevel,17 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-27' as score_date,'-1' as synth_warnlevel,19 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-28' as score_date,'-1' as synth_warnlevel,7 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-29' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-30' as score_date,'-1' as synth_warnlevel,12 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-10-31' as score_date,'-1' as synth_warnlevel,8 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-01' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-02' as score_date,'-1' as synth_warnlevel,3 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-03' as score_date,'-1' as synth_warnlevel,17 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-04' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-05' as score_date,'-1' as synth_warnlevel,20 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-06' as score_date,'-1' as synth_warnlevel,19 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-07' as score_date,'-1' as synth_warnlevel,5 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-08' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-09' as score_date,'-1' as synth_warnlevel,16 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-10' as score_date,'-1' as synth_warnlevel,14 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-11' as score_date,'-1' as synth_warnlevel,20 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-12' as score_date,'-1' as synth_warnlevel,3 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-13' as score_date,'-1' as synth_warnlevel,15 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-14' as score_date,'-1' as synth_warnlevel,13 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-15' as score_date,'-1' as synth_warnlevel,3 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-16' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-17' as score_date,'-1' as synth_warnlevel,18 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-18' as score_date,'-1' as synth_warnlevel,8 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-19' as score_date,'-1' as synth_warnlevel,10 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-20' as score_date,'-1' as synth_warnlevel,2 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-21' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-22' as score_date,'-1' as synth_warnlevel,14 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-23' as score_date,'-1' as synth_warnlevel,3 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-24' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-25' as score_date,'-1' as synth_warnlevel,9 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-26' as score_date,'-1' as synth_warnlevel,8 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-27' as score_date,'-1' as synth_warnlevel,9 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-28' as score_date,'-1' as synth_warnlevel,18 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-29' as score_date,'-1' as synth_warnlevel,12 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-11-30' as score_date,'-1' as synth_warnlevel,7 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-01' as score_date,'-1' as synth_warnlevel,17 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-02' as score_date,'-1' as synth_warnlevel,5 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-03' as score_date,'-1' as synth_warnlevel,9 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-04' as score_date,'-1' as synth_warnlevel,5 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-05' as score_date,'-1' as synth_warnlevel,13 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-06' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-07' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-08' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-09' as score_date,'-1' as synth_warnlevel,3 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-10' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-11' as score_date,'-1' as synth_warnlevel,0 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-12' as score_date,'-1' as synth_warnlevel,15 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-13' as score_date,'-1' as synth_warnlevel,1 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-14' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-15' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-16' as score_date,'-1' as synth_warnlevel,3 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-17' as score_date,'-1' as synth_warnlevel,20 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-18' as score_date,'-1' as synth_warnlevel,11 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-19' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-20' as score_date,'-1' as synth_warnlevel,12 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-21' as score_date,'-1' as synth_warnlevel,5 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-22' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-23' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-24' as score_date,'-1' as synth_warnlevel,1 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-25' as score_date,'-1' as synth_warnlevel,15 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-26' as score_date,'-1' as synth_warnlevel,15 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-27' as score_date,'-1' as synth_warnlevel,11 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-28' as score_date,'-1' as synth_warnlevel,0 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-29' as score_date,'-1' as synth_warnlevel,3 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-30' as score_date,'-1' as synth_warnlevel,7 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2021-12-31' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-01' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-02' as score_date,'-1' as synth_warnlevel,12 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-03' as score_date,'-1' as synth_warnlevel,2 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-04' as score_date,'-1' as synth_warnlevel,12 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-05' as score_date,'-1' as synth_warnlevel,12 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-06' as score_date,'-1' as synth_warnlevel,2 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-07' as score_date,'-1' as synth_warnlevel,5 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-08' as score_date,'-1' as synth_warnlevel,12 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-09' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-10' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-11' as score_date,'-1' as synth_warnlevel,10 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-12' as score_date,'-1' as synth_warnlevel,18 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-13' as score_date,'-1' as synth_warnlevel,7 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-14' as score_date,'-1' as synth_warnlevel,3 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-15' as score_date,'-1' as synth_warnlevel,8 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-16' as score_date,'-1' as synth_warnlevel,16 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-17' as score_date,'-1' as synth_warnlevel,17 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-18' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-19' as score_date,'-1' as synth_warnlevel,9 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-20' as score_date,'-1' as synth_warnlevel,19 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-21' as score_date,'-1' as synth_warnlevel,12 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-22' as score_date,'-1' as synth_warnlevel,8 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-23' as score_date,'-1' as synth_warnlevel,1 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-24' as score_date,'-1' as synth_warnlevel,5 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-25' as score_date,'-1' as synth_warnlevel,18 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-26' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-27' as score_date,'-1' as synth_warnlevel,19 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-01-28' as score_date,'-2' as synth_warnlevel,36 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-01-29' as score_date,'-2' as synth_warnlevel,34 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-01-30' as score_date,'-2' as synth_warnlevel,38 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-01-31' as score_date,'-2' as synth_warnlevel,24 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-01' as score_date,'-2' as synth_warnlevel,22 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-02' as score_date,'-2' as synth_warnlevel,34 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-03' as score_date,'-2' as synth_warnlevel,27 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-04' as score_date,'-2' as synth_warnlevel,28 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-05' as score_date,'-2' as synth_warnlevel,34 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-06' as score_date,'-2' as synth_warnlevel,35 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-07' as score_date,'-2' as synth_warnlevel,36 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-08' as score_date,'-2' as synth_warnlevel,38 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-09' as score_date,'-2' as synth_warnlevel,32 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-10' as score_date,'-2' as synth_warnlevel,26 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-11' as score_date,'-2' as synth_warnlevel,26 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-12' as score_date,'-2' as synth_warnlevel,36 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-13' as score_date,'-2' as synth_warnlevel,37 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-14' as score_date,'-2' as synth_warnlevel,26 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-15' as score_date,'-2' as synth_warnlevel,29 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-16' as score_date,'-2' as synth_warnlevel,39 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-17' as score_date,'-2' as synth_warnlevel,39 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-18' as score_date,'-2' as synth_warnlevel,24 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-19' as score_date,'-2' as synth_warnlevel,29 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-20' as score_date,'-2' as synth_warnlevel,30 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-21' as score_date,'-2' as synth_warnlevel,23 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-22' as score_date,'-2' as synth_warnlevel,26 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-23' as score_date,'-2' as synth_warnlevel,32 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-24' as score_date,'-2' as synth_warnlevel,35 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-25' as score_date,'-2' as synth_warnlevel,32 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-26' as score_date,'-2' as synth_warnlevel,28 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-27' as score_date,'-2' as synth_warnlevel,24 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-02-28' as score_date,'-3' as synth_warnlevel,46 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-01' as score_date,'-3' as synth_warnlevel,46 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-02' as score_date,'-3' as synth_warnlevel,43 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-03' as score_date,'-3' as synth_warnlevel,54 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-04' as score_date,'-3' as synth_warnlevel,43 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-05' as score_date,'-3' as synth_warnlevel,57 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-06' as score_date,'-3' as synth_warnlevel,60 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-07' as score_date,'-3' as synth_warnlevel,41 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-08' as score_date,'-3' as synth_warnlevel,46 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-09' as score_date,'-3' as synth_warnlevel,58 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-10' as score_date,'-3' as synth_warnlevel,47 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-11' as score_date,'-3' as synth_warnlevel,46 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-12' as score_date,'-3' as synth_warnlevel,50 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-13' as score_date,'-3' as synth_warnlevel,60 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-14' as score_date,'-3' as synth_warnlevel,55 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-15' as score_date,'-3' as synth_warnlevel,60 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-16' as score_date,'-3' as synth_warnlevel,44 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-17' as score_date,'-3' as synth_warnlevel,59 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-18' as score_date,'-3' as synth_warnlevel,56 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-19' as score_date,'-3' as synth_warnlevel,51 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-20' as score_date,'-3' as synth_warnlevel,49 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-21' as score_date,'-3' as synth_warnlevel,48 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-22' as score_date,'-3' as synth_warnlevel,44 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-23' as score_date,'-3' as synth_warnlevel,53 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-24' as score_date,'-3' as synth_warnlevel,50 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-25' as score_date,'-3' as synth_warnlevel,58 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-26' as score_date,'-3' as synth_warnlevel,49 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-27' as score_date,'-3' as synth_warnlevel,59 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-28' as score_date,'-3' as synth_warnlevel,55 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-29' as score_date,'-3' as synth_warnlevel,54 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-03-30' as score_date,'-4' as synth_warnlevel,62 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-03-31' as score_date,'-4' as synth_warnlevel,79 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-01' as score_date,'-4' as synth_warnlevel,70 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-02' as score_date,'-4' as synth_warnlevel,80 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-03' as score_date,'-4' as synth_warnlevel,76 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-04' as score_date,'-4' as synth_warnlevel,73 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-05' as score_date,'-4' as synth_warnlevel,71 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-06' as score_date,'-4' as synth_warnlevel,78 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-07' as score_date,'-4' as synth_warnlevel,71 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-08' as score_date,'-4' as synth_warnlevel,63 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-09' as score_date,'-4' as synth_warnlevel,75 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-10' as score_date,'-4' as synth_warnlevel,69 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-11' as score_date,'-4' as synth_warnlevel,69 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-12' as score_date,'-4' as synth_warnlevel,76 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-13' as score_date,'-4' as synth_warnlevel,65 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-14' as score_date,'-4' as synth_warnlevel,79 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-15' as score_date,'-4' as synth_warnlevel,78 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-16' as score_date,'-4' as synth_warnlevel,71 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-17' as score_date,'-4' as synth_warnlevel,74 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-18' as score_date,'-4' as synth_warnlevel,63 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-19' as score_date,'-4' as synth_warnlevel,68 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-20' as score_date,'-4' as synth_warnlevel,67 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-21' as score_date,'-4' as synth_warnlevel,79 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-22' as score_date,'-4' as synth_warnlevel,79 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-23' as score_date,'-4' as synth_warnlevel,67 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-24' as score_date,'-4' as synth_warnlevel,69 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-25' as score_date,'-4' as synth_warnlevel,79 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-26' as score_date,'-4' as synth_warnlevel,65 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-27' as score_date,'-4' as synth_warnlevel,74 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-28' as score_date,'-4' as synth_warnlevel,77 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-04-29' as score_date,'-5' as synth_warnlevel,81 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-04-30' as score_date,'-5' as synth_warnlevel,90 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-05-01' as score_date,'-5' as synth_warnlevel,99 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-05-02' as score_date,'-5' as synth_warnlevel,85 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-05-03' as score_date,'-5' as synth_warnlevel,98 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-05-04' as score_date,'-5' as synth_warnlevel,96 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-05-05' as score_date,'-5' as synth_warnlevel,96 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-05-06' as score_date,'-5' as synth_warnlevel,85 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-05-07' as score_date,'-5' as synth_warnlevel,91 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-05-08' as score_date,'-5' as synth_warnlevel,95 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-05-09' as score_date,'-5' as synth_warnlevel,90 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-05-10' as score_date,'-5' as synth_warnlevel,88 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-05-11' as score_date,'-5' as synth_warnlevel,81 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-05-12' as score_date,'-5' as synth_warnlevel,88 as synth_score,'v1.0' as model_version,'-4' as adjust_warnlevel
+
+union all select '2022-05-13' as score_date,'-4' as synth_warnlevel,73 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-05-14' as score_date,'-4' as synth_warnlevel,61 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-05-15' as score_date,'-4' as synth_warnlevel,63 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-05-16' as score_date,'-4' as synth_warnlevel,74 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-05-17' as score_date,'-4' as synth_warnlevel,78 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-05-18' as score_date,'-4' as synth_warnlevel,71 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-05-19' as score_date,'-4' as synth_warnlevel,66 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-05-20' as score_date,'-4' as synth_warnlevel,71 as synth_score,'v1.0' as model_version,'-3' as adjust_warnlevel
+
+union all select '2022-05-21' as score_date,'-3' as synth_warnlevel,49 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-05-22' as score_date,'-3' as synth_warnlevel,56 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-05-23' as score_date,'-3' as synth_warnlevel,57 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-05-24' as score_date,'-3' as synth_warnlevel,58 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-05-25' as score_date,'-3' as synth_warnlevel,53 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-05-26' as score_date,'-3' as synth_warnlevel,56 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-05-27' as score_date,'-3' as synth_warnlevel,49 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-05-28' as score_date,'-3' as synth_warnlevel,54 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-05-29' as score_date,'-3' as synth_warnlevel,44 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-05-30' as score_date,'-3' as synth_warnlevel,49 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-05-31' as score_date,'-3' as synth_warnlevel,53 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-01' as score_date,'-3' as synth_warnlevel,58 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-02' as score_date,'-3' as synth_warnlevel,52 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-03' as score_date,'-3' as synth_warnlevel,55 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-04' as score_date,'-3' as synth_warnlevel,52 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-05' as score_date,'-3' as synth_warnlevel,43 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-06' as score_date,'-3' as synth_warnlevel,41 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-07' as score_date,'-3' as synth_warnlevel,54 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-08' as score_date,'-3' as synth_warnlevel,45 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-09' as score_date,'-3' as synth_warnlevel,44 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-10' as score_date,'-3' as synth_warnlevel,45 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-11' as score_date,'-3' as synth_warnlevel,53 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-12' as score_date,'-3' as synth_warnlevel,49 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-13' as score_date,'-3' as synth_warnlevel,57 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-14' as score_date,'-3' as synth_warnlevel,41 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-15' as score_date,'-3' as synth_warnlevel,49 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-16' as score_date,'-3' as synth_warnlevel,56 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-17' as score_date,'-3' as synth_warnlevel,41 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-18' as score_date,'-2' as synth_warnlevel,27 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-19' as score_date,'-2' as synth_warnlevel,31 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-20' as score_date,'-2' as synth_warnlevel,39 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-21' as score_date,'-2' as synth_warnlevel,23 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-22' as score_date,'-2' as synth_warnlevel,24 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-23' as score_date,'-2' as synth_warnlevel,21 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-24' as score_date,'-2' as synth_warnlevel,31 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-25' as score_date,'-2' as synth_warnlevel,26 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-26' as score_date,'-2' as synth_warnlevel,30 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-27' as score_date,'-2' as synth_warnlevel,28 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-28' as score_date,'-2' as synth_warnlevel,31 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-29' as score_date,'-2' as synth_warnlevel,22 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-06-30' as score_date,'-2' as synth_warnlevel,40 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-07-01' as score_date,'-2' as synth_warnlevel,35 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-07-02' as score_date,'-2' as synth_warnlevel,34 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-07-03' as score_date,'-2' as synth_warnlevel,34 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-07-04' as score_date,'-2' as synth_warnlevel,33 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-07-05' as score_date,'-2' as synth_warnlevel,35 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-07-06' as score_date,'-2' as synth_warnlevel,23 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-07-07' as score_date,'-2' as synth_warnlevel,32 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-07-08' as score_date,'-2' as synth_warnlevel,38 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-07-09' as score_date,'-2' as synth_warnlevel,37 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-07-10' as score_date,'-2' as synth_warnlevel,36 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-07-11' as score_date,'-2' as synth_warnlevel,36 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-07-12' as score_date,'-2' as synth_warnlevel,21 as synth_score,'v1.0' as model_version,'-2' as adjust_warnlevel
+
+union all select '2022-07-13' as score_date,'-1' as synth_warnlevel,10 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-14' as score_date,'-1' as synth_warnlevel,17 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-15' as score_date,'-1' as synth_warnlevel,8 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-16' as score_date,'-1' as synth_warnlevel,20 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-17' as score_date,'-1' as synth_warnlevel,20 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-18' as score_date,'-1' as synth_warnlevel,9 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-19' as score_date,'-1' as synth_warnlevel,5 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-20' as score_date,'-1' as synth_warnlevel,12 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-21' as score_date,'-1' as synth_warnlevel,17 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-22' as score_date,'-1' as synth_warnlevel,16 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-23' as score_date,'-1' as synth_warnlevel,14 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-24' as score_date,'-1' as synth_warnlevel,19 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-25' as score_date,'-1' as synth_warnlevel,5 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-26' as score_date,'-1' as synth_warnlevel,20 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-27' as score_date,'-1' as synth_warnlevel,10 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-28' as score_date,'-1' as synth_warnlevel,11 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-29' as score_date,'-1' as synth_warnlevel,18 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-30' as score_date,'-1' as synth_warnlevel,10 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-07-31' as score_date,'-1' as synth_warnlevel,16 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-01' as score_date,'-1' as synth_warnlevel,18 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-02' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-03' as score_date,'-1' as synth_warnlevel,20 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-04' as score_date,'-1' as synth_warnlevel,9 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-05' as score_date,'-1' as synth_warnlevel,17 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-06' as score_date,'-1' as synth_warnlevel,19 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-07' as score_date,'-1' as synth_warnlevel,10 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-08' as score_date,'-1' as synth_warnlevel,1 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-09' as score_date,'-1' as synth_warnlevel,7 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-10' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-11' as score_date,'-1' as synth_warnlevel,14 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-12' as score_date,'-1' as synth_warnlevel,14 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-13' as score_date,'-1' as synth_warnlevel,19 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-14' as score_date,'-1' as synth_warnlevel,13 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-15' as score_date,'-1' as synth_warnlevel,2 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-16' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-17' as score_date,'-1' as synth_warnlevel,9 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-18' as score_date,'-1' as synth_warnlevel,13 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-19' as score_date,'-1' as synth_warnlevel,14 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-20' as score_date,'-1' as synth_warnlevel,20 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-21' as score_date,'-1' as synth_warnlevel,11 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-22' as score_date,'-1' as synth_warnlevel,10 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-23' as score_date,'-1' as synth_warnlevel,7 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-24' as score_date,'-1' as synth_warnlevel,12 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-25' as score_date,'-1' as synth_warnlevel,5 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-26' as score_date,'-1' as synth_warnlevel,8 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-27' as score_date,'-1' as synth_warnlevel,9 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-28' as score_date,'-1' as synth_warnlevel,5 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-29' as score_date,'-1' as synth_warnlevel,16 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-30' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-08-31' as score_date,'-1' as synth_warnlevel,17 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-09-01' as score_date,'-1' as synth_warnlevel,8 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-09-02' as score_date,'-1' as synth_warnlevel,16 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-09-03' as score_date,'-1' as synth_warnlevel,8 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-09-04' as score_date,'-1' as synth_warnlevel,2 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-09-05' as score_date,'-1' as synth_warnlevel,12 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-09-06' as score_date,'-1' as synth_warnlevel,13 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-09-07' as score_date,'-1' as synth_warnlevel,7 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-09-08' as score_date,'-1' as synth_warnlevel,4 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-09-09' as score_date,'-1' as synth_warnlevel,3 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel
+
+union all select '2022-09-10' as score_date,'-1' as synth_warnlevel,6 as synth_score,'v1.0' as model_version,'-1' as adjust_warnlevel

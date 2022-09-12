@@ -4,7 +4,6 @@
 -- set hive.exec.dynamic.partition=true;  --开启动态分区功能
 -- set hive.exec.dynamic.partition.mode=nostrick;  --允许全部分区都为动态
 
-
 with 
 compy_range as 
 (
@@ -130,7 +129,6 @@ three AS
 		3 as lv
 	from two a join one b on a.gd_gd_id=b.cm_id 
 	 where a.gd_id <> b.gd_id   --排除循环持有3
-     
 ),
 three_cum AS
 (
