@@ -1,8 +1,8 @@
 -- 对外投资 (同步方式：一天单批次插入) --
 -- 入参：${ETL_DATE}(20220818 int) 
 -- set hive.execution.engine=spark;  --编排很好mr
-set hive.exec.dynamic.partition=true;  --开启动态分区功能
-set hive.exec.dynamic.partition.mode=nostrick;  --允许全部分区都为动态
+-- set hive.exec.dynamic.partition=true;  --开启动态分区功能
+-- set hive.exec.dynamic.partition.mode=nostrick;  --允许全部分区都为动态
 
 
 with 
@@ -202,9 +202,9 @@ select
 	current_timestamp() as create_time,
 	'' as update_by,
 	current_timestamp() update_time,
-	0 as version,
-	to_date(CURRENT_TIMESTAMP()) as dt,
-	'对外投资' as type_
+	0 as version
+	-- to_date(CURRENT_TIMESTAMP()) as dt,
+	-- '对外投资' as type_
 FROM
 (
 	select 

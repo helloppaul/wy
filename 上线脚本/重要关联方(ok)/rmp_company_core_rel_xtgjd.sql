@@ -115,9 +115,9 @@ select
 	current_timestamp() as create_time,
 	'' as update_by,
 	current_timestamp() update_time,
-	0 as version,
-	to_date(CURRENT_TIMESTAMP()) as dt,
-	'相同根节点' as type_
+	0 as version
+	-- to_date(CURRENT_TIMESTAMP()) as dt,
+	-- '相同根节点' as type_
 FROM
 (
 	select distinct
