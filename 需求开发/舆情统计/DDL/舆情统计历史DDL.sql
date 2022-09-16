@@ -14,5 +14,6 @@ create table pth_rmp.RMP_OPINION_STATISTIC_HIS
 	update_by	string,
 	update_time	TIMESTAMP,
 	version	tinyint
-)stored as parquet
-;
+)
+partitioned by (dt int)
+ stored as Parquet;

@@ -1,5 +1,5 @@
 -- 舆情统计历史 RMP_OPINION_STATISTIC_HIS (同步方式：一天单批次) --
-insert into RMP_OPINION_STATISTIC_HIS
+insert into RMP_OPINION_STATISTIC_HIS partition(dt=${ETL_DATE})
 select 
 	select distinct
 	current_timestamp() as batch_dt,

@@ -78,8 +78,13 @@ insert into pth_rmp.rmp_COMPANY_CORE_REL partition(dt=${ETL_DATE},type_='skr')
 ------------------------------ 以上部分为临时表 ---------------------------------------------------------
 select 
 	to_date(CURRENT_TIMESTAMP()) relation_dt,
-	L.corp_id,
-	L.relation_id,
+	chg_main.corp_id,
+	case 
+		when chg.corp_id is null then L.relation_id 
+		else chg.corp_id 
+	end as relation_id,
+	-- L.relation_id,
+	-- chg.corp_id as relation_id,
 	chg.corp_name as relation_nm,
 	case L.rela_party_type
 		WHEN 'E' then 2  --企业 
@@ -128,5 +133,7 @@ FROM
 	  and announcement_date >= add_months(to_date(CURRENT_TIMESTAMP()),-60)
 ) L join compy_range cr on cr.corp_id=L.corp_id
 	left join cm_property cmp on L.corp_id = cmp.corp_id
-	LEFT JOIN corp_chg chg on L.relation_id=chg.corp_id
+	LEFT JOIN corp_chg chg on L.relation_id=chg.source_id --and chg.source_code='FI'
+	join corp_chg chg_main 
+		on L.corp_id=chg_main.source_id and chg_main.source_code='FI'
 ; 
