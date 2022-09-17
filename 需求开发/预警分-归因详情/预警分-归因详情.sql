@@ -69,19 +69,20 @@ _rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf_ as  --特征得分_中频_产业债 原始
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf --@hds.rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf
 ),
--- _RMP_WARNING_SCORE_DETAIL_HIS_ as   --归因详情历史表(用于获取上一日指标值)
--- (
---     select  distinct
---         corp_id,
---         corp_nm,
---         score_dt,
---         sub_model_name,
---         idx_name,
---         idx_value,
---         idx_unint
---     from pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS   --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
---     --where score_dt=to_date(date_add(current_timestamp(),-1))
--- ),
+_RMP_WARNING_SCORE_DETAIL_HIS_ as   --归因详情历史表(用于获取上一日指标值)
+(
+    select  distinct
+        corp_id,
+        corp_nm,
+        score_dt,
+        sub_model_name,
+        idx_name,
+        idx_value,
+        idx_unit,
+        dt
+    from app_ehzh.RMP_WARNING_SCORE_DETAIL_HIS   --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
+    --where score_dt=to_date(date_add(current_timestamp(),-1))
+),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
 feat_CFG as 
 (
@@ -363,12 +364,12 @@ warn_feat_CFG as
     from feat_CFG
 ),
 -- -- 上一日指标值 --
--- warn_lastday_idx_value as 
--- (
---     select * 
---     from _RMP_WARNING_SCORE_DETAIL_HIS_
---     where score_dt=to_date(date_add(current_timestamp(),-1))
--- ),
+warn_lastday_idx_value as 
+(
+    select *
+    from _RMP_WARNING_SCORE_DETAIL_HIS_
+    where dt=cast(from_unixtime(unix_timestamp(to_date(current_timestamp()),'yyyy-MM-dd'),'yyyyMMdd') as int)
+),
 -- 结果集 --
 res0 as   --预警分+特征原始值
 (
@@ -458,15 +459,25 @@ res3 as   --预警分+特征原始值+综合贡献度+指标评分卡+特征配置表
         f_cfg.type,
         f_cfg.cal_explain as idx_cal_explain,
         f_cfg.feature_explain as idx_explain,
+        nvl(lst.idx_value,0) as last_idx_value,
         f_cfg.unit_origin,
         f_cfg.unit_target,
         f_cfg.contribution_cnt  --归因个数
     from res2 main
     join warn_feat_CFG f_cfg
         on main.idx_name=f_cfg.feature_cd and  main.model_freq_type=substr(f_cfg.sub_model_type,1,6)
+    left join warn_lastday_idx_value lst  --昨日预警分-归因详情数据。若为空，则表示当日为首次数据衍生
+        on main.corp_id=lst.corp_id and 
+           main.score_dt=lst.score_dt and 
+           main.sub_model_name=lst.sub_model_name and 
+           main.idx_name=lst.idx_name
 )
 ------------------------------------以上部分为临时表-------------------------------------------------------------------
+-- insert into pth_rmp.RMP_WARNING_SCORE_DETAIL 
 select 
+    '' as sid_kw,  --impala
+    -- concat(MD5(concat(corp_id,batch_dt,dimension,type,sub_model_name,idx_name)),cast(rand() as string)) sid_kw,  --hive
+    batch_dt,
     corp_id,
     corp_nm,
     score_dt,
@@ -483,15 +494,15 @@ select
     contribution_cnt,  
     factor_evaluate,
     median,  --！！！ 待测试
-    0 as last_idx_value,  --！！！
+    last_idx_value,  --！！！
     idx_cal_explain,
     idx_explain,
     0 as delete_flag,
 	'' as create_by,
 	current_timestamp() as create_time,
 	'' as update_by,
-	current_timestamp() update_time,
+	current_timestamp() as update_time,
 	0 as version
 from res3
-
+;
 

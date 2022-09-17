@@ -1,4 +1,4 @@
--- RMP_WARNING_SCORE_MODEL_HIS (同步方式：一天多批次插入) --
+-- RMP_WARNING_SCORE_MODEL_HIS (同步方式：一天单批次插入) --
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 insert into pth_rmp.RMP_WARNING_SCORE_MODEL_HIS partition(dt=${ETL_DATE})
 select 
@@ -24,4 +24,4 @@ where a.delete_flag=0
   and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))  --当天一开始，将昨天的最新批次的数据同步到历史表
 ;
 
-truncate table pth_rmp.RMP_WARNING_SCORE_MODEL; --历史表衍生完成，删除前一天的日表数据
+-- truncate table pth_rmp.RMP_WARNING_SCORE_MODEL; --历史表衍生完成，删除前一天的日表数据

@@ -1,4 +1,4 @@
--- 预警分-模型结果表 RMP_WARNING_SCORE_MODEL  --
+-- 预警分-模型结果表 RMP_WARNING_SCORE_MODEL --
 create table pth_rmp.RMP_WARNING_SCORE_MODEL 
 (
 	sid_kw string,
