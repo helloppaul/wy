@@ -18,4 +18,5 @@ create table pth_rmp.RMP_ALERT_COMPREHS_SCORE_HIS
 	update_by	string,
 	update_time	timestamp,
 	version	tinyint
-)stored as Parquet;
+)partitioned by (dt int)
+ stored as Parquet;

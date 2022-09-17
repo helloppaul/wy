@@ -1,4 +1,4 @@
--- 重要关联方历史 rmp_company_core_rel_his (同步方式：一个月一次插入)--
+-- 重要关联方历史 rmp_company_core_rel_his (同步方式：一个月插入一次)--
 insert into pth_rmp.rmp_company_core_rel_his partition(dt=${ETL_DATE})
 select 
 	last_day(CURRENT_TIMESTAMP()) relation_month,  --存放当天所在本月最后一天日期,2022-08-31
@@ -23,3 +23,4 @@ select
 from pth_rmp.rmp_company_core_rel
 where relation_dt=last_day(CURRENT_TIMESTAMP())
   and delete_flag=0
+;

@@ -1,5 +1,5 @@
 -- 舆情统计历史 RMP_OPINION_STATISTIC_HIS (同步方式：一天单批次) --
-insert into RMP_OPINION_STATISTIC_HIS partition(dt=${ETL_DATE})
+insert into pth_rmp.RMP_OPINION_STATISTIC_HIS partition(dt=${ETL_DATE})
 select 
 	select distinct
 	current_timestamp() as batch_dt,
@@ -20,4 +20,4 @@ from pth_rmp.RMP_OPINION_STATISTIC_DAY a
 join (select max(batch_dt) as max_batch_dt from pth_rmp.RMP_OPINION_STATISTIC_DAY where delete_flag=0) b
 	on a.batch_dt=b.max_batch_dt
 where a.delete_flag=0
-  and a.score_dt=to_date(date_add(current_timestamp(),-1))   --当天一开始，将昨天的最新批次的数据同步到历史表
+  and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))  --当天一开始，将昨天的最新批次的数据同步到历史表

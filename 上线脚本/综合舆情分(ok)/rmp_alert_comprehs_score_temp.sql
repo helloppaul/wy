@@ -1,6 +1,7 @@
 -- 综合舆情分中间表 rmp_alert_comprehs_score_temp (同步方式：一天多批次插入)--
 --入参：${ETL_DATE}(20220818 int)
 -- /* 2022-9-5 新闻重复数占比统计更新，增加近24小时新闻的统计 */
+-- /* 2022-9-17 新增 综合舆情分分值归一到 0-100 的处理*/
 with corp_chg as 
 (
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
@@ -200,38 +201,68 @@ core_relcompy_score_res as   --关联方的 综合舆情分结果 （考虑存�
 com_score_temp as  --计算得到综合舆情分
 (
 	select 
-		batch_dt,corp_id,corp_nm,
-		score_dt,score,
-		Main_score_hit_yq,main_score_hit_ci,main_score_hit,main_label_hit,
-		relation_id,relation_nm,r_score,r_importance,r,r_score_cal,news_duplicates_ratio,
-		second_score,third_score,model_version,
-		second_score+third_score+score as comprehensive_score  --计算得到综合舆情分
+		batch_dt,
+		corp_id,
+		corp_nm,
+		score_dt,
+		score,
+		Main_score_hit_yq,
+		main_score_hit,
+		main_label_hit,
+		relation_id,
+		relation_nm,
+		r_score,
+		r_importance,
+		r,
+		r_score_cal,
+		news_duplicates_ratio,
+		second_score,
+		third_score,
+		model_version,
+		case 
+			when comprehensive_score > 200  then 
+				200 / 2
+			else  
+				comprehensive_score / 2
+		end as comprehensive_score  --！！！档位划分，未来可能还会调整
 	from 
 	(
-		select distinct
-			rc.batch_dt,
-			nvl(rc.corp_id,sc.corp_id) as corp_id,   --合并左右连接的企业id
-			rc.corp_nm,
-			nvl(rc.score_dt,sc.score_dt) as score_dt,
-			nvl(sc.score,0) as score,
-			nvl(sc.score_hit_yq,0) as Main_score_hit_yq,
-			nvl(sc.score_hit_ci,0) as main_score_hit_ci,
-			nvl(sc.score_hit,0) as main_score_hit,
-			nvl(sc.label_hit,0) as main_label_hit,
-			rc.relation_id,
-			rc.relation_nm,
-			rc.r_score,
-			rc.r_importance,
-			rc.r,
-			rc.r_score_cal,
-			rc.news_duplicates_ratio,
-			nvl(rc.second_score,0) as second_score,
-			nvl(rc.third_score,0) as third_score,
-			rc.model_version
-		from core_relcompy_score_res rc
-		full join RMP_ALERT_SCORE_SUMM_ sc
-			on rc.corp_id = sc.corp_id and rc.score_dt=sc.score_dt
-	)A
+		select 
+			*,
+			second_score+third_score+score as comprehensive_score  --计算得到综合舆情分
+			-- batch_dt,corp_id,corp_nm,
+			-- score_dt,score,
+			-- Main_score_hit_yq,main_score_hit_ci,main_score_hit,main_label_hit,
+			-- relation_id,relation_nm,r_score,r_importance,r,r_score_cal,news_duplicates_ratio,
+			-- second_score,third_score,model_version,
+			-- second_score+third_score+score as comprehensive_score  --计算得到综合舆情分
+		from 
+		(
+			select distinct
+				rc.batch_dt,
+				nvl(rc.corp_id,sc.corp_id) as corp_id,   --合并左右连接的企业id
+				rc.corp_nm,
+				nvl(rc.score_dt,sc.score_dt) as score_dt,
+				nvl(sc.score,0) as score,
+				nvl(sc.score_hit_yq,0) as Main_score_hit_yq,
+				nvl(sc.score_hit_ci,0) as main_score_hit_ci,
+				nvl(sc.score_hit,0) as main_score_hit,
+				nvl(sc.label_hit,0) as main_label_hit,
+				rc.relation_id,
+				rc.relation_nm,
+				rc.r_score,
+				rc.r_importance,
+				rc.r,
+				rc.r_score_cal,
+				rc.news_duplicates_ratio,
+				nvl(rc.second_score,0) as second_score,
+				nvl(rc.third_score,0) as third_score,
+				rc.model_version
+			from core_relcompy_score_res rc
+			full join RMP_ALERT_SCORE_SUMM_ sc
+				on rc.corp_id = sc.corp_id and rc.score_dt=sc.score_dt
+		)A
+	)B
 ),
 label_hit_tab AS  --风险预警
 (
@@ -413,7 +444,7 @@ Main_com_score AS
 	)A left join deal_featvalue Df 
 		on A.corp_id = Df.corp_code and A.score_dt=Df.end_dt
 )
-insert into app_ehzh.rmp_alert_comprehs_score_temp  --@rmp_alert_comprehs_score_temp
+insert into pth_rmp.rmp_alert_comprehs_score_temp  --@pth_rmp.rmp_alert_comprehs_score_temp
 select distinct
 	cast(G.batch_dt as string) as batch_dt,
 	G.corp_id,

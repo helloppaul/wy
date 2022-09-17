@@ -16,4 +16,5 @@ create table RMP_COMPY_CONTRIB_DEGREE_HIS
 	update_by	string,
 	update_time	TIMESTAMP,
 	version	tinyint
-)stored as Parquet;
+)partitioned by (dt int)
+ stored as Parquet;

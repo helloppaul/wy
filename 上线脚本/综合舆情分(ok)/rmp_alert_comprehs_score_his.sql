@@ -1,5 +1,5 @@
 -- 综合舆情分历史 RMP_ALERT_COMPREHS_SCORE_HIS (同步方式：一天单批次插入)--
-insert into pth_rmp.RMP_ALERT_COMPREHS_SCORE_HIS
+insert into pth_rmp.RMP_ALERT_COMPREHS_SCORE_HIS partition(dt=${ETL_DATE})
 select distinct
 	a.corp_id,
 	a.corp_nm,
@@ -22,5 +22,7 @@ from pth_rmp.RMP_ALERT_COMPREHS_SCORE a
 join (select max(batch_dt) as max_batch_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE) b
 	on a.score_dt=b.max_batch_dt
 where a.delete_flag=0
-  and a.score_dt=to_date(date_add(current_timestamp(),-1))   --当天一开始，将昨天的最新批次的数据同步到历史表
+  and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))  --当天一开始，将昨天的最新批次的数据同步到历史表
+--   and a.score_dt=to_date(date_add(current_timestamp(),-1))   --当天一开始，将昨天的最新批次的数据同步到历史表
 ;
+-- truncate table pth_rmp.RMP_ALERT_COMPREHS_SCORE; --历史表衍生完成，删除前一天的日表数据

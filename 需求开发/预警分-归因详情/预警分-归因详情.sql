@@ -123,7 +123,15 @@ warn_union_adj_sync_score as --取最新批次的融合调整后综合预警分
         chg.corp_name as corp_nm,
         to_date(a.rating_dt) as score_dt,
         a.total_score_adjusted as adj_score,
-        a.interval_text_adjusted as adj_synth_level
+		case a.interval_text_adjusted
+			when '绿色等级' then '-1' 
+			when '黄色等级' then '-2'
+			when '橙色等级' then '-3'
+			when '红色等级' then '-4'
+			when '风险已暴露' then '-5'
+		end as adj_synth_level,
+		a.model_name,
+		a.model_version
     from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a   
     join (select max(rating_dt) as max_rating_dt from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ ) b
         on a.rating_dt=b.max_rating_dt
@@ -441,7 +449,12 @@ res3 as   --预警分+特征原始值+综合贡献度+指标评分卡+特征配置表
         main.sub_model_name_zbpfk,
         f_cfg.sub_model_type,
         f_cfg.feature_name_target,
-        f_cfg.dimension,
+        case f_cfg.dimension 
+            when '财务' then 1
+            when '经营' then 2
+            when '市场' then 3
+            when '舆情' then 4
+        end as dimension,
         f_cfg.type,
         f_cfg.cal_explain as idx_cal_explain,
         f_cfg.feature_explain as idx_explain,
@@ -457,7 +470,6 @@ select
     corp_id,
     corp_nm,
     score_dt,
-    0 as dimension_cd,
     dimension,
     '' as  dim_warn_level,  --！！！和模型融合方案有关，待定
     0 as type_cd,
