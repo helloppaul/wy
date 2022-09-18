@@ -16,10 +16,15 @@ corp_chg as --´øÓĞ ³ÇÍ¶/²úÒµÅĞ¶ÏºÍ¹ú±êÒ»¼¶ĞĞÒµ µÄÌØÊâcorp_chg
 ),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª ½Ó¿Ú²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 -- Ô¤¾¯·Ö --
-_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --Ô¤¾¯·Ö_ÈÚºÏµ÷Õûºó×ÛºÏ  Ô­Ê¼½Ó¿Ú
+-- _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --Ô¤¾¯·Ö_ÈÚºÏµ÷Õûºó×ÛºÏ  Ô­Ê¼½Ó¿Ú
+-- (
+--     select * 
+--     from app_ehzh.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+-- ),
+_RMP_WARNING_SCORE_MODEL_ as  --Ô¤¾¯·Ö-Ä£ĞÍ½á¹û±í
 (
-    select * 
-    from app_ehzh.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+    select *
+    from app_ehzh.RMP_WARNING_SCORE_MODEL  --@pth_rmp.RMP_WARNING_SCORE_MODEL
 ),
 -- ÌØÕ÷Ô­Ê¼Öµ --
 _rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_ as  --ÌØÕ÷Ô­Ê¼Öµ_¸ßÆµ Ô­Ê¼½Ó¿Ú
@@ -47,6 +52,26 @@ _rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as  --ÌØÕ÷¹±Ï×¶È_ÈÚºÏµ÷Õûºó×Ûº
 (
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
+),
+_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf_ as --ÌØÕ÷¹±Ï×¶È_¸ßÆµ
+(
+	select * 
+	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf  --@hds.rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf
+),
+_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_ as  --ÌØÕ÷¹±Ï×¶È_µÍÆµ
+(
+	select * 
+	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf  --@hds.rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf
+),
+_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf_ as  --ÌØÕ÷¹±Ï×¶È_ÖĞÆµ³ÇÍ¶
+(
+	select * 
+	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf  --@hds.rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf
+),
+_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf_ as  --ÌØÕ÷¹±Ï×¶È_ÖĞÆµ²úÒµ
+(
+	select *
+	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf  --@hds.rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf
 ),
 -- ÌØÕ÷µÃ·Ö(ÌØÕ÷´ò·Ö¿¨) --
 _rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf_ as  --ÌØÕ÷µÃ·Ö_¸ßÆµ Ô­Ê¼½Ó¿Ú 
@@ -84,7 +109,7 @@ _RMP_WARNING_SCORE_DETAIL_HIS_ as   --¹éÒòÏêÇéÀúÊ·±í(ÓÃÓÚ»ñÈ¡ÉÏÒ»ÈÕÖ¸±êÖµ)
     --where score_dt=to_date(date_add(current_timestamp(),-1))
 ),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª ÅäÖÃ±í ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
-feat_CFG as 
+feat_CFG as  --ÌØÕ÷ÊÖ¹¤ÅäÖÃ±í
 (
     select 
         feature_cd,
@@ -114,31 +139,76 @@ feat_CFG as
     from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
     where sub_model_type='ÖĞÆµ³ÇÍ¶'
 ),
+_warn_dim_risk_level_cfg_ as  -- Î¬¶È¹±Ï×¶ÈÕ¼±È¶ÔÓ¦·çÏÕË®Æ½-ÅäÖÃ±í
+(
+	select 60 as low_contribution_percent,100 as high_contribution_percent,-3 as risk_lv ,'¸ß·çÏÕ' as risk_lv_desc   --(60,100]
+	union all  
+	select 40 as low_contribution_percent,60 as high_contribution_percent,-2 as risk_lv,'ÖĞ·çÏÕ' as risk_lv_desc   --(40,60]
+	union all  
+	select 0 as low_contribution_percent, 40 as high_contribution_percent,-1 as risk_lv,'µÍ·çÏÕ' as risk_lv_desc   --(0,40]
+),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª Ó¦ÓÃ²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
+--Ó³Éäºó ÌØÕ÷ÊÖ¹¤ÅäÖÃ±í --
+warn_feat_CFG as 
+(
+    select 
+        feature_cd,
+        feature_name,
+        sub_model_type,
+        feature_name_target,
+        case dimension 
+            when '²ÆÎñ' then 1
+            when '¾­Óª' then 2
+            when 'ÊĞ³¡' then 3
+            when 'ÓßÇé' then 4
+        end as dimension,
+        type,
+        cal_explain,
+        feature_explain,
+        unit_origin,
+        unit_target,
+        count(feature_cd) over(partition by dimension) as contribution_cnt
+    from feat_CFG
+),
 -- Ô¤¾¯·Ö --
-warn_union_adj_sync_score as --È¡×îĞÂÅú´ÎµÄÈÚºÏµ÷Õûºó×ÛºÏÔ¤¾¯·Ö
+warn_union_adj_sync_score as --È¡×îĞÂÅú´ÎµÄÔ¤¾¯·Ö-Ä£ĞÍ½á¹û±í
 (
     select distinct
-        cast(a.rating_dt as string) as batch_dt,
-        chg.corp_id,
-        chg.corp_name as corp_nm,
-        to_date(a.rating_dt) as score_dt,
-        a.total_score_adjusted as adj_score,
-		case a.interval_text_adjusted
-			when 'ÂÌÉ«µÈ¼¶' then '-1' 
-			when '»ÆÉ«µÈ¼¶' then '-2'
-			when '³ÈÉ«µÈ¼¶' then '-3'
-			when 'ºìÉ«µÈ¼¶' then '-4'
-			when '·çÏÕÒÑ±©Â¶' then '-5'
-		end as adj_synth_level,
-		a.model_name,
-		a.model_version
-    from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a   
-    join (select max(rating_dt) as max_rating_dt from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ ) b
-        on a.rating_dt=b.max_rating_dt
-    join corp_chg chg
-        on chg.source_code='FI' and chg.source_id=cast(a.corp_code as string)
+        batch_dt,
+        corp_id,
+        corp_nm,
+        score_date as score_dt,
+        synth_score as adj_score,
+        synth_warnlevel as adj_synth_level,
+        adjust_warnlevel,
+        model_version
+    from _RMP_WARNING_SCORE_MODEL_ a
+    join (select max(batch_dt) as max_batch_dt from _RMP_WARNING_SCORE_MODEL_ ) b
+        on a.batch_dt=b.max_batch_dt
 ),
+-- warn_union_adj_sync_score as --È¡×îĞÂÅú´ÎµÄÈÚºÏµ÷Õûºó×ÛºÏÔ¤¾¯·Ö
+-- (
+--     select distinct
+--         cast(a.rating_dt as string) as batch_dt,
+--         chg.corp_id,
+--         chg.corp_name as corp_nm,
+--         to_date(a.rating_dt) as score_dt,
+--         a.total_score_adjusted as adj_score,
+-- 		case a.interval_text_adjusted
+-- 			when 'ÂÌÉ«µÈ¼¶' then '-1' 
+-- 			when '»ÆÉ«µÈ¼¶' then '-2'
+-- 			when '³ÈÉ«µÈ¼¶' then '-3'
+-- 			when 'ºìÉ«µÈ¼¶' then '-4'
+-- 			when '·çÏÕÒÑ±©Â¶' then '-5'
+-- 		end as adj_synth_level,
+-- 		a.model_name,
+-- 		a.model_version
+--     from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a   
+--     join (select max(rating_dt) as max_rating_dt from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ ) b
+--         on a.rating_dt=b.max_rating_dt
+--     join corp_chg chg
+--         on chg.source_code='FI' and chg.source_id=cast(a.corp_code as string)
+-- ),
 -- ÌØÕ÷Ô­Ê¼Öµ --
 warn_feature_value as --Ô­Ê¼ÌØÕ÷Öµ_ºÏ²¢¸ßÖĞµÍÆµ
 (
@@ -282,6 +352,183 @@ warn_contribution_ratio as
     join corp_chg chg 
         on cast(a.corp_code as string)=chg.source_id and chg.source_code='FI'
 ),
+warn_feature_contrib as --ÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
+(
+	select 
+		cast(max(a.batch_dt) over() as string) as batch_dt,  --ÒÔ¸ßÆµ¸üĞÂµÄÊı¾İÎªÅú´ÎÊ±¼ä
+		chg.corp_id,
+		chg.corp_name as corp_nm,
+		to_date(end_dt) as score_dt,
+		feature_name,
+		feature_pct,
+        model_freq_type,  --ÌØÕ÷ËùÊô×ÓÄ£ĞÍ·ÖÀà/Ä£ĞÍÆµÂÊ·ÖÀà
+		feature_risk_interval,  --ÌØÕ÷Òì³£±êÊ¶
+		model_name,
+		model_version as sub_model_name
+	from 
+	(
+		--¸ßÆµ
+		select distinct
+			end_dt as batch_dt,
+			corp_code,
+			end_dt,
+			feature_name,
+			cast(feature_pct as float) as feature_pct,  --ÌØÕ÷¹±Ï×¶È
+			'¸ßÆµ' as model_freq_type,
+			feature_risk_interval,  --ÌØÕ÷Òì³£±êÊ¶£¨0/1,1´ú±íÒì³££©
+			model_name,
+			model_version
+		from _rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf_
+		union all 
+		--µÍÆµ
+		select distinct
+			end_dt as batch_dt,
+			corp_code,
+			end_dt,
+			feature_name,
+			cast(feature_pct as float) as feature_pct,  --ÌØÕ÷¹±Ï×¶È
+			'µÍÆµ' as model_freq_type,
+			feature_risk_interval,  --ÌØÕ÷Òì³£±êÊ¶£¨0/1,1´ú±íÒì³££©
+			model_name,
+			model_version
+		from _rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_
+		union all 
+		--ÖĞÆµ-³ÇÍ¶
+		select distinct
+			end_dt as batch_dt,
+			corp_code,
+			end_dt,
+			feature_name,
+			cast(feature_pct as float) as feature_pct,  --ÌØÕ÷¹±Ï×¶È
+			'ÖĞÆµ-³ÇÍ¶' as model_freq_type,
+			feature_risk_interval,  --ÌØÕ÷Òì³£±êÊ¶£¨0/1,1´ú±íÒì³££©
+			model_name,
+			model_version
+		from _rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf_ 
+		union all 
+		--ÖĞÆµ-²úÒµ
+		select distinct
+			end_dt as batch_dt,
+			corp_code,
+			end_dt,
+			feature_name,
+			cast(feature_pct as float) as feature_pct,  --ÌØÕ÷¹±Ï×¶È
+			'ÖĞÆµ-²úÒµ' as model_freq_type,
+			feature_risk_interval,  --ÌØÕ÷Òì³£±êÊ¶£¨0/1,1´ú±íÒì³££©
+			model_name,
+			model_version
+		from _rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf_
+	)A join corp_chg chg 
+        on cast(a.corp_code as string)=chg.source_id and chg.source_code='FI'
+),
+warn_feature_contrib_res1 as  --´øÓĞ Î¬¶È¹±Ï×¶ÈÕ¼±È µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ  
+(
+    select 
+        batch_dt,
+        corp_id,
+        corp_nm,
+        score_dt,
+        dimension,
+        model_freq_type,  ----ÌØÕ÷ËùÊô×ÓÄ£ĞÍ·ÖÀà/Ä£ĞÍÆµÂÊ·ÖÀà
+        sum(feature_pct) as dim_submodel_contribution_ratio  --Î¬¶È¹±Ï×¶ÈÕ¼±È
+    from
+    (
+        select distinct
+            a.batch_dt,
+            a.corp_id,
+            a.corp_nm,
+            a.score_dt,
+            f_cfg.dimension,
+            a.feature_name,
+            a.feature_pct,  --¹±Ï×¶ÈÕ¼±È %
+            a.model_freq_type,
+            a.feature_risk_interval,
+            a.model_name,
+            a.sub_model_name
+        from warn_feature_contrib a 
+        join warn_feat_CFG f_cfg 
+            on a.feature_name=f_cfg.feature_cd and a.model_freq_type=substr(f_cfg.sub_model_type,1,6)
+    )B group by batch_dt,corp_id,corp_nm,score_dt,dimension,model_freq_type
+),
+warn_feature_contrib_res2 as  -- ´øÓĞ Î¬¶È·çÏÕµÈ¼¶ µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
+(
+    select distinct
+        batch_dt,
+        corp_id,
+        corp_nm,
+        score_dt,
+        dimension,
+        dim_risk_lv,
+        dim_risk_lv_desc  --µ÷ÕûÇ°Î¬¶È·çÏÕµÈ¼¶ used
+    from
+    ( 
+        select 
+            *,
+            first_value(risk_lv) over(partition by batch_dt,corp_id,corp_nm,score_dt,dimension order by risk_lv asc) as dim_risk_lv,  --µ÷ÕûÇ°Î¬¶È·çÏÕµÈ¼¶£¨ÊıÖµĞÍ£©
+            first_value(risk_lv_desc) over(partition by batch_dt,corp_id,corp_nm,score_dt,dimension order by risk_lv asc) as dim_risk_lv_desc  --µ÷ÕûÇ°Î¬¶È·çÏÕµÈ¼¶
+        from 
+        (
+            select distinct
+                batch_dt,
+                corp_id,
+                corp_nm,
+                score_dt,
+                dimension,
+                model_freq_type,
+                dim_submodel_contribution_ratio,   --¸÷×ÓÄ£ĞÍ¶ÔÓ¦Î¬¶È¹±Ï×¶ÈÕ¼±È£¬used by ¹éÒò±¨¸æµÚ¶ş¶Î
+                b.risk_lv,
+                b.risk_lv_desc   -- Ô­Ê¼·çÏÕµÈ¼¶ÃèÊö
+            from warn_feature_contrib_res1 main 
+            join _warn_dim_risk_level_cfg_ b 
+            where main.dim_submodel_contribution_ratio>b.low_contribution_percent and main.dim_submodel_contribution_ratio<=b.high_contribution_percent
+        )C 
+    )D
+),
+warn_feature_contrib_res3_tmp as 
+(
+    select distinct
+        main.batch_dt,
+        main.corp_id,
+        main.corp_nm,
+        main.score_dt,
+        main.dimension,
+        main.dim_risk_lv,
+        main.dim_risk_lv_desc,  --Î¬¶È·çÏÕµÈ¼¶ ¸ß·çÏÕ£¬ÖĞ·çÏÕ£¬µÍ·çÏÕ
+        nvl(b.adj_synth_level,'') as adj_synth_level,  --×ÛºÏÔ¤¾¯µÈ¼¶
+        nvl(b.adjust_warnlevel,'') as adjust_warnlevel --µ÷ÕûºóµÈ¼¶
+    from warn_feature_contrib_res2 main
+    left join warn_union_adj_sync_score b --Ô¤¾¯·Ö-Ä£ĞÍ½á¹û±í
+        on main.batch_dt=b.batch_dt and main.corp_id=b.corp_id
+),
+warn_feature_contrib_res3 as  -- ¸ù¾İ×ÛºÏÔ¤¾¯µÈ¼¶µ÷ÕûºóµÄÎ¬¶È·çÏÕË®Æ½ µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
+(
+    select distinct
+        batch_dt, 
+        corp_id,
+        corp_nm,
+        score_dt,
+        dimension,
+        dim_warn_level  --×îÖÕµ÷ÕûºóµÄÎ¬¶È·çÏÕµÈ¼¶
+    from 
+    (
+        select 
+            *,
+            case 
+                when cast(dim_risk_lv as string)<>adjust_warnlevel then 
+                    adjust_warnlevel
+            end as dim_warn_level  --¸ù¾İ×ÛºÏÔ¤¾¯µÈ¼¶µ÷ÕûºóµÄÎ¬¶È·çÏÕË®Æ½
+        from warn_feature_contrib_res3_tmp a 
+        join (select max(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp) b  --»ñÈ¡»ñÈ¡×î¸ß·çÏÕË®Æ½¶ÔÓ¦µÄÎ¬¶È
+            on a.dim_risk_lv=b.max_dim_risk_lv
+        union all 
+        select 
+            *,
+            cast(dim_risk_lv as string) as dim_warn_level
+        from warn_feature_contrib_res3_tmp a 
+        join (select max(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp) b  --»ñÈ¡³ı×î¸ß·çÏÕË®Æ½¶ÔÓ¦µÄÎ¬¶È
+        where a.dim_risk_lv <> b.max_dim_risk_lv
+    )C
+),
 warn_contribution_ratio_with_factor_evl as  --´øÒò×ÓÆÀ¼ÛµÄÌØÕ÷¹±Ï×¶ÈÓ¦ÓÃ²ãÊı¾İ
 (
     SELECT distinct
@@ -356,13 +603,7 @@ warn_score_card as
     )A join corp_chg chg 
         on cast(a.corp_code as string)=chg.source_id and chg.source_code='FI'
 ),
-warn_feat_CFG as 
-(
-    select 
-        *,
-        count(feature_cd) over(partition by dimension) as contribution_cnt
-    from feat_CFG
-),
+
 -- -- ÉÏÒ»ÈÕÖ¸±êÖµ --
 warn_lastday_idx_value as 
 (
@@ -450,12 +691,7 @@ res3 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í
         main.sub_model_name_zbpfk,
         f_cfg.sub_model_type,
         f_cfg.feature_name_target,
-        case f_cfg.dimension 
-            when '²ÆÎñ' then 1
-            when '¾­Óª' then 2
-            when 'ÊĞ³¡' then 3
-            when 'ÓßÇé' then 4
-        end as dimension,
+        f_cfg.dimension,
         f_cfg.type,
         f_cfg.cal_explain as idx_cal_explain,
         f_cfg.feature_explain as idx_explain,
@@ -471,10 +707,43 @@ res3 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í
            main.score_dt=lst.score_dt and 
            main.sub_model_name=lst.sub_model_name and 
            main.idx_name=lst.idx_name
+),
+res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í+¸÷Î¬¶È·çÏÕË®Æ½(¸ßÖĞµÍÆµ¹±Ï×¶ÈÇóµÃ)
+(
+    select distinct
+        main.batch_dt,
+        main.corp_id,
+        main.corp_nm,
+        main.score_dt,
+        main.idx_name,
+        main.idx_value,
+        main.idx_unit,
+        main.model_freq_type,
+        main.sub_model_name,
+        main.median,
+        main.contribution_ratio,  --¹±Ï×¶ÈÕ¼±È
+        main.factor_evaluate,  --Òò×ÓÆÀ¼Û
+        main.sub_model_name_zhgxd,  --×ÛºÏ¹±Ï×¶ÈµÄ×ÓÄ£ĞÍÃû³Æ
+        main.idx_score,
+        main.sub_model_name_zbpfk,
+        main.sub_model_type,
+        main.feature_name_target,
+        main.dimension,
+        b.dim_warn_level,  --×îÖÕµ÷ÕûºóµÄÎ¬¶È·çÏÕµÈ¼¶(ÖØÄÑµã)
+        main.type,
+        main.idx_cal_explain,
+        main.idx_explain,
+        main.last_idx_value,
+        main.unit_origin,
+        main.unit_target,
+        main.contribution_cnt  --¹éÒò¸öÊı
+    from res3 main
+    left join warn_feature_contrib_res3 b
+        on main.batch_dt=b.batch_dt and main.corp_id=b.corp_id and main.dimension=b.dimension
 )
 ------------------------------------ÒÔÉÏ²¿·ÖÎªÁÙÊ±±í-------------------------------------------------------------------
 -- insert into pth_rmp.RMP_WARNING_SCORE_DETAIL 
-select 
+select distinct
     '' as sid_kw,  --impala
     -- concat(MD5(concat(corp_id,batch_dt,dimension,type,sub_model_name,idx_name)),cast(rand() as string)) sid_kw,  --hive
     batch_dt,
@@ -482,7 +751,7 @@ select
     corp_nm,
     score_dt,
     dimension,
-    '' as  dim_warn_level,  --£¡£¡£¡ºÍÄ£ĞÍÈÚºÏ·½°¸ÓĞ¹Ø£¬´ı¶¨
+    dim_warn_level,  --£¡£¡£¡ºÍÄ£ĞÍÈÚºÏ·½°¸ÓĞ¹Ø£¬´ı¶¨
     0 as type_cd,
     type,
     sub_model_name,
@@ -503,6 +772,6 @@ select
 	'' as update_by,
 	current_timestamp() as update_time,
 	0 as version
-from res3
+from res4
 ;
 
