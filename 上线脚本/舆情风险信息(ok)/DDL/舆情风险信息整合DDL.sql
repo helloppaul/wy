@@ -24,5 +24,5 @@ create table pth_rmp.rmp_opinion_risk_info
 	update_by STRING,
 	update_time TIMESTAMP,
 	version int
-)partitioned by (dt int) 
+)partitioned by (dt int,type_ string) 
  stored as Parquet;

@@ -1,4 +1,5 @@
 -- RMP_WARNING_SCORE_DETAIL (同步方式：一天对批次插入) --
+-- /* 2022-9-19 限定特征范围在 综合预警等级-特征贡献度 */
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as --带有 城投/产业判断和国标一级行业 的特殊corp_chg
@@ -446,7 +447,7 @@ warn_feature_contrib_res1 as  --带有 维度贡献度占比 的特征贡献度-合并高中低频
             a.model_name,
             a.sub_model_name
         from warn_feature_contrib a 
-        join warn_feat_CFG f_cfg 
+        left join warn_feat_CFG f_cfg 
             on a.feature_name=f_cfg.feature_cd and a.model_freq_type=substr(f_cfg.sub_model_type,1,6)
     )B group by batch_dt,corp_id,corp_nm,score_dt,dimension,model_freq_type
 ),
@@ -646,7 +647,7 @@ res1 as   --预警分+特征原始值+综合贡献度
         b.factor_evaluate,  --因子评价
         b.sub_model_name as sub_model_name_zhgxd   --综合贡献度的子模型名称
     from res0 main
-    left join warn_contribution_ratio_with_factor_evl b 
+    join warn_contribution_ratio_with_factor_evl b  --限定范围在综合预警等级-特征贡献度(线性方案特征为全量；赎高方案只有有贡献的特征，会有缺失)
         on main.corp_id=b.corp_id and main.batch_dt=b.batch_dt and main.sub_model_name=b.sub_model_name
 ),
 res2 as --预警分+特征原始值+综合贡献度+指标评分卡
@@ -700,7 +701,7 @@ res3 as   --预警分+特征原始值+综合贡献度+指标评分卡+特征配置表
         f_cfg.unit_target,
         f_cfg.contribution_cnt  --归因个数
     from res2 main
-    join warn_feat_CFG f_cfg
+    left join warn_feat_CFG f_cfg
         on main.idx_name=f_cfg.feature_cd and  main.model_freq_type=substr(f_cfg.sub_model_type,1,6)
     left join warn_lastday_idx_value lst  --昨日预警分-归因详情数据。若为空，则表示当日为首次数据衍生
         on main.corp_id=lst.corp_id and 

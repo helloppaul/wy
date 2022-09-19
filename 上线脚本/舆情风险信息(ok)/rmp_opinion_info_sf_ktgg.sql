@@ -16,7 +16,7 @@ corp_chg as
 		on a.corp_id=b.corp_id and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
 )
-insert overwrite table pth_rmp.rmp_opinion_risk_info partition(dt=${ETL_DATE})
+insert overwrite table pth_rmp.rmp_opinion_risk_info partition(dt=${ETL_DATE},type_='sf_ktgg')
 select distinct
 	cid_chg.corp_id as corp_id,
 	Final.corp_nm,
@@ -34,13 +34,14 @@ select distinct
 	nvl(Final.url_kw,'') as url_kw,
 	nvl(Final.news_from,'') as news_from,
 	Final.msg,
-	Final.delete_flag,
-	Final.create_by,
-	Final.create_time,
-	Final.update_by,
-	Final.update_time,
-	Final.version
-	-- to_date(Final.notice_dt) as dt
+	0 as delete_flag,
+	'' as create_by,
+	current_timestamp() as create_time,
+	'' as update_by,
+	current_timestamp() update_time,
+	0 as version
+	-- cast(from_unixtime(unix_timestamp(to_date(Final.notice_dt),'yyyy-MM-dd'),'yyyyMMdd') as int) as dt,
+	-- 'sf_ktgg' as type_
 from 
 (
 	SELECT distinct
@@ -56,13 +57,7 @@ from
 		Final_CXSF.src_sid,
 		Final_CXSF.url_kw,
 		Final_CXSF.news_from,
-		Final_CXSF.msg,
-		0 as delete_flag,
-		'' as create_by,
-		cast('2022-08-01' as timestamp) as create_time,
-		'' as update_by,
-		current_timestamp() update_time,
-		0 as version
+		Final_CXSF.msg
 	FROM 
 	(	
 		--开庭公告
@@ -71,6 +66,7 @@ from
 			corp_id,
 			corp_nm,
 			notice_dt,
+			-- '' as msg_id,
 			concat(corp_id,'_',md5(RISK_DESC)) as msg_id,   -- hive版本支持：MD5(corp_id,notice_dt,case_type_ii,RISK_DESC)*/
 			'' as msg_title,  -- 诚信司法该title为空
 			'' as case_type_cd,  -- 最外层sql再和舆情风险规则标签表关联
@@ -95,19 +91,11 @@ from
 				 IMPORTANCE,
 				 concat(cast(year(NOTICE_DT) as string),'年',cast(month(NOTICE_DT) as string),'月',cast(day(NOTICE_DT) as string),'日',',',
 						company_nm,
-						'新增',cast(count(*) as string),'条',translate(translate(RISK_TYPE,'作为被告',''),'(开庭公告)',''),'案件。','\r\n',
-						'最新涉及案件详情如下：','\r\n','\r\n',
-					concat_ws('',
-						collect_set(
-						concat(
-							Case when NOTICE_DT is not null then concat('开庭日期:',cast(NOTICE_DT as string),'\r\n') else '' END,
-							Case when involve <> '' then concat('涉案公司:',involve,'\r\n') else '' END,
-							Case when involve_role <> '' then concat('涉案公司角色：',involve_role,'\r\n') else '' END,
-							Case when case_reason <> '' then concat('案由：',case_reason,'\r\n') else '' END,
-							Case when case_no <> '' then concat('案号：',case_no,'\r\n') else '' END,
-							Case when court <> '' then concat('法院：',cast(court as string),'\r\n') else '' END,
-							Case when court_link <> '' then concat('开庭公告链接：(',court_link,') ') else '' END,'\r\n','\r\n'))
-					))
+						'新增',cast(count(*) as string),'条',translate(translate(RISK_TYPE,'作为被告',''),'(开庭公告)',''),'案件。','\\r\\n',
+						'最新涉及案件详情如下：','\\r\\n','\\r\\n',
+					--group_concat(RISK_DESC_tmp,'')
+					concat_ws('',collect_set(RISK_DESC_tmp))
+					)
 				 as RISK_DESC,
 				 max(SRC_TABLE) as SRC_TABLE,
 				 max(SRC_SID) as SRC_SID,
@@ -121,6 +109,15 @@ from
 					COMPANY_ID2,
 					COMPANY_NM,
 					NOTICE_DT,
+					concat(
+							Case when NOTICE_DT is not null then concat('开庭日期:',cast(NOTICE_DT as string),'\\r\\n') else '' END,
+							Case when involve <> '' then concat('涉案公司:',involve,'\\r\\n') else '' END,
+							Case when involve_role <> '' then concat('涉案公司角色：',involve_role,'\\r\\n') else '' END,
+							Case when case_reason <> '' then concat('案由：',case_reason,'\\r\\n') else '' END,
+							Case when case_no <> '' then concat('案号：',case_no,'\\r\\n') else '' END,
+							Case when court <> '' then concat('法院：',cast(court as string),'\\r\\n') else '' END,
+							Case when court_link <> '' then concat('开庭公告链接：(',court_link,') ') else '' END,'\\r\\n','\\r\\n')
+					as RISK_DESC_tmp,
 					CASE 
 						WHEN (case_reason like '%借贷%' OR case_reason like '%借款%' OR case_reason like '%拆借%' OR case_reason like '%债务%' or  case_reason like '%债权%' or  case_reason like '%金融不良债权%')  
 							  AND case_reason NOT like '%破产%'  

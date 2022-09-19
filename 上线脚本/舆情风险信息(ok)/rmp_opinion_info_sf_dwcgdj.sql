@@ -43,7 +43,7 @@ A as
 	  and ITCODE2 <> ''  -- 当事人非空/企业非空
 	group by ITCODE2,CR0164_009,CR0164_006   --根据 公司,时间,案号 分组	
 )
-insert overwrite table pth_rmp.rmp_opinion_risk_info partition(dt=${ETL_DATE})
+insert overwrite table pth_rmp.rmp_opinion_risk_info partition(dt=${ETL_DATE},type_='sf_dwcgdj')
 select distinct
 	cid_chg.corp_id as corp_id,
 	Final.corp_nm,
@@ -61,13 +61,14 @@ select distinct
 	nvl(Final.url_kw,'') as url_kw,
 	nvl(Final.news_from,'') as news_from,
 	Final.msg,
-	Final.delete_flag,
-	Final.create_by,
-	Final.create_time,
-	Final.update_by,
-	Final.update_time,
-	Final.version
-	-- to_date(Final.notice_dt) as dt
+	0 as delete_flag,
+	'' as create_by,
+	current_timestamp() as create_time,
+	'' as update_by,
+	current_timestamp() update_time,
+	0 as version
+	-- cast(from_unixtime(unix_timestamp(to_date(Final.notice_dt),'yyyy-MM-dd'),'yyyyMMdd') as int) as dt,
+	-- 'sf_dwcgdj' as type_
 from 
 (
 	SELECT distinct
@@ -83,13 +84,7 @@ from
 		Final_CXSF.src_sid,
 		Final_CXSF.url_kw,
 		Final_CXSF.news_from,
-		Final_CXSF.msg,
-		0 as delete_flag,
-		'' as create_by,
-		cast('2022-08-01' as timestamp) as create_time,
-		'' as update_by,
-		current_timestamp() update_time,
-		0 as version
+		Final_CXSF.msg
 	FROM 
 	(	
 		--对外持股冻结
