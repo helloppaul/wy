@@ -1,5 +1,4 @@
 -- RMP_WARNING_SCORE_DETAIL (同步方式：一天对批次插入) --
--- /* 2022-9-19 限定特征范围在 综合预警等级-特征贡献度 */
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as --带有 城投/产业判断和国标一级行业 的特殊corp_chg
@@ -604,7 +603,6 @@ warn_score_card as
     )A join corp_chg chg 
         on cast(a.corp_code as string)=chg.source_id and chg.source_code='FI'
 ),
-
 -- -- 上一日指标值 --
 warn_lastday_idx_value as 
 (
@@ -647,7 +645,7 @@ res1 as   --预警分+特征原始值+综合贡献度
         b.factor_evaluate,  --因子评价
         b.sub_model_name as sub_model_name_zhgxd   --综合贡献度的子模型名称
     from res0 main
-    join warn_contribution_ratio_with_factor_evl b  --限定范围在综合预警等级-特征贡献度(线性方案特征为全量；赎高方案只有有贡献的特征，会有缺失)
+    left join warn_contribution_ratio_with_factor_evl b  
         on main.corp_id=b.corp_id and main.batch_dt=b.batch_dt and main.sub_model_name=b.sub_model_name
 ),
 res2 as --预警分+特征原始值+综合贡献度+指标评分卡

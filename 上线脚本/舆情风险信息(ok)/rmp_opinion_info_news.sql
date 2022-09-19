@@ -49,7 +49,7 @@ from
 	SELECT distinct
 		corp_id,corp_nm,
 		notice_dt,
-		'' as msg_id,  -- impala
+		-- '' as msg_id,  -- impala
 		concat(corp_id,'_',MD5(concat(corp_id,msg_id_,case_type_cd,case_type_ii_cd))) AS msg_id,  -- hive
 		msg_title,
 		case_type_cd,case_type,
