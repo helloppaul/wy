@@ -1,5 +1,6 @@
 -- 舆情统计日表 RMP_OPINION_STATISTIC_DAY (同步方式：一天多批次插入)  --
 --入参：${ETL_DATE}(20220818 int)，用于筛选score_dt
+-- /*2022-9-19 不剔除快讯和政府预警，将 快讯和政府预警 纳入统计范围*/
 with 
 corp_chg as 
 (
@@ -95,7 +96,7 @@ _rmp_company_info_main_union_hy as
 		wind_tag as level_type_ii
 	from _rmp_company_info_main_union  
 ),
-main_news_without_kxun_region as  --主体舆情(剔除快讯和区域舆情)
+main_news_without_kxun_region as  --主体舆情(区域舆情)
 (
 	select distinct
 		chg.corp_id,
@@ -110,8 +111,8 @@ main_news_without_kxun_region as  --主体舆情(剔除快讯和区域舆情)
 	join corp_chg chg 
 		on a.itcode2=chg.source_id and chg.source_code='FI'
 	where a.flag<>'1'
-	  and a.CRNW0003_001<>'6012000'  --政府预警'6012000'
-	  and a.CRNW0003_010<>'4'
+	  --and a.CRNW0003_001<>'6012000'  --政府预警'6012000'
+	  --and a.CRNW0003_010<>'4'
 	  and cast(a.CRNW0003_006 as int)<0   --负面舆情限制条件
 ),
 industry_class_yq as 
