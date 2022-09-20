@@ -38,7 +38,7 @@ label_hit_tab AS
 			o.corp_id ,
 			max(o.corp_nm) as corp_nm,
 			max(o.credit_code) as credit_code,
-			o.rating_dt as score_dt,
+			to_date(o.rating_dt) as score_dt,
 			max(o.total_score_adjusted) as score,  --舆情分
 			max(o1.yq_num) as yq_num,
 			max(o1.tmp_score_hit) as tmp_score_hit,
@@ -81,7 +81,7 @@ label_hit_tab AS
 		group by o.corp_id,o.rating_dt
 	)K
 )
-insert into pth_rmp.rmp_alert_score_summ
+-- insert into pth_rmp.rmp_alert_score_summ
 select
 	E.batch_dt,     --batch_dt来自于模型 单主体舆情分-调整后的模型结果
 	E.corp_id,

@@ -21,7 +21,8 @@ select distinct
 	cid_chg.corp_id as corp_id,
 	Final.corp_nm,
 	Final.notice_dt,
-	Final.msg_id,
+	-- Final.msg_id, --impala
+	concat(Final.corp_id,'_',md5(concat(cast(Final.notice_dt as string),Final.msg_title,Final.case_type_ii,Final.msg))) as msg_id,   -- hive版本支持：MD5(corp_id,notice_dt,case_type_ii,RISK_DESC)*/
 	Final.msg_title,
 	Final.case_type_cd,
 	Final.case_type,
@@ -65,8 +66,7 @@ from
 			corp_id,
 			corp_nm,
 			notice_dt,
-			-- '' as msg_id,
-			concat(corp_id,'_',md5(RISK_DESC)) as msg_id,   -- hive版本支持：MD5(corp_id,notice_dt,case_type_ii,RISK_DESC)*/
+			'' as msg_id,
 			'' as msg_title,  -- 诚信司法该title为空
 			'' as case_type_cd,  -- 最外层sql再和舆情风险规则标签表关联
 			'' as  case_type,

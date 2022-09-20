@@ -1,13 +1,39 @@
 -- 贡献度排行榜 RMP_COMPY_CONTRIB_DEGREE --
 -- 入参：${ETL_DATE} -> to_date(score_dt)。入参给NULL，初始化全部数据 --
 -- where corp_nm='海通创新证券投资有限公司'  and score_dt='2022-07-03'  and relation_nm in ('上海海通证券资产管理有限公司,海通证券股份有限公司')
+-- /* 2022-9-20 rank_num 调整为row_number()排序 */
 with 
 RMP_ALERT_COMPREHS_SCORE_TEMP_Batch as  --最新批次的综合舆情分数据,且有关联方
 (
-	select distinct * from RMP_ALERT_COMPREHS_SCORE_TEMP a 
+	select distinct a.* from RMP_ALERT_COMPREHS_SCORE_TEMP a 
 	join (select max(batch_dt) as new_batch_dt from RMP_ALERT_COMPREHS_SCORE_TEMP )b  
 		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'')
 	where a.r_score_cal is not null  --有关联方
+),
+_rmp_alert_score_summ_ as 
+(
+	select 
+		nvl(a.batch_dt,'') as batch_dt, 
+		a.corp_id,
+		a.corp_nm,
+		a.credit_code,
+		a.score_dt,
+		a.score,
+		a.score_hit_ci,
+		a.score_hit_yq,
+		a.score_hit,
+		a.label_hit ,
+		a.alert ,
+		a.fluctuated ,
+		a.model_version
+	from app_ehzh.rmp_alert_score_summ a --pth_rmp.rmp_alert_score_summ
+	where delete_flag=0
+),
+_rmp_alert_score_summ_batch as --最新批次的单舆情分数据
+(
+	select distinct a.* from _rmp_alert_score_summ_ a --@pth_rmp.rmp_alert_score_summ
+	join (select max(batch_dt) as new_batch_dt from _rmp_alert_score_summ_ )b  --@pth_rmp.rmp_alert_score_summ
+		on a.batch_dt=b.new_batch_dt
 ),
 company_core_rel_ as 
 (
@@ -25,7 +51,7 @@ select
 	relation_nm,
 	relation_type_l2_line,
 	contribution_degree,
-	rank() over(partition by corp_id,score_dt order by contribution_degree desc) as rank_num,
+	ROW_NUMBER() over(partition by corp_id,score_dt order by contribution_degree desc) as rank_num,
 	abnormal_flag,
 	0 as delete_flag,
 	'' as create_by,
@@ -51,7 +77,8 @@ from
 		on com.corp_id = rel.corp_id and com.relation_id = rel.relation_id
 	join pth_rmp.rmp_compy_core_rel_degree_cfg CFG 
 		on rel.relation_type_l2_code=CFG.rel_type_ii_cd
-	left join rmp_alert_score_summ sc
-		on com.relation_id = sc.corp_id and com.score_dt=sc.score_dt and nvl(com.batch_dt,'')=nvl(sc.batch_dt,'')
+	left join _rmp_alert_score_summ_batch sc
+		on com.relation_id = sc.corp_id and to_date(com.score_dt)=to_date(sc.score_dt) --and nvl(com.batch_dt,'')=nvl(sc.batch_dt,'')
 	group by com.batch_dt,com.corp_id,com.corp_nm,com.corp_nm,com.score_dt,com.relation_id,com.relation_nm,com.r_score_cal,sc.alert
-)Final where to_date(score_dt)=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))  ;
+)Final 
+where to_date(score_dt)=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))  ;

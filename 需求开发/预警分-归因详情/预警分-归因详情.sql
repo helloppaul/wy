@@ -5,7 +5,6 @@ corp_chg as --´øÓĞ ³ÇÍ¶/²úÒµÅĞ¶ÏºÍ¹ú±êÒ»¼¶ĞĞÒµ µÄÌØÊâcorp_chg
 (
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
     ,b.bond_type,b.industryphy_name
-
 	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
 		  join (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance) cid2
 			on cid1.etl_date=cid2.etl_date
@@ -363,8 +362,8 @@ warn_feature_contrib as --ÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
 		feature_pct,
         model_freq_type,  --ÌØÕ÷ËùÊô×ÓÄ£ĞÍ·ÖÀà/Ä£ĞÍÆµÂÊ·ÖÀà
 		feature_risk_interval,  --ÌØÕ÷Òì³£±êÊ¶
-		model_name,
-		model_version as sub_model_name
+		model_name as sub_model_name,
+		model_version
 	from 
 	(
 		--¸ßÆµ
@@ -739,12 +738,12 @@ res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í+¸÷Î¬¶È·çÏÕË®Æ½(¸
     from res3 main
     left join warn_feature_contrib_res3 b
         on main.batch_dt=b.batch_dt and main.corp_id=b.corp_id and main.dimension=b.dimension
-)
+    )
 ------------------------------------ÒÔÉÏ²¿·ÖÎªÁÙÊ±±í-------------------------------------------------------------------
 -- insert into pth_rmp.RMP_WARNING_SCORE_DETAIL 
 select distinct
     '' as sid_kw,  --impala
-    -- concat(MD5(concat(corp_id,batch_dt,dimension,type,sub_model_name,idx_name)),cast(rand() as string)) sid_kw,  --hive
+    -- concat(MD5(concat(corp_id,batch_dt,dimension,type,sub_model_name,idx_name)),corp_id) as sid_kw,  --hive
     batch_dt,
     corp_id,
     corp_nm,

@@ -21,7 +21,7 @@ corp_chg as
 insert overwrite table pth_rmp.rmp_opinion_risk_info partition(dt=${ETL_DATE},type_='news')
 select distinct
 	cid_chg.corp_id as corp_id,
-	Final.corp_nm,
+	cid_chg.corp_name as corp_nm,
 	Final.notice_dt,
 	Final.msg_id,
 	Final.msg_title,
@@ -50,7 +50,8 @@ from
 		corp_id,corp_nm,
 		notice_dt,
 		-- '' as msg_id,  -- impala
-		concat(corp_id,'_',MD5(concat(corp_id,msg_id_,case_type_cd,case_type_ii_cd))) AS msg_id,  -- hive
+		concat(corp_id,'_',msg_id_,'_',cast(case_type_ii_cd as string)) as msg_id, 
+		-- concat(corp_id,'_',MD5(concat(corp_id,msg_id_,case_type_cd,case_type_ii_cd))) AS msg_id,  -- hive
 		msg_title,
 		case_type_cd,case_type,
 		case_type_ii_cd,case_type_ii,
@@ -123,7 +124,7 @@ from
 						else o.crnw0001_010
 					end as URL,
 					o.crnw0001_007 as news_from,
-					'' as msg
+					o3.CRNW0002_001 as msg
 				from (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0001 where flag<>'1') o,
 					 (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0003_all_v2 where flag<>'1') o1,
 					 (select * from hds.tr_ods_rmp_fi_x_news_tcrnwitcode where flag<>'1' ) o2,
@@ -138,10 +139,10 @@ from
 					     left join (select tag,tag_cd,tag_ii,tag_ii_cd,importance,tag_type from pth_rmp.rmp_opinion_risk_info_tag) tag
 							on a.indexname=tag.tag_ii and tag.tag_type=0
 					  -- where   a.flag<>'1'  and a.indexlevel in ('3','4')
-					) idx
-					 -- (select newscode,NEWSDATE,'' msg-- CRNW0002_001 msg*/ 
-					  -- from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') o3
-				where o.newscode=o1.newscode and o1.itcode2=o2.itcode2 and idx.indexcode=o1.crnw0003_001 --and o.newscode=o3.newscode 
+					) idx,
+					 (select distinct newscode,NEWSDATE,CRNW0002_001 --正文数据
+					  from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') o3
+				where o.newscode=o1.newscode and o1.itcode2=o2.itcode2 and idx.indexcode=o1.crnw0003_001 and o.newscode=o3.newscode 
 				  and cast(o1.crnw0003_006 as int)<0
 			)t0
 		)Final_Part

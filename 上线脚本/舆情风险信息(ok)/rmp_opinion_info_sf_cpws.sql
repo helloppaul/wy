@@ -26,7 +26,8 @@ select distinct
 	cid_chg.corp_id as corp_id,
 	Final.corp_nm,
 	Final.notice_dt,
-	Final.msg_id,
+	-- Final.msg_id,   --impala
+	concat(Final.corp_id,'_',md5(concat(cast(Final.notice_dt as string),Final.msg_title,Final.case_type_ii,Final.msg))) as msg_id,   -- hive版本支持：MD5(corp_id,notice_dt,case_type_ii,RISK_DESC)*/
 	Final.msg_title,
 	Final.case_type_cd,
 	Final.case_type,
@@ -70,8 +71,7 @@ from
 			COMPANY_ID as corp_id,
 			COMPANY_NM as corp_nm,
 			notice_dt,
-			-- '' as msg_id,
-			concat(COMPANY_ID,'_',md5(RISK_DESC)) as msg_id,   -- hive版本支持：MD5(corp_id,notice_dt,case_type_ii,RISK_DESC)*/
+			'' as msg_id,
 			'' as msg_title,  -- 诚信司法该title为空
 			'' as case_type_cd,  -- 最外层sql再和舆情风险规则标签表关联
 			'' as  case_type,
@@ -352,5 +352,5 @@ from
 			) T where T.rm<=10 group by COMPANY_ID,COMPANY_NM,NOTICE_DT,RISK_TYPE,RISK_TYPE_CD,IMPORTANCE 
 		)Final_Part
 	)Final_CXSF join pth_rmp.RMP_OPINION_RISK_INFO_TAG tag on Final_CXSF.case_type_ii = tag.tag_ii and tag.tag_type in (1,2) -- 仅司法诚信替换标签，新闻舆情已单独处理 
-)Final join corp_chg cid_chg on Final.corp_id = cid_chg.source_id and cid_chg.source_code='FI';
+)Final join corp_chg cid_chg on Final.corp_id = cid_chg.source_id and cid_chg.source_code='FI'
 where to_date(notice_dt)=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))  ;	
