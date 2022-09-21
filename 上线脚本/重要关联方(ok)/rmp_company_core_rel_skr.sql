@@ -107,7 +107,7 @@ select
 	current_timestamp() update_time,
 	0 as version
 	--to_date(CURRENT_TIMESTAMP()) as dt,
-	-- '实际控制人' as type_
+	-- 'skr' as type_
 FROM
 (
 	select DISTINCT

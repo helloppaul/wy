@@ -131,7 +131,7 @@ select
 	current_timestamp() update_time,
 	0 as version
 	-- to_date(CURRENT_TIMESTAMP()) as dt,
-	-- '同集团内上市发债企业' as type_
+	-- 'ssfz' as type_
 FROM
 (
 	select distinct

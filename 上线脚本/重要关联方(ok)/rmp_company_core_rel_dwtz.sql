@@ -204,7 +204,7 @@ select
 	current_timestamp() update_time,
 	0 as version
 	-- to_date(CURRENT_TIMESTAMP()) as dt,
-	-- '对外投资' as type_
+	-- 'dwtz' as type_
 FROM
 (
 	select 

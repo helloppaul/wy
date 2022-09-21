@@ -205,7 +205,7 @@ select
 	current_timestamp() update_time,
 	0 as version
 	-- to_date(CURRENT_TIMESTAMP()) as dt,
-	-- '股东' as type_
+	-- 'gd' as type_
 from	
 (
 	select 

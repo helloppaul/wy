@@ -117,7 +117,7 @@ select
 	current_timestamp() update_time,
 	0 as version
 	-- to_date(CURRENT_TIMESTAMP()) as dt,
-	-- '相同根节点' as type_
+	-- 'xtgjd' as type_
 FROM
 (
 	select distinct

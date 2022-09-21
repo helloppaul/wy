@@ -7,7 +7,7 @@
 
 
 with 
-corp_chg as 
+corp_chg_ as 
 (
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
 	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
@@ -17,6 +17,14 @@ corp_chg as
 	join pth_rmp.rmp_company_info_main B 
 		on a.corp_id=b.corp_id and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
+),
+corp_chg as 
+(
+	select * from 
+	(
+		select *,ROW_NUMBER() over(partition by source_id,source_code order by 1) as rm 
+		from corp_chg_ 
+	) A where rm=1 
 )
 insert overwrite table pth_rmp.rmp_opinion_risk_info partition(dt=${ETL_DATE},type_='news')
 select distinct
@@ -46,7 +54,7 @@ select distinct
 	-- 'news' as type_
 from 
 (
-	SELECT distinct
+	SELECT 
 		corp_id,corp_nm,
 		notice_dt,
 		-- '' as msg_id,  -- impala
@@ -61,7 +69,8 @@ from
 		src_sid,
 		url_kw,
 		news_from,
-		msg
+		msg,
+		ROW_NUMBER() over(partition by corp_id,msg_id_,case_type_ii_cd order by 1) as rm1 --去除重复数据
 	FROM 
 	(	
 			--新闻舆情
@@ -124,7 +133,7 @@ from
 						else o.crnw0001_010
 					end as URL,
 					o.crnw0001_007 as news_from,
-					o3.CRNW0002_001 as msg
+					'' as msg
 				from (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0001 where flag<>'1') o,
 					 (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0003_all_v2 where flag<>'1') o1,
 					 (select * from hds.tr_ods_rmp_fi_x_news_tcrnwitcode where flag<>'1' ) o2,
@@ -139,13 +148,13 @@ from
 					     left join (select tag,tag_cd,tag_ii,tag_ii_cd,importance,tag_type from pth_rmp.rmp_opinion_risk_info_tag) tag
 							on a.indexname=tag.tag_ii and tag.tag_type=0
 					  -- where   a.flag<>'1'  and a.indexlevel in ('3','4')
-					) idx,
-					 (select distinct newscode,NEWSDATE,CRNW0002_001 --正文数据
-					  from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') o3
-				where o.newscode=o1.newscode and o1.itcode2=o2.itcode2 and idx.indexcode=o1.crnw0003_001 and o.newscode=o3.newscode 
+					) idx
+					--  (select distinct newscode,NEWSDATE,CRNW0002_001 --正文数据
+					--   from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') o3
+				where o.newscode=o1.newscode and o1.itcode2=o2.itcode2 and idx.indexcode=o1.crnw0003_001 --and o.newscode=o3.newscode 
 				  and cast(o1.crnw0003_006 as int)<0
 			)t0
 		)Final_Part
 	)Final_News
-)Final join corp_chg cid_chg on Final.corp_id = cid_chg.source_id and cid_chg.source_code='FI' 
+)Final join corp_chg cid_chg on Final.corp_id = cid_chg.source_id and cid_chg.source_code='FI' and rm1=1
 where to_date(notice_dt)=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))  ;

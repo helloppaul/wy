@@ -209,6 +209,7 @@ com_score_temp as  --计算得到综合舆情分
 		Main_score_hit_yq,
 		main_score_hit,
 		main_label_hit,
+		main_score_hit_ci,
 		relation_id,
 		relation_nm,
 		r_score,
@@ -440,7 +441,7 @@ Main_com_score AS
 			third_score,
 			model_version,
 			comprehensive_score
-		from com_score_temp 
+		from com_score_temp
 	)A left join deal_featvalue Df 
 		on A.corp_id = Df.corp_code and A.score_dt=Df.end_dt
 )

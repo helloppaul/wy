@@ -20,8 +20,8 @@ select distinct
 	CURRENT_TIMESTAMP() as update_time,
 	0 as version
 from pth_rmp.RMP_ALERT_SCORE_SUMM a 
-join (select max(batch_dt) as max_batch_dt from pth_rmp.RMP_ALERT_SCORE_SUMM) b
-	on a.score_dt=b.max_batch_dt
+join (select score_dt,max(batch_dt) as max_batch_dt from pth_rmp.RMP_ALERT_SCORE_SUMM group by score_dt) b
+	on a.score_dt=b.score_dt and a.batch_dt=b.max_batch_dt
 where a.delete_flag=0
   and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))  --当天一开始，将昨天的最新批次的数据同步到历史表
 --   and a.score_dt=to_date(date_add(current_timestamp(),-1))   --当天一开始，将昨天的最新批次的数据同步到历史表
