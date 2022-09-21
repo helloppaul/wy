@@ -1,4 +1,5 @@
 -- RMP_INDUSTRY_NEWS_INFO (同步方式：一天多批次覆盖) --
+-- 入参：${ETL_DATE}(20220818 int)  -> to_date(notice_dt)
 with gb AS  --国标分类数据
 (
 	select * 
@@ -83,9 +84,10 @@ gb_summ as --国标分类数据汇总
 		industryname
 	FROM gb_drill_up_4
 )
--- insert  overwrite table RMP_INDUSTRY_NEWS_INFO partition(dt=${ETL_DATE})
+insert  overwrite table pth_rmp.RMP_INDUSTRY_NEWS_INFO partition(dt=${ETL_DATE})
 ------------------------------ 以上部分为临时表 ---------------------------------------------------------
-select 
+select distinct 
+	'' as sid_kw,
 	news.crnw0001_002 as notice_dt,
 	news.newscode as news_id,   --新闻编码已经包含时间
 	news.crnw0001_003 as news_title,
@@ -95,12 +97,19 @@ select
 	gb_summ.gb_industry_tag_ii,
 	news.CRNW0001_007 as news_from,
 	news.CRNW0001_010 as news_url,
-	news_detail.CRNW0002_001 as news
+	-- news_detail.CRNW0002_001 as news
+	0 as delete_flag,
+	'' as create_by,
+	current_timestamp() as create_time,
+	'' as update_by,
+	current_timestamp() update_time,
+	0 as version
 from (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0006 where flag<>'1') hy
 join (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0001 where flag<>'1')news
 	on hy.NEWSCODE = news.NEWSCODE 
 left join gb_summ
 	on cast(hy.CRNW0006_001 as string) = gb_summ.industryid
-left join (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') news_detail
-	on news.NEWSCODE = news_detail.NEWSCODE
+-- left join (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') news_detail
+-- 	on news.NEWSCODE = news_detail.NEWSCODE
+where to_date(news.crnw0001_002)=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))  ;
 ;
