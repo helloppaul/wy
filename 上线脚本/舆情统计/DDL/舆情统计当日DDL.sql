@@ -1,4 +1,5 @@
 -- 舆情统计当日 RMP_OPINION_STATISTIC_DAY --
+drop table  if exists pth_rmp.RMP_OPINION_STATISTIC_DAY ;
 create table pth_rmp.RMP_OPINION_STATISTIC_DAY 
 (
 	batch_dt string,

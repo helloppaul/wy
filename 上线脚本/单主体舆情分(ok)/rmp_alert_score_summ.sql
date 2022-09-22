@@ -15,14 +15,14 @@ corp_chg as
 modelres_adjusted_senti_self_ as 
 (
 	select a.*,chg.corp_id,chg.corp_name as corp_nm,chg.credit_code
-	from app_ehzh.rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj a --modelres_adjusted_senti_self a
+	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj_intf a --app_ehzh.rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj a --modelres_adjusted_senti_self a
 	join corp_chg chg on chg.source_id = cast(a.corp_code as string)
 	where chg.source_code='FI' 
 ),
 featvalue_senti_self_ as 
 (
 	select a.*,chg.corp_id,chg.corp_name as corp_nm 
-	from app_ehzh.rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf a --featvalue_senti_self a
+	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf a --app_ehzh.rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf a --featvalue_senti_self a
 	join corp_chg chg on chg.source_id = cast(a.corp_code as string)
 	where chg.source_code='FI' 
 ),
@@ -64,7 +64,7 @@ label_hit_tab AS
 							0
 					END as tmp_score_hit
 				from (	select distinct 
-							cast(end_dt as string) as batch_dt,
+							to_date(end_dt) as batch_dt,
 							corp_id,corp_code,
 							end_dt,
 							feature_name,feature_value,
@@ -81,7 +81,7 @@ label_hit_tab AS
 		group by o.corp_id,o.rating_dt
 	)K
 )
--- insert into pth_rmp.rmp_alert_score_summ
+insert into pth_rmp.rmp_alert_score_summ
 select
 	E.batch_dt,     --batch_dt来自于模型 单主体舆情分-调整后的模型结果
 	E.corp_id,

@@ -1,4 +1,5 @@
 -- 舆情统计历史 RMP_OPINION_STATISTIC_HIS --
+drop table if exists pth_rmp.RMP_OPINION_STATISTIC_HIS;
 create table pth_rmp.RMP_OPINION_STATISTIC_HIS 
 (
 	score_dt timestamp,   --！！！推送oracle时，不推送该字段

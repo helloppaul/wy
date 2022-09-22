@@ -23,7 +23,7 @@ RMP_ALERT_SCORE_SUMM_ as
 	score,
 	score_hit_yq,score_hit_ci,score_hit,
 	label_hit,alert,fluctuated,model_version
-	from app_ehzh.RMP_ALERT_SCORE_SUMM a   --@RMP_ALERT_SCORE_SUMM ->pth_rmp.RMP_ALERT_SCORE_SUMM
+	from pth_rmp.RMP_ALERT_SCORE_SUMM a --app_ehzh.RMP_ALERT_SCORE_SUMM a   --@RMP_ALERT_SCORE_SUMM ->pth_rmp.RMP_ALERT_SCORE_SUMM
 	join (select * from corp_chg where source_code='FI')b on a.corp_id=b.corp_id
 	where a.delete_flag=0
 ),
@@ -83,10 +83,10 @@ deal_featvalue as(
 					0
 			END as tmp_score_hit
 		from (	select distinct 
-					cast(end_dt as string) as batch_dt,
+					to_date(end_dt) as batch_dt,
 					corp_code,end_dt,
 					feature_name,feature_value
-				from app_ehzh.rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf  --@featvalue_senti_self -> hds.
+				from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf --app_ehzh.rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf  --@featvalue_senti_self -> hds.
 				where feature_name in ('total_num','importance_-3_num')
 			 )f0
 	)f where feature_name='total_num' 
