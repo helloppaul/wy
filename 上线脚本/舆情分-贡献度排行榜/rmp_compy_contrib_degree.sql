@@ -43,6 +43,7 @@ company_core_rel_ as
 )
 insert into pth_rmp.RMP_COMPY_CONTRIB_DEGREE 
 select 
+	md5(concat(batch_dt,corp_id,relation_id)) as sid_kw,
 	batch_dt,
 	corp_id,
 	corp_nm,

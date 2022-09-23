@@ -1,6 +1,7 @@
 drop table if exists pth_rmp.RMP_COMPY_CONTRIB_DEGREE_HIS;
 create table pth_rmp.RMP_COMPY_CONTRIB_DEGREE_HIS
 (
+	sid_kw string,
 	corp_id  string,
 	corp_nm  string,
 	score_dt  timestamp,
@@ -16,5 +17,5 @@ create table pth_rmp.RMP_COMPY_CONTRIB_DEGREE_HIS
 	update_by	string,
 	update_time	TIMESTAMP,
 	version	tinyint
-)partitioned by (dt int)
- stored as Parquet;
+)partitioned by (etl_date int)
+ stored as textfile;

@@ -2,6 +2,7 @@
 drop table if exists pth_rmp.rmp_opinion_risk_info;
 create table pth_rmp.rmp_opinion_risk_info
 (
+	sid_kw string,
 	corp_id STRING,
 	corp_nm STRING,
 	notice_dt TIMESTAMP,
@@ -24,5 +25,5 @@ create table pth_rmp.rmp_opinion_risk_info
 	update_by STRING,
 	update_time TIMESTAMP,
 	version int
-)partitioned by (dt int,type_ string) 
- stored as Parquet;
+)partitioned by (etl_date int,type_ string) 
+ stored as textfile;

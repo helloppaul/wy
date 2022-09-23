@@ -1,6 +1,7 @@
 drop table if exists pth_rmp.RMP_ALERT_SCORE_SUMM;
 create table pth_rmp.RMP_ALERT_SCORE_SUMM 
 (	
+	sid_kw as string,
 	batch_dt string,
 	corp_id string,
 	corp_nm  string,
@@ -20,4 +21,4 @@ create table pth_rmp.RMP_ALERT_SCORE_SUMM
 	update_by	string,
 	update_time	TIMESTAMP,
 	version	tinyint
-)stored as Parquet;
+)stored as textfile;

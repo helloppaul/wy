@@ -1,6 +1,7 @@
 drop table if exists pth_rmp.RMP_ALERT_COMPREHS_SCORE_HIS;
 create table pth_rmp.RMP_ALERT_COMPREHS_SCORE_HIS
 (	
+	sid_kw string,
 	corp_id	string,
 	corp_nm	string,
 	credit_code	string,
@@ -18,5 +19,5 @@ create table pth_rmp.RMP_ALERT_COMPREHS_SCORE_HIS
 	update_by	string,
 	update_time	timestamp,
 	version	tinyint
-)partitioned by (dt int)
- stored as Parquet;
+)partitioned by (etl_date int)
+ stored as textfile;

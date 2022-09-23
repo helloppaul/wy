@@ -1,6 +1,7 @@
 drop table if exists pth_rmp.RMP_COMPY_CONTRIB_DEGREE;
 create table pth_rmp.RMP_COMPY_CONTRIB_DEGREE
 (
+	sid_kw string,
 	batch_dt  string,
 	corp_id  string,
 	corp_nm  string,
@@ -17,4 +18,4 @@ create table pth_rmp.RMP_COMPY_CONTRIB_DEGREE
 	update_by	string,
 	update_time	TIMESTAMP,
 	version	tinyint
-)stored as Parquet;
+)stored as textfile;

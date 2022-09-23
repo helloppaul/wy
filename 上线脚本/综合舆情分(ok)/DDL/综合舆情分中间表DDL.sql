@@ -1,6 +1,7 @@
 drop table if exists pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP;
 create table pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP
 (	
+	sid_kw string,
 	batch_dt string,
 	corp_id	string,
 	corp_nm	string,
@@ -28,4 +29,4 @@ create table pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP
 	update_by	string,
 	update_time	timestamp,
 	version	tinyint
-)stored as Parquet;
+)stored as textfile;

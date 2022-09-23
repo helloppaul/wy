@@ -84,10 +84,10 @@ gb_summ as --国标分类数据汇总
 		industryname
 	FROM gb_drill_up_4
 )
-insert  overwrite table pth_rmp.RMP_INDUSTRY_NEWS_INFO partition(dt=${ETL_DATE})
+insert  overwrite table pth_rmp.RMP_INDUSTRY_NEWS_INFO partition(etl_date=${ETL_DATE})
 ------------------------------ 以上部分为临时表 ---------------------------------------------------------
 select distinct 
-	'' as sid_kw,
+	md5(concat(cast(news.crnw0001_002 as string),news.newscode,gb_summ.gb_industry_tag_ii_cd,'0')) as sid_kw,
 	news.crnw0001_002 as notice_dt,
 	news.newscode as news_id,   --新闻编码已经包含时间
 	news.crnw0001_003 as news_title,

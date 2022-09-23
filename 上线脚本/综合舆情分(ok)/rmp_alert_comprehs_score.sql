@@ -1,6 +1,7 @@
 -- 综合舆情分 RMP_ALERT_COMPREHS_SCORE (同步方式：一天多批次插入)--
 insert into pth_rmp.RMP_ALERT_COMPREHS_SCORE
 select distinct
+	a.sid_kw,
 	a.batch_dt,
 	a.corp_id,
 	a.corp_nm,

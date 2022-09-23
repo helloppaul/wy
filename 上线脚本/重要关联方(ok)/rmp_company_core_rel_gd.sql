@@ -177,9 +177,10 @@ three_cum AS
 	) A
 	group by cm_id,cm,gd_id,gd,gd_type
 )
-insert into pth_rmp.rmp_COMPANY_CORE_REL partition(dt=${ETL_DATE},type_='gd')
+insert into pth_rmp.rmp_COMPANY_CORE_REL partition(etl_date=${ETL_DATE},type_='gd')
 ------------------------------ 以上部分为临时表 ---------------------------------------------------------
 select 
+	md5(concat(L.corp_id,L.relation_id,cast(L.relation_type_l2_code as string),L.type6)) as sid_kw,
 	to_date(CURRENT_TIMESTAMP()) relation_dt,
 	L.corp_id,
 	L.relation_id,

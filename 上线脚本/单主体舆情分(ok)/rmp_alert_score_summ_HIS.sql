@@ -1,6 +1,7 @@
 -- 单主体舆情分历史 RMP_ALERT_SCORE_SUMM_HIS (同步方式：一天多批次覆盖) --
-insert overwrite table  pth_rmp.RMP_ALERT_SCORE_SUMM_HIS partition(dt=${ETL_DATE})
+insert overwrite table  pth_rmp.RMP_ALERT_SCORE_SUMM_HIS partition(etl_date=${ETL_DATE})
 select distinct
+	a.sid_kw,
 	a.corp_id,
 	a.corp_nm,
 	a.credit_code,

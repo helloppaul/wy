@@ -447,6 +447,7 @@ Main_com_score AS
 )
 insert into pth_rmp.rmp_alert_comprehs_score_temp  --@pth_rmp.rmp_alert_comprehs_score_temp
 select distinct
+	md5(concat(to_date(G.batch_dt),G.corp_id,lb.relation_id,'0')) as sid_kw,
 	cast(G.batch_dt as string) as batch_dt,
 	G.corp_id,
 	chg.corp_name as corp_nm,

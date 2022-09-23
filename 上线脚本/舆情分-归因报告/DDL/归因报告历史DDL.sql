@@ -2,6 +2,7 @@
 drop table if exists pth_rmp.RMP_ATTRIBUTION_SUMM_HIS;
 create table pth_rmp.RMP_ATTRIBUTION_SUMM_HIS
 (
+	sid_kw string,
 	corp_id string,
 	corp_nm string,
 	credit_cd string,
@@ -15,5 +16,5 @@ create table pth_rmp.RMP_ATTRIBUTION_SUMM_HIS
 	update_by STRING,
 	update_time TIMESTAMP,
 	version int
-)partitioned by (dt string)
- stored as parquet;
+)partitioned by (etl_date int)
+ stored as textfile;

@@ -2,6 +2,7 @@
 drop table if exists pth_rmp.RMP_ATTRIBUTION_SUMM;
 create table pth_rmp.RMP_ATTRIBUTION_SUMM
 (
+	sid_kw string,
 	batch_dt string,
 	corp_id string,
 	corp_nm string,
@@ -16,4 +17,4 @@ create table pth_rmp.RMP_ATTRIBUTION_SUMM
 	update_by STRING,
 	update_time TIMESTAMP,
 	version int
-) stored as parquet;
+) stored as textfile;

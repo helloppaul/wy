@@ -103,9 +103,10 @@ t as
 	join Group_Corp o
 		on cr.corp_id=o.eid   --企业范围限制
 )
-insert into pth_rmp.rmp_COMPANY_CORE_REL partition(dt=${ETL_DATE},type_='ssfz')
+insert into pth_rmp.rmp_COMPANY_CORE_REL partition(etl_date=${ETL_DATE},type_='ssfz')
 ------------------------------ 以上部分为临时表 ---------------------------------------------------------
 select 
+	md5(concat(L.corp_id,L.relation_id,cast(L.relation_type_l2_code as string),L.type6)) as sid_kw,
 	to_date(CURRENT_TIMESTAMP()) relation_dt,
 	L.corp_id,
 	L.relation_id,

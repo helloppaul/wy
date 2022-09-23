@@ -1,6 +1,7 @@
 drop table if exists pth_rmp.rmp_COMPANY_CORE_REL_HIS;
 create table if not exists pth_rmp.rmp_COMPANY_CORE_REL_HIS
 (	
+	sid_kw string,
 	relation_month timestamp,   
 	corp_id STRING,
 	relation_id STRING,
@@ -20,5 +21,5 @@ create table if not exists pth_rmp.rmp_COMPANY_CORE_REL_HIS
 	update_by STRING,
 	update_time TIMESTAMP,
 	version int
-)partitioned by (dt int)
- stored as Parquet;
+)partitioned by (etl_date int)
+ stored as textfile;

@@ -1,4 +1,4 @@
--- ÐÐÒµÓßÇé RMP_INDUSTRY_NEWS_INFO --
+-- ???? RMP_INDUSTRY_NEWS_INFO --
 create table pth_rmp.RMP_INDUSTRY_NEWS_INFO 
 (
 	sid_kw string,
@@ -18,5 +18,5 @@ create table pth_rmp.RMP_INDUSTRY_NEWS_INFO
 	update_time	TIMESTAMP,
 	version	tinyint
 )
-partitioned by (dt int)
-stored as Parquet;
+partitioned by (etl_date int)
+stored as textfile;

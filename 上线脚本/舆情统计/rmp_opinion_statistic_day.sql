@@ -149,27 +149,33 @@ region_class_yq as
 	group by to_date(main.news_dt),main.importance,b.statistic_dim,b.level_type_list,b.level_type_ii
 )
 ------------------------------ temp_table above ---------------------------------------------------------
-insert overwrite table pth_rmp.RMP_OPINION_STATISTIC_DAY partition(dt=${ETL_DATE})
-select distinct
-	from_unixtime(unix_timestamp(cast(current_timestamp() as string),'yyyy-MM-dd HH:mm:ss')) as batch_dt,
-	score_dt,   
-	statistic_dim,  
-	industry_class,  
-	importance,
-	level_type_list,
-	level_type_ii,
-	opinion_cnt,
-	0 as delete_flag,
-	'' as create_by,
-	current_timestamp() as create_time,
-	'' as update_by,
-	current_timestamp() update_time,
-	0 as version
-from
+insert overwrite table pth_rmp.RMP_OPINION_STATISTIC_DAY partition(etl_date=${ETL_DATE})
+select 
+	concat(batch_dt,statistic_dim,cast(industry_class as string),level_type_list,level_type_ii,'0') as sid_kw,
+	*
+from 
 (
-	select * from industry_class_yq
-	union all 
-	select * from region_class_yq
-)A 
+	select distinct
+		from_unixtime(unix_timestamp(cast(current_timestamp() as string),'yyyy-MM-dd HH:mm:ss')) as batch_dt,
+		score_dt,   
+		statistic_dim,  
+		industry_class,  
+		importance,
+		level_type_list,
+		level_type_ii,
+		opinion_cnt,
+		0 as delete_flag,
+		'' as create_by,
+		current_timestamp() as create_time,
+		'' as update_by,
+		current_timestamp() update_time,
+		0 as version
+	from
+	(
+		select * from industry_class_yq
+		union all 
+		select * from region_class_yq
+	)A 
+)Fi
 where score_dt= to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
 ;
