@@ -53,9 +53,9 @@ union all select 25 as sid_kw,'6008000' as tag_cd,'监管预警' as tag,'6008009
 
 union all select 26 as sid_kw,'6009000' as tag_cd,'市场预警' as tag,'6009001' as tag_ii_cd,'暂停上市' as tag_ii,-3 as importance,0 as tag_type
 
-union all select 27 as sid_kw,'6009000' as tag_cd,'市场预警' as tag,'6009005' as tag_ii_cd,'停牌' as tag_ii,-2 as importance,2 as tag_type
+union all select 27 as sid_kw,'6009000' as tag_cd,'市场预警' as tag,'6009005' as tag_ii_cd,'停牌' as tag_ii,-2 as importance,0 as tag_type
 
-union all select 28 as sid_kw,'6009000' as tag_cd,'市场预警' as tag,'6009006' as tag_ii_cd,'终止上市' as tag_ii,-3 as importance,2 as tag_type
+union all select 28 as sid_kw,'6009000' as tag_cd,'市场预警' as tag,'6009006' as tag_ii_cd,'终止上市' as tag_ii,-3 as importance,0 as tag_type
 
 union all select 29 as sid_kw,'JU001000' as tag_cd,'被执行' as tag,'JU001001' as tag_ii_cd,'被列入被执行人' as tag_ii,-2 as importance,2 as tag_type
 

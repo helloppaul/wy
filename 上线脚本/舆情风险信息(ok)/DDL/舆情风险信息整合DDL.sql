@@ -19,6 +19,8 @@ create table pth_rmp.rmp_opinion_risk_info
 	url_kw STRING,
 	news_from STRING,
 	msg STRING,
+	notice_date timestamp,
+	notice_month timestamp,
 	delete_flag int,
 	create_by STRING,
 	create_time TIMESTAMP,

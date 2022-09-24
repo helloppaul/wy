@@ -1,6 +1,7 @@
 -- 诚信 (同步方式：一天多批次覆盖)--
 --入参：${ETL_DATE}(20220818 int)  -> to_date(notice_dt)，给NULL初始化全部日期数据
 --/* 2022-8-29 \r\n 全局替换为 \\r\\n */
+--/* 2022-9-25 新增 notice_date,notice_month 字段
 
 
 -- set hive.execution.engine=spark;  --编排很好mr
@@ -42,6 +43,8 @@ from
 		nvl(Final.url_kw,'') as url_kw,
 		nvl(Final.news_from,'') as news_from,
 		Final.msg,
+		to_date(Final.notice_dt) as notice_date, 
+		last_day(Final.notice_dt) as notice_month,
 		0 as delete_flag,
 		'' as create_by,
 		current_timestamp() as create_time,
