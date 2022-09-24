@@ -151,9 +151,9 @@ Third_two as  --风险事件的描述(仅新闻)
 			score_dt,
 			risk_cnt,
 			importance,
-			--concat_ws('、',sort_array(collect_set(concat(importance_map,cast(risk_imp_cnt as string),'条')))) as risk_imp_msg
 			concat(importance_map,cast(risk_imp_cnt as string),'条') as tmp_risk_imp_msg
-			--group_concat(concat(importance_map,cast(risk_imp_cnt as string),'条'),'、')  as risk_imp_msg
+			--废弃 concat_ws('、',sort_array(collect_set(concat(importance_map,cast(risk_imp_cnt as string),'条')))) as risk_imp_msg 废弃
+			--废弃 group_concat(concat(importance_map,cast(risk_imp_cnt as string),'条'),'、')  as risk_imp_msg 废弃
 		from 
 		(	
 			select distinct *
@@ -309,8 +309,8 @@ Third_msg as
 	)A
 )
 ---------------------- 以上部分为临时表 --------------------------------------------------------------------------
--- insert overwrite table RMP_ATTRIBUTION_SUMM_REL_TEMP
 select 
+	batch_dt,
 	corp_id,
 	corp_nm,
 	score_dt,

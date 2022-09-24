@@ -390,7 +390,6 @@ second_msg as
 	)A 
 )
 ---------------------- 以上部分为临时表 --------------------------------------------------------------------------
--- insert overwrite table RMP_ATTRIBUTION_SUMM_MAIN_TEMP
 select 
 	batch_dt,
 	corp_id,

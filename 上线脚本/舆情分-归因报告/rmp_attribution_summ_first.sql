@@ -63,7 +63,6 @@ First_msg as   --主体名称
 	from First_
 )
 ---------------------- 以上部分为临时表 --------------------------------------------------------------------------
--- insert overwrite table RMP_ATTRIBUTION_SUMM_FIRST_TEMP
 select 
 	batch_dt,
 	corp_id,

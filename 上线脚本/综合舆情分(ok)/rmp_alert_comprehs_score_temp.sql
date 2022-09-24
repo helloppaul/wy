@@ -2,6 +2,8 @@
 --入参：${ETL_DATE}(20220818 int)
 -- /* 2022-9-5 新闻重复数占比统计更新，增加近24小时新闻的统计 */
 -- /* 2022-9-17 新增 综合舆情分分值归一到 0-100 的处理*/
+--依赖 pth_rmp.rmp_calendar,pth_rmp.RMP_ALERT_SCORE_SUMM,pth_rmp.RMP_COMPANY_CORE_REL,pth_rmp.RMP_COMPY_CORE_REL_DEGREE_CFG
+	-- pth_rmp.rmp_opinion_risk_info,hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf(特征原始值) 
 with corp_chg as 
 (
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code

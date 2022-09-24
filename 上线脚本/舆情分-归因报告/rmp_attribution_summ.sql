@@ -50,13 +50,13 @@ from
 				-- concat(rel.rel_sentence,'\\r\\n',main.Main_sentence,'\\r\\n',lst.last_sentence)
 		end as report_msg2
 	from pth_rmp.RMP_ATTRIBUTION_SUMM_FIRST_TEMP one 
-	join pth_rmp.RMP_ATTRIBUTION_SUMM_MAIN_TEMP main
+	left join pth_rmp.RMP_ATTRIBUTION_SUMM_MAIN_TEMP main
 		on one.corp_id=main.corp_id and one.score_dt=main.score_dt
-	join pth_rmp.RMP_ATTRIBUTION_SUMM_REL_TEMP rel 
+	left join pth_rmp.RMP_ATTRIBUTION_SUMM_REL_TEMP rel 
 		on one.corp_id = rel.corp_id and one.score_dt = rel.score_dt
-	join pth_rmp.RMP_ATTRIBUTION_SUMM_LAST_TEMP lst 
+	left join pth_rmp.RMP_ATTRIBUTION_SUMM_LAST_TEMP lst 
 		on one.corp_id = lst.corp_id and one.score_dt = lst.score_dt 
-	join (select * from corp_chg where source_code='FI') chg
+	left join (select * from corp_chg where source_code='FI') chg
 		on one.corp_id=chg.corp_id
 )A 
 where to_date(score_dt)=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd'))) 
