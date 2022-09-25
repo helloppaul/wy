@@ -29,69 +29,69 @@ _RMP_WARNING_SCORE_MODEL_ as  --预警分-模型结果表
 _rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_ as  --特征原始值_高频 原始接口
 (
     select * 
-    from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf --@hds.rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf
 ),
 _rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf_ as  --特征原始值_低频 原始接口
 (
     select * 
-    from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf --@hds.rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
 ),
 _rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf_ as  --特征原始值_中频_城投 原始接口
 (
     select * 
-    from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf --@hds.rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf
 ),
 _rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf_ as  --特征原始值_中频_产业债 原始接口
 (
     select * 
-    from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf --@hds.rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf
 ),
 -- 特征贡献度 --
 _rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as  --特征贡献度_融合调整后综合 原始接口
 (
-    select * 
-    from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
+    select *  
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf 
 ),
 _rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf_ as --特征贡献度_高频
 (
 	select * 
-	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf  --@hds.rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf
+	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf
 ),
 _rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_ as  --特征贡献度_低频
 (
 	select * 
-	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf  --@hds.rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf
+	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf
 ),
 _rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf_ as  --特征贡献度_中频城投
 (
 	select * 
-	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf  --@hds.rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf
+	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf
 ),
 _rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf_ as  --特征贡献度_中频产业
 (
 	select *
-	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf  --@hds.rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf
+	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf
 ),
 -- 特征得分(特征打分卡) --
 _rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf_ as  --特征得分_高频 原始接口 
 (
     select * 
-    from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf --@hds.rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf
 ),
 _rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf_ as  --特征得分_低频 原始接口
 (
     select * 
-    from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf --@hds.rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf
 ),
 _rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf_ as  --特征得分_中频_城投 原始接口
 (
     select * 
-    from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf --@hds.rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf
 ),
 _rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf_ as  --特征得分_中频_产业债 原始接口
 (
     select * 
-    from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf --@hds.rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf
 ),
 _RMP_WARNING_SCORE_DETAIL_HIS_ as   --归因详情历史表(用于获取上一日指标值)
 (
@@ -442,7 +442,7 @@ warn_feature_contrib_res1 as  --带有 维度贡献度占比 的特征贡献度-合并高中低频
             a.feature_pct,  --贡献度占比 %
             a.model_freq_type,
             a.feature_risk_interval,
-            a.model_name,
+            -- a.model_name,
             a.sub_model_name
         from warn_feature_contrib a 
         left join warn_feat_CFG f_cfg 
@@ -468,13 +468,13 @@ warn_feature_contrib_res2 as  -- 带有 维度风险等级 的特征贡献度-合并高中低频
         from 
         (
             select distinct
-                batch_dt,
-                corp_id,
-                corp_nm,
-                score_dt,
-                dimension,
-                model_freq_type,
-                dim_submodel_contribution_ratio,   --各子模型对应维度贡献度占比，used by 归因报告第二段
+                main.batch_dt,
+                main.corp_id,
+                main.corp_nm,
+                main.score_dt,
+                main.dimension,
+                main.model_freq_type,
+                main.dim_submodel_contribution_ratio,   --各子模型对应维度贡献度占比，used by 归因报告第二段
                 b.risk_lv,
                 b.risk_lv_desc   -- 原始风险等级描述
             from warn_feature_contrib_res1 main 
