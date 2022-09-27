@@ -19,7 +19,7 @@ corp_chg as --带有 城投/产业判断和国标一级行业 的特殊corp_chg
 _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接口
 (
     select * 
-    from app_ehzh.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 warn_union_adj_sync_score as --取最新批次的融合调整后综合预警分
