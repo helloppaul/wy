@@ -8,8 +8,11 @@ corp_chg as
 		  join (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance) cid2
 			on cid1.etl_date=cid2.etl_date
 		 )	a 
-	join pth_rmp.rmp_company_info_main B 
-		on a.corp_id=b.corp_id and a.etl_date = b.etl_date
+	join (select b1.* from pth_rmp.rmp_company_info_main b1 
+		  join (select max(etl_date) etl_date from pth_rmp.rmp_company_info_main ) b2
+		  	on b1.etl_date=b2.etl_date
+		) b 
+		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
 )
 ---------------------- 以上部分为临时表 --------------------------------------------------------------------------
