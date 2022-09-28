@@ -225,6 +225,7 @@ com_score_temp as  --计算得到综合舆情分
 		second_score,
 		third_score,
 		model_version,
+		origin_comprehensive_score,
 		case 
 			when comprehensive_score > 200  then 
 				200 / 2
@@ -235,6 +236,7 @@ com_score_temp as  --计算得到综合舆情分
 	(
 		select 
 			*,
+			second_score+third_score+score as origin_comprehensive_score,
 			second_score+third_score+score as comprehensive_score  --计算得到综合舆情分
 			-- batch_dt,corp_id,corp_nm,
 			-- score_dt,score,
@@ -445,6 +447,7 @@ Main_com_score AS
 			second_score,
 			third_score,
 			model_version,
+			origin_comprehensive_score,
 			comprehensive_score
 		from com_score_temp
 	)A left join deal_featvalue Df 
@@ -467,6 +470,7 @@ select distinct
 	lb.news_duplicates_ratio,
 	round(G.second_score,4) as second_score,
 	round(G.third_score) as third_score,
+	origin_comprehensive_score,
 	round(G.comprehensive_score,4) as comprehensive_score,
 	G.score_hit,
 	lb.label_hit,
@@ -489,6 +493,7 @@ from
 		--Main_score_hit_yq,
 		second_score,
 		third_score,
+		origin_comprehensive_score,
 		comprehensive_score,
 		model_version,
 		mu,
@@ -505,6 +510,7 @@ from
 			Main_score_hit_yq,
 			second_score,
 			third_score,
+			origin_comprehensive_score,
 			comprehensive_score,
 			model_version,
 			mu,
@@ -522,6 +528,7 @@ from
 				E.main_score_hit,
 				E.second_score,
 				E.third_score,
+				E.origin_comprehensive_score,
 				E.comprehensive_score,
 				E.model_version,
 				E.mu,
@@ -543,13 +550,14 @@ from
 					model_version,
 					yq_num,
 					cal_score_dt,
+					origin_comprehensive_score,
 					count(*) over(partition by corp_id,score_dt) as cal_score_dt_cnt,  --查看近12天统计日期实际数量
 					avg(cal_comprehensive_score) over(partition by corp_id,score_dt order by yq_num desc) as mu
 				from 
 				( 	select a.batch_dt,a.corp_id,a.score_dt,
 						   a.Main_score_hit_yq,a.main_score_hit_ci,a.main_score_hit,
 						   a.second_score,a.third_score,
-						   a.comprehensive_score,a.model_version,
+						   a.comprehensive_score,a.model_version,a.origin_comprehensive_score,
 						   b.score_dt as cal_score_dt,b.yq_num,b.comprehensive_score as cal_comprehensive_score,b.RM
 					from Main_com_score a 
 					join (select *,row_number() over(partition by corp_id order by yq_num desc) as RM from Main_com_score) b 
