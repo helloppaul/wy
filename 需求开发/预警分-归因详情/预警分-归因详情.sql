@@ -47,7 +47,7 @@ _rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf_ as  --ÌØÕ÷Ô­Ê¼Öµ_ÖĞÆµ_²úÒµÕ® Ô­
     from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf
 ),
 -- ÌØÕ÷¹±Ï×¶È --
-_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as  --ÌØÕ÷¹±Ï×¶È_ÈÚºÏµ÷Õûºó×ÛºÏ Ô­Ê¼½Ó¿Ú
+_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as  --ÌØÕ÷¹±Ï×¶È_ÈÚºÏµ÷Õûºó×ÛºÏ Ô­Ê¼½Ó¿Ú£¨Ôö¼ÓÁËÎŞ¼à¶½ÌØÕ÷£ºcreditrisk_highfreq_unsupervised  £©
 (
     select *  
     from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf 
@@ -94,7 +94,8 @@ _rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf_ as  --ÌØÕ÷µÃ·Ö_ÖĞÆµ_²úÒµÕ® Ô­Ê¼
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf
 ),
-_RMP_WARNING_SCORE_DETAIL_HIS_ as   --¹éÒòÏêÇéÀúÊ·±í(ÓÃÓÚ»ñÈ¡ÉÏÒ»ÈÕÖ¸±êÖµ)
+--¹éÒòÏêÇéÀúÊ·±í(ÓÃÓÚ»ñÈ¡ÉÏÒ»ÈÕÖ¸±êÖµ)
+_RMP_WARNING_SCORE_DETAIL_HIS_ as   
 (
     select  distinct
         corp_id,
@@ -529,7 +530,7 @@ warn_feature_contrib_res3 as  -- ¸ù¾İ×ÛºÏÔ¤¾¯µÈ¼¶µ÷ÕûºóµÄÎ¬¶È·çÏÕË®Æ½ µÄÌØÕ÷¹±Ï×
         where a.dim_risk_lv <> b.max_dim_risk_lv
     )C
 ),
-warn_contribution_ratio_with_factor_evl as  --´øÒò×ÓÆÀ¼ÛµÄÌØÕ÷¹±Ï×¶ÈÓ¦ÓÃ²ãÊı¾İ
+warn_contribution_ratio_with_factor_evl as  --´øÒò×ÓÆÀ¼ÛµÄÌØÕ÷¹±Ï×¶ÈÓ¦ÓÃ²ãÊı¾İ(²»°üº¬ÎŞ¼à¶½)
 (
     SELECT distinct
         a.batch_dt,
@@ -544,7 +545,7 @@ warn_contribution_ratio_with_factor_evl as  --´øÒò×ÓÆÀ¼ÛµÄÌØÕ÷¹±Ï×¶ÈÓ¦ÓÃ²ãÊı¾İ
             else 1 --Õı³£ 
         end as factor_evaluate,
         a.sub_model_name
-    from warn_contribution_ratio a 
+    from (select * from warn_contribution_ratio where feature_name <> 'creditrisk_highfreq_unsupervised') a 
     left join warn_feature_value b 
         on a.corp_id=b.corp_id and a.batch_dt=b.batch_dt and a.sub_model_name=b.sub_model_name
 ),
@@ -647,6 +648,27 @@ res1 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È
     from res0 main
     left join warn_contribution_ratio_with_factor_evl b  
         on main.corp_id=b.corp_id and main.batch_dt=b.batch_dt and main.sub_model_name=b.sub_model_name
+    union all 
+    --ÌØÕ÷¹±Ï×¶ÈµÄÎŞ¼à¶½×ÓÄ£ĞÍ ÌØÊâ´¦Àí  £¨Ö»ÓĞ¹±Ï×¶ÈÕ¼±ÈÊı¾İ£¬ÆäÓà¾ùÎª¿Õ£¬²»ÏÂ×êÖÁÒò×Ó²ãÃæ£©
+    select
+        batch_dt,
+        corp_id,
+        corp_nm,
+        score_dt,
+        feature_name as idx_name,
+        -1 as idx_value,
+        '' as idx_unit,
+        'ÎŞ¼à¶½' model_freq_type,
+        sub_model_name,
+        -1 as median,
+        contribution_ratio,
+        -1 as factor_evaluate, 
+        '' as sub_model_name_zhgxd 
+    from ( select distinct a1.* FROM warn_contribution_ratio a1
+           join warn_contribution_ratio_with_factor_evl a2
+                on a1.batch_dt=a2.batch_dt   --a1±íµÄbatch_dtºÍa2±íĞè±£³ÖÒ»ÖÂ
+            where a1.feature_name = 'creditrisk_highfreq_unsupervised'
+        ) A 
 ),
 res2 as --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨
 (
@@ -739,7 +761,7 @@ res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í+¸÷Î¬¶È·çÏÕË®Æ½(¸
     from res3 main
     left join warn_feature_contrib_res3 b
         on main.batch_dt=b.batch_dt and main.corp_id=b.corp_id and main.dimension=b.dimension
-    )
+)
 ------------------------------------ÒÔÉÏ²¿·ÖÎªÁÙÊ±±í-------------------------------------------------------------------
 -- insert into pth_rmp.RMP_WARNING_SCORE_DETAIL 
 select distinct
@@ -772,5 +794,6 @@ select distinct
 	current_timestamp() as update_time,
 	0 as version
 from res4
-;
+-- where score_dt = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+; 
 
