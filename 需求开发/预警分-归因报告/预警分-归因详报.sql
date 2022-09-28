@@ -75,7 +75,7 @@ feat_CFG as --特征手工配置表
         feature_cd,
         feature_name,
         sub_model_type,
-        feature_name_target,
+        feature_name_target,  --used
         dimension,
         type,
         cal_explain,
@@ -122,75 +122,6 @@ First_Part_Data as  --适用 预警分-归因简报的数据
 	join _warn_level_ratio_cfg_ cfg
 		on main.synth_warnlevel=cfg.warn_lv
 ),
--- warn_feature_contrib as --特征贡献度-合并高中低频
--- (
--- 	select 
--- 		cast(max(a.batch_dt) over() as string) as batch_dt,  --以高频更新的数据为批次时间
--- 		chg.corp_id,
--- 		chg.corp_name as corp_nm,
--- 		to_date(end_dt) as score_dt,
--- 		feature_name,
--- 		feature_pct,
---         model_freq_type,  --特征所属子模型分类/模型频率分类
--- 		feature_risk_interval,
--- 		model_name,
--- 		model_version as sub_model_name
--- 	from 
--- 	(
--- 		--高频
--- 		select distinct
--- 			end_dt as batch_dt,
--- 			corp_code,
--- 			end_dt,
--- 			feature_name,
--- 			cast(feature_pct as float) as feature_pct,  --特征贡献度
--- 			'高频' as model_freq_type,
--- 			feature_risk_interval,  --特征异常标识（0/1,1代表异常）
--- 			model_name,
--- 			model_version
--- 		from _rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf_
--- 		union all 
--- 		--低频
--- 		select distinct
--- 			end_dt as batch_dt,
--- 			corp_code,
--- 			end_dt,
--- 			feature_name,
--- 			cast(feature_pct as float) as feature_pct,  --特征贡献度
--- 			'低频' as model_freq_type,
--- 			feature_risk_interval,  --特征异常标识（0/1,1代表异常）
--- 			model_name,
--- 			model_version
--- 		from _rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_
--- 		union all 
--- 		--中频-城投
--- 		select distinct
--- 			end_dt as batch_dt,
--- 			corp_code,
--- 			end_dt,
--- 			feature_name,
--- 			cast(feature_pct as float) as feature_pct,  --特征贡献度
--- 			'中频-城投' as model_freq_type,
--- 			feature_risk_interval,  --特征异常标识（0/1,1代表异常）
--- 			model_name,
--- 			model_version
--- 		from _rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf_ 
--- 		union all 
--- 		--中频-产业
--- 		select distinct
--- 			end_dt as batch_dt,
--- 			corp_code,
--- 			end_dt,
--- 			feature_name,
--- 			cast(feature_pct as float) as feature_pct,  --特征贡献度
--- 			'中频-产业' as model_freq_type,
--- 			feature_risk_interval,  --特征异常标识（0/1,1代表异常）
--- 			model_name,
--- 			model_version
--- 		from _rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf_
--- 	)A join corp_chg chg 
---         on cast(a.corp_code as string)=chg.source_id and chg.source_code='FI'
--- ),
 Second_Part_Data_Prepare as 
 (
 	select 
@@ -199,18 +130,19 @@ Second_Part_Data_Prepare as
 		main.score_dt,
 		nvl(a.synth_warnlevel,'0') as synth_warnlevel, --综合预警等级
 		main.dimension,
-		main.type,
-		main.idx_name,
-		main.feature_name_target,
+		main.type,  	-- used
+		main.idx_name,  -- used 
+		main.idx_value,  -- used
+		main.idx_unit,  -- used
+		f_cfg.feature_name_target,  --特征名称-目标(系统)  used
 		main.contribution_ratio,
 		main.factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
-		c.risk_lv_desc as dim_risk_lv  --维度风险等级(难点)
+		main.dim_warn_level  --维度风险等级(难点)
 	from _RMP_WARNING_SCORE_DETAIL_ main
+	left join feat_CFG f_cfg 	
+		on main.idx_name=f_cfg.feature_cd
 	left join _RMP_WARNING_SCORE_MODEL_ a
 		on main.corp_id=a.corp_id and main.batch_dt=a.batch_dt
-	-- left join warn_feature_contrib b
-	left join _warn_dim_risk_level_cfg_ c
-	
 ),
 Second_Part_Data as 
 (

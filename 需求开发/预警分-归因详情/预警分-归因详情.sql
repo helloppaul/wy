@@ -1,4 +1,5 @@
 -- RMP_WARNING_SCORE_DETAIL (同步方式：一天对批次插入) --
+-- 依赖 模型 综合预警分，特征原始值高中低，特征贡献度高中低无监督以及综合，评分卡高中低，归因详情及其历史 PS:不依赖pth_rmp.模型结果表
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg
@@ -18,15 +19,45 @@ corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg
 ),
 --—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 -- 预警分 --
--- _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接口
--- (
---     select * 
---     from app_ehzh.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
--- ),
+_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接口
+(
+    select * 
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+),
 _RMP_WARNING_SCORE_MODEL_ as  --预警分-模型结果表
 (
-    select *
-    from app_ehzh.RMP_WARNING_SCORE_MODEL  --@pth_rmp.RMP_WARNING_SCORE_MODEL
+    select distinct
+        cast(a.rating_dt as string) as batch_dt,
+        chg.corp_id,
+        chg.corp_name as corp_nm,
+		chg.credit_code as credit_cd,
+        to_date(a.rating_dt) as score_date,
+        a.total_score_adjusted as synth_score,  -- 预警分
+		case a.interval_text_adjusted
+			when '绿色预警' then '-1' 
+			when '黄色预警' then '-2'
+			when '橙色预警' then '-3'
+			when '红色预警' then '-4'
+			when '风险已暴露' then '-5'
+		end as synth_warnlevel,  -- 综合预警等级,
+		case
+			when a.interval_text_adjusted in ('绿色预警','黄色预警') then 
+				'-1'   --低风险
+			when a.interval_text_adjusted  = '橙色预警' then 
+				'-2'  --中风险
+			when a.interval_text_adjusted  ='红色预警' then 
+				'-3'  --高风险
+			when a.interval_text_adjusted  ='风险已暴露' then 
+				'-4'   --风险已暴露
+		end as adjust_warnlevel,
+		a.model_name,
+		a.model_version
+    from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a   
+    join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
+        on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
+    join corp_chg chg
+        on chg.source_code='FI' and chg.source_id=cast(a.corp_code as string)
+    -- from app_ehzh.RMP_WARNING_SCORE_MODEL  --@pth_rmp.RMP_WARNING_SCORE_MODEL
 ),
 -- 特征原始值 --
 _rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_ as  --特征原始值_高频 原始接口
@@ -165,6 +196,7 @@ warn_feat_CFG as
             when '经营' then 2
             when '市场' then 3
             when '舆情' then 4
+            when '异常风险检测' then 5
         end as dimension,
         type,
         cal_explain,
@@ -178,17 +210,17 @@ warn_feat_CFG as
 warn_union_adj_sync_score as --取最新批次的预警分-模型结果表
 (
     select distinct
-        batch_dt,
-        corp_id,
-        corp_nm,
-        score_date as score_dt,
-        synth_score as adj_score,
-        synth_warnlevel as adj_synth_level,
-        adjust_warnlevel,
-        model_version
+        a.batch_dt,
+        a.corp_id,
+        a.corp_nm,
+        a.score_date as score_dt,
+        a.synth_score as adj_score,
+        a.synth_warnlevel as adj_synth_level,
+        a.adjust_warnlevel,
+        a.model_version
     from _RMP_WARNING_SCORE_MODEL_ a
-    join (select max(batch_dt) as max_batch_dt from _RMP_WARNING_SCORE_MODEL_ ) b
-        on a.batch_dt=b.max_batch_dt
+    join (select max(batch_dt) as max_batch_dt,score_date from _RMP_WARNING_SCORE_MODEL_ group by score_date) b
+        on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
 ),
 -- warn_union_adj_sync_score as --取最新批次的融合调整后综合预警分
 -- (
@@ -659,13 +691,13 @@ res1 as   --预警分+特征原始值+综合贡献度
         corp_nm,
         score_dt,
         feature_name as idx_name,
-        -1 as idx_value,
+        NULL as idx_value,
         '' as idx_unit,
         '无监督' model_freq_type,
         sub_model_name,
-        -1 as median,
+        NULL as median,
         contribution_ratio,
-        -1 as factor_evaluate, 
+        NULL as factor_evaluate, 
         '' as sub_model_name_zhgxd 
     from ( select distinct a1.* FROM warn_contribution_ratio a1
            join warn_contribution_ratio_with_factor_evl a2
