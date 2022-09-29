@@ -36,6 +36,7 @@ com_score_with_contrib_degree as
 		com.r_score_cal, --计算后的每个关联方舆情分 
 		com.second_score,
 		com.third_score,
+		com.origin_comprehensive_score,
 		com.comprehensive_score	,
 		com.score_hit,
 		com.label_hit
@@ -50,7 +51,7 @@ Third_one as  --放关联方归因
 		second_score,
 		third_score,
 		score,
-		(second_score+third_score)/comprehensive_score as rel_contrib_degree,  --关联方贡献度
+		(second_score+third_score)/origin_comprehensive_score as rel_contrib_degree,  --关联方贡献度
 		corp_id,
 		corp_nm,
 		score_dt,
@@ -69,6 +70,7 @@ Third_one as  --放关联方归因
 				score,
 				second_score,
 				third_score,
+				origin_comprehensive_score,
 				comprehensive_score,
 				corp_id,
 				corp_nm,

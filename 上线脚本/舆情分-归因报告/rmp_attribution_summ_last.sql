@@ -10,7 +10,7 @@ RMP_ALERT_COMPREHS_SCORE_TEMP_Batch_Main as  --最新批次的综合舆情分数
 (
 	select distinct 
 		batch_dt,corp_id,corp_nm,score_dt,cast(score as float) as score,
-		second_score,third_score,comprehensive_score 
+		second_score,third_score,origin_comprehensive_score,comprehensive_score 
 	from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
 	join (select max(batch_dt) as new_batch_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP )b  
 		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'')
@@ -22,7 +22,7 @@ RMP_ALERT_COMPREHS_SCORE_TEMP_Batch_Rel as  --最新批次的综合舆情分数�
 	select 
 		batch_dt,corp_id,corp_nm,score_dt,cast(score as float) as score,
 		relation_id,relation_nm,
-		second_score,third_score,comprehensive_score,
+		second_score,third_score,origin_comprehensive_score,comprehensive_score,
 		score_hit,label_hit,alert
 	from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
 	join (select max(batch_dt) as new_batch_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP )b  

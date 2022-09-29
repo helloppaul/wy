@@ -12,7 +12,7 @@ RMP_ALERT_COMPREHS_SCORE_TEMP_Batch as  --最新批次的综合舆情分数据,�
 (
 	select distinct 
 		batch_dt,corp_id,corp_nm,score_dt,
-		score,second_score,third_score,comprehensive_score,score_hit,label_hit
+		score,second_score,third_score,origin_comprehensive_score,comprehensive_score,score_hit,label_hit
 	from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
 	join (select max(batch_dt) as new_batch_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP )b  
 		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'')
@@ -42,7 +42,7 @@ Second_one as  --放主体归因
 		label_hit,
 		second_score,
 		third_score,
-		(score/comprehensive_score) as main_contrib_degree
+		(score/origin_comprehensive_score) as main_contrib_degree
 	from RMP_ALERT_COMPREHS_SCORE_TEMP_Batch a 
 ),
 Second_one_msg as  --放主体归因信息
