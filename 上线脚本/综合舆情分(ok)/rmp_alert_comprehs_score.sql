@@ -1,4 +1,8 @@
 -- 综合舆情分 RMP_ALERT_COMPREHS_SCORE (同步方式：一天多批次插入)--
+-- with RMP_ALERT_COMPREHS_SCORE_TEMP_ as 
+-- (
+-- 	select * from 
+-- )
 insert into pth_rmp.RMP_ALERT_COMPREHS_SCORE
 select distinct
 	a.sid_kw,

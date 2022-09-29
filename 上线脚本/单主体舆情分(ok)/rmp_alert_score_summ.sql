@@ -1,5 +1,6 @@
 -- 单主体舆情分 rmp_alert_score_summ (同步方式：一天多批次插入)--
---入参：${ETL_DATE}(20220818 int)
+--入参：${ETL_DATE}(20220818 int) 
+--—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with 
 corp_chg as 
 (
@@ -15,20 +16,57 @@ corp_chg as
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
 ),
-modelres_adjusted_senti_self_ as 
+--—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
+rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj_intf_  as   -- 模型_舆情分  原始接口
+(
+	select * 
+	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj_intf
+),
+rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf_ as  -- 模型_特征原始值  原始接口
+(
+	select *
+	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf
+),
+
+--—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
+mid_opinion_alert_score as   --单主体舆情分  取每天最新批次数据 (如果只有一天的数据，相当于取当天最大批次数据)
 (
 	select a.*,chg.corp_id,chg.corp_name as corp_nm,chg.credit_code
-	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj_intf a --app_ehzh.rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj a --modelres_adjusted_senti_self a
-	join corp_chg chg on chg.source_id = cast(a.corp_code as string)
+	from rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj_intf_ a 
+	join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj_intf_ group by to_date(rating_dt)) b  
+		on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt) = b.score_dt
+	join corp_chg chg 
+		on chg.source_id = cast(a.corp_code as string)
 	where chg.source_code='FI' 
 ),
-featvalue_senti_self_ as 
+mid_opinion_feat as   --特征原始值  取每天最新批次数据 (如果只有一天的数据，相当于取当天最大批次数据)
 (
 	select a.*,chg.corp_id,chg.corp_name as corp_nm 
-	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf a --app_ehzh.rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf a --featvalue_senti_self a
-	join corp_chg chg on chg.source_id = cast(a.corp_code as string)
-	where chg.source_code='FI' 
+	from rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf_ group by to_date(end_dt)) b  
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt) = b.score_dt
+	join corp_chg chg 
+		on chg.source_id = cast(a.corp_code as string)
+	where chg.source_code='FI'  
 ),
+
+
+-- modelres_adjusted_senti_self_ as 
+-- (
+-- 	select a.*,chg.corp_id,chg.corp_name as corp_nm,chg.credit_code
+-- 	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj_intf a --app_ehzh.rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj a --modelres_adjusted_senti_self a
+-- 	join corp_chg chg on chg.source_id = cast(a.corp_code as string)
+-- 	where chg.source_code='FI' 
+-- ),
+-- featvalue_senti_self_ as 
+-- (
+-- 	select a.*,chg.corp_id,chg.corp_name as corp_nm 
+-- 	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf a --app_ehzh.rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf a --featvalue_senti_self a
+-- 	join corp_chg chg on chg.source_id = cast(a.corp_code as string)
+-- 	where chg.source_code='FI' 
+-- ),
+--—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
+
 label_hit_tab AS
 (
 	select 
@@ -47,7 +85,7 @@ label_hit_tab AS
 			max(o1.tmp_score_hit) as tmp_score_hit,
 			max(o1.model_version)as model_version,
 			min(nvl(tag.importance,0)) as tag_importance
-		from modelres_adjusted_senti_self_ o --单主体舆情分
+		from mid_opinion_alert_score o --单主体舆情分
 		join
 		(
 			select distinct batch_dt,corp_id,corp_code,end_dt,nvl(feature_value,0) as yq_num,tmp_score_hit,model_version from
@@ -72,7 +110,7 @@ label_hit_tab AS
 							end_dt,
 							feature_name,feature_value,
 							model_version
-						from featvalue_senti_self_
+						from mid_opinion_feat
 						where feature_name in ('total_num','importance_-3_num')
 					 )f0
 			)f where feature_name='total_num' 
@@ -178,5 +216,6 @@ from
 			)C1
 		)C
 	)D	
-)E where E.score_dt = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+)E 
+where E.score_dt = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
 ; 
