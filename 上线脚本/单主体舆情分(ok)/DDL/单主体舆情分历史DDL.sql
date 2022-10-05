@@ -7,6 +7,7 @@ create table pth_rmp.RMP_ALERT_SCORE_SUMM_HIS
 	credit_code  string,
 	score_dt  TIMESTAMP,
 	score  double,
+	yq_num int,
 	score_hit_ci tinyint,
 	score_hit_yq tinyint,
 	score_hit tinyint,

@@ -16,6 +16,7 @@ create table pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP
 	news_duplicates_ratio	double,
 	second_score	double,
 	third_score	double,
+	origin_comprehensive_score double,
 	comprehensive_score	double,
 	score_hit	tinyint,
 	label_hit	tinyint,

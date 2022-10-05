@@ -27,7 +27,6 @@ rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf_ as  -- 模型_特征原始值  
 	select *
 	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf
 ),
-
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
 mid_opinion_alert_score as   --单主体舆情分  取每天最新批次数据 (如果只有一天的数据，相当于取当天最大批次数据)
 (
@@ -66,7 +65,6 @@ mid_opinion_feat as   --特征原始值  取每天最新批次数据 (如果只�
 -- 	where chg.source_code='FI' 
 -- ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
-
 label_hit_tab AS
 (
 	select 
@@ -131,8 +129,9 @@ select
 	E.credit_code,
 	E.score_dt,   --原始模型组提供的值
 	E.score,
-	E.score_hit_ci,
-	E.score_hit_yq,
+	E.yq_num,  --不需要刷到oracle
+	E.score_hit_ci,   --不需要刷到oracle
+	E.score_hit_yq,  --不需要刷到oracle
 	E.score_hit,
 	E.label_hit,
 	if(E.score_hit_ci=1 or E.label_hit=1,1,0) as alert,  --！！！2022-8-25 上线临时调整，得分预警不考虑舆情数量的限制条件
@@ -154,6 +153,7 @@ from
 		credit_code,
 		to_date(score_dt) as score_dt,
 		score,
+		yq_num,
 		if(score>ci,1,0) as score_hit_ci,   --分值预警中间值1
 		tmp_score_hit as score_hit_yq,  --分值预警中间值2，用于辅助综合舆情分计算
 		CASE 
@@ -172,6 +172,7 @@ from
 			credit_code,
 			score_dt,
 			score,
+			yq_num,
 			mu + sqrt(sigma_tmp/12-1) as ci,  --置信区间下限
 			--importance,
 			tmp_score_hit,
@@ -187,9 +188,10 @@ from
 					B.batch_dt,
 					B.corp_id,
 					B.corp_nm,
-					credit_code,
+					B.credit_code,
 					B.score_dt,
 					B.score,
+					B.yq_num,
 					B.tmp_score_hit,  
 					B.label_hit,
 					B.mu,
@@ -206,9 +208,9 @@ from
 						score_dt,
 						--rating_dt,
 						score, 
+						yq_num,
 						tmp_score_hit,
 						label_hit,
-						yq_num,
 						model_version,
 						avg(score) over(partition by corp_id order by yq_num rows between 12 preceding and current row) as mu   --14天舆情分里面剔除舆情数量倒数少的两天,计算12天的舆情分均值
 					from  label_hit_tab A 

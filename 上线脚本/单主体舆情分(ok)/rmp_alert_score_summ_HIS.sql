@@ -7,6 +7,7 @@ select distinct
 	a.credit_code,
 	a.score_dt,
 	a.score,
+	a.yq_num,
 	a.score_hit_ci,
 	a.score_hit_yq,
 	a.score_hit,
