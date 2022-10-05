@@ -13,38 +13,15 @@ corp_chg as
 (
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
 	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
-		  join (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance) cid2
-			on cid1.etl_date=cid2.etl_date
+		  where cid1.etl_date = (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
+			-- on cid1.etl_date=cid2.etl_date
 		 )	a 
 	join (select b1.* from pth_rmp.rmp_company_info_main b1 
-		  join (select max(etl_date) etl_date from pth_rmp.rmp_company_info_main ) b2
-		  	on b1.etl_date=b2.etl_date
+		  where b1.etl_date = (select max(etl_date) etl_date from pth_rmp.rmp_company_info_main )
+		  	-- on b1.etl_date=b2.etl_date
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
-),
-A as 
-(
-	SELECT 
-		ITCODE2 as COMPANY_ID, -- 公司代码(企业库)/当事人 as 公司代码
-		max(ITCODE) as COMPANY_ID2, -- 公司代码(金融库) AS 公司代码2
-		max(ITNAME) as COMPANY_NM,
-		to_date(cast(CR0164_009 as TIMESTAMP)) as NOTICE_DT,  -- 限令发布日期 as 发生时间
-		to_date(cast(max(CR0164_003) as TIMESTAMP)) as register_dt,-- 立案时间 as 立案时间
-		
-		max(CR0164_004) as execed_man, -- 被执行人 as 被执行人
-		max(CR0164_002) as case_title,  -- 案件标题
-		CR0164_006 as case_no,  -- 案号 as 案号
-		max(CR0164_008) as apply_exec, --  as  申请执行人
-		max(CR0164_007) as exec_court , -- 执行法院
-		--count(*) as case_no_cnt,  --当天某公司的案号数量
-		max(ID)as SRC_SID, -- 流水号 as 源头SID数据
-		upper('tr_ods_rmp_fi_TCR0164') as SRC_TABLE, -- 源头表名
-		current_timestamp() as UPDT_DT   -- 更新时间,
-	FROM  hds.tr_ods_rmp_fi_TCR0164  --开庭庭审当事人表
-	where IsCD = '0'  --是否撤销，考虑未撤销 限制高消费的
-	  and ITCODE2 <> ''  -- 当事人非空/企业非空
-	group by ITCODE2,CR0164_009,CR0164_006   --根据 公司,时间,案号 分组	
 )
 insert overwrite table pth_rmp.rmp_opinion_risk_info partition(etl_date=${ETL_DATE},type_='sf_dwcgdj')
 select msg_id as sid_kw,*

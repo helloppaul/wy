@@ -19,15 +19,18 @@ RMP_ALERT_COMPREHS_SCORE_TEMP_Batch as  --最新批次的综合舆情分数据,�
 	where a.alert=1 --and to_date(a.score_dt)='2022-08-03' 
 	  --and a.corp_id='pz00e1c32133191ee1a9cc3556af92f8ea' and to_date(a.score_dt)='2022-08-02'  --and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
 ),
-corp_chg as 
+with corp_chg as 
 (
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
 	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
-		  join (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance) cid2
-			on cid1.etl_date=cid2.etl_date
+		  where cid1.etl_date = (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
+			-- on cid1.etl_date=cid2.etl_date
 		 )	a 
-	join pth_rmp.rmp_company_info_main B 
-		on a.corp_id=b.corp_id and a.etl_date = b.etl_date
+	join (select b1.* from pth_rmp.rmp_company_info_main b1 
+		  where b1.etl_date = (select max(etl_date) etl_date from pth_rmp.rmp_company_info_main )
+		  	-- on b1.etl_date=b2.etl_date
+		) b 
+		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
 ),
 Second_one as  --放主体归因
