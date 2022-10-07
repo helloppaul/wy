@@ -100,6 +100,7 @@ feat_CFG as --特征手工配置表
     where sub_model_type='中频城投'
 ),
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
+-- 第一段数据 --
 First_Part_Data as  --适用 预警分-归因简报的数据
 (
 	select distinct
@@ -122,14 +123,16 @@ First_Part_Data as  --适用 预警分-归因简报的数据
 	join _warn_level_ratio_cfg_ cfg
 		on main.synth_warnlevel=cfg.warn_lv
 ),
+-- 第二段数据 --
 Second_Part_Data_Prepare as 
 (
-	select 
+	select distinct
 		main.corp_id,
 		main.corp_nm,
 		main.score_dt,
 		nvl(a.synth_warnlevel,'0') as synth_warnlevel, --综合预警等级
-		main.dimension,
+		main.dimension,    --维度编码
+		f_cfg.dimension as dimension_ch,  --维度名称
 		main.type,  	-- used
 		main.idx_name,  -- used 
 		main.idx_value,  -- used
@@ -137,7 +140,7 @@ Second_Part_Data_Prepare as
 		f_cfg.feature_name_target,  --特征名称-目标(系统)  used
 		main.contribution_ratio,
 		main.factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
-		main.dim_warn_level  --维度风险等级(难点)
+		main.dim_warn_level  --维度风险等级(难点)  used
 	from _RMP_WARNING_SCORE_DETAIL_ main
 	left join feat_CFG f_cfg 	
 		on main.idx_name=f_cfg.feature_cd
@@ -150,18 +153,54 @@ Second_Part_Data as
 		corp_id,
 		corp_nm,
 		score_dt,
+		synth_warnlevel,
 		dimension,
-		dim_contrib_ratio,
-		dim_risk_lv,  --维度风险等级(难点)
+		dimension_ch,
+		-- sum(contribution_ratio) as dim_contrib_ratio,
+		sum(contribution_ratio) over(partition by corp_id,score_dt,dimension) as dim_contrib_ratio,
+		sum(contribution_ratio) over(partition by corp_id,score_dt,dimension,factor_evaluate) as dim_factorEvalu_contrib_ratio,
+		dim_warn_level,  --维度风险等级(难点)
 		type,
 		factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
-		dim_evalu_contribution_ratio,  --个维度且因子评价下的 因子贡献度占比汇总
 		idx_name,  -- 异常因子/异常指标
-		factor_evaluate		
-	from
+		idx_value,
+		idx_unit,
+		count(idx_name) over(partition by corp_id,score_dt,dimension)  as dim_factor_cnt,
+		count(idx_name) over(partition by corp_id,score_dt,dimension,factor_evaluate)  as dim_factorEvalu_factor_cnt
+	from Second_Part_Data_Prepare 
+	order by corp_id,score_dt desc,dim_contrib_ratio desc
+),
+Second_Part_Data_Dimension as -- 按维度层汇总描述用数据
+(
+	select distinct
+		corp_id,
+		corp_nm,
+		score_dt,
+		dimension,
+		dimension_ch,
+		dim_contrib_ratio,
+		dim_factorEvalu_contrib_ratio,
+		dim_warn_level,
+		dim_factor_cnt,
+		dim_factorEvalu_factor_cnt
+	from Second_Part_Data
+	where factor_evaluate = 0
+),
+Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
+(
+	select distinct
+		corp_id,
+		corp_nm,
+		score_dt,
+		dimension,
+		dimension_ch,
+		type
+	from Second_Part_Data
+	where factor_evaluate = 0
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
-First_Msg as --第一段信息
+-- 第一段信息 --
+First_Msg as --
 (
 	select 
 		corp_id,
@@ -172,5 +211,22 @@ First_Msg as --第一段信息
 			'属',warn_lv_desc
 		) as sentence_1  --第一句话
 	from First_Part_Data
+),
+-- 第二段信息 --
+Second_Msg_dimension as  -- 维度层的信息描述
+(
+	select 
+		corp_id,
+		corp_nm,
+		dimension,
+		concat(
+			dimension_ch,'维度','（','贡献度占比',cast(round(dim_contrib_ratio*100,0) as string),'%','）','，',
+			'该维度当前处于',dim_warn_level,'风险等级','，',
+			dimension_ch,'维度','纳入的',cast(dim_factor_cnt as string),'个指标中','，',cast(dim_factorEvalu_factor_cnt as string),'个指标表现异常','，',
+			'异常指标对主体总体风险贡献度为',cast(round(dim_factorEvalu_contrib_ratio*100,0) as string) ,'%','，'
+		)
+		as dim_msg
+	from Second_Part_Data_Dimension
+
 )
 
