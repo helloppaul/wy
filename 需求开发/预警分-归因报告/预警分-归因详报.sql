@@ -165,6 +165,7 @@ Second_Part_Data as
 		idx_name,  -- 异常因子/异常指标
 		idx_value,
 		idx_unit,
+		concat(idx_name,'为',cast(idx_value as string),idx_unit) as idx_desc,
 		count(idx_name) over(partition by corp_id,score_dt,dimension)  as dim_factor_cnt,
 		count(idx_name) over(partition by corp_id,score_dt,dimension,factor_evaluate)  as dim_factorEvalu_factor_cnt
 	from Second_Part_Data_Prepare 
@@ -188,15 +189,18 @@ Second_Part_Data_Dimension as -- 按维度层汇总描述用数据
 ),
 Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
 (
-	select distinct
+	select
 		corp_id,
 		corp_nm,
 		score_dt,
 		dimension,
 		dimension_ch,
-		type
+		type,
+		-- concat_ws('、',collect_set(idx_desc)) as idx_desc_one_row   -- hive 
+		group_concat(idx_desc,'、') as idx_desc_one_row    -- impala
 	from Second_Part_Data
 	where factor_evaluate = 0
+	group by corp_id,corp_nm,score_dt,dimension,dimension_ch,type
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 -- 第一段信息 --
@@ -213,20 +217,58 @@ First_Msg as --
 	from First_Part_Data
 ),
 -- 第二段信息 --
-Second_Msg_dimension as  -- 维度层的信息描述
+Second_Msg_Dimension as  -- 维度层的信息描述
 (
 	select 
 		corp_id,
 		corp_nm,
+		score_dt,
 		dimension,
+		dimension_ch,
 		concat(
 			dimension_ch,'维度','（','贡献度占比',cast(round(dim_contrib_ratio*100,0) as string),'%','）','，',
 			'该维度当前处于',dim_warn_level,'风险等级','，',
 			dimension_ch,'维度','纳入的',cast(dim_factor_cnt as string),'个指标中','，',cast(dim_factorEvalu_factor_cnt as string),'个指标表现异常','，',
 			'异常指标对主体总体风险贡献度为',cast(round(dim_factorEvalu_contrib_ratio*100,0) as string) ,'%','，'
-		)
-		as dim_msg
+		) as dim_msg
 	from Second_Part_Data_Dimension
-
+),
+Second_Msg_Dimension_Type as 
+(
+	select 
+		corp_id,
+		corp_nm,
+		score_dt,
+		dimension,
+		dimension_ch,
+		-- concat(concat_ws('；',collect_set(dim_type_msg)),'。') as idx_desc_one_row   -- hive 
+		concat(group_concat(dim_type_msg,'；'),'。') as idx_desc_in_one_dimension  --impala
+	from
+	(
+		select 
+			corp_id,
+			corp_nm,
+			dimension,
+			dimension_ch,
+			type,
+			concat(
+				type,,'异常：',idx_desc_in_one_type
+			) as dim_type_msg
+		from Second_Part_Data_Dimension_Type
+	)A 
+	group by corp_id,corp_nm,score_dt,dimension,dimension_ch
+),
+Second_Msg as 
+(
+	select 
+		a.corp_id,
+		a.corp_nm,
+		a.dimension,
+		concat(
+			a.dim_msg,b.idx_desc_in_one_dimension
+		) as msg
+	from Second_Msg_Dimension a
+	join Second_Msg_Dimension_Type b 
+		on a.corp_id=b.corp_id and a.dimension=b.dimension
 )
 
