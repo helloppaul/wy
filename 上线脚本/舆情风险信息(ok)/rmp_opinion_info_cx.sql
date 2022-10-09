@@ -10,7 +10,7 @@
 
 
 with 
- corp_chg as 
+corp_chg as 
 (
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
 	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
