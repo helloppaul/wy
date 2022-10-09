@@ -7,11 +7,11 @@ corp_chg as  --´øÓÐ ³ÇÍ¶/²úÒµÅÐ¶ÏºÍ¹ú±êÒ»¼¶ÐÐÒµ µÄÌØÊâcorp_chg
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
     ,b.bond_type,b.industryphy_name
 	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
-		  where cid1.etl_date = (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
+		  where cid1.etl_date in (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
 			-- on cid1.etl_date=cid2.etl_date
 		 )	a 
 	join (select b1.* from pth_rmp.rmp_company_info_main b1 
-		  where b1.etl_date = (select max(etl_date) etl_date from pth_rmp.rmp_company_info_main )
+		  where b1.etl_date in (select max(etl_date) etl_date from pth_rmp.rmp_company_info_main )
 		  	-- on b1.etl_date=b2.etl_date
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
@@ -23,6 +23,10 @@ _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --Ô¤¾¯·Ö_ÈÚºÏµ÷Õûºó×ÛºÏ  Ô­Ê¼½
 (
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+    where 1 = 1
+      -- Ê±¼äÏÞÖÆ
+      and to_date(rating_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+
 ),
 _RMP_WARNING_SCORE_MODEL_ as  --Ô¤¾¯·Ö-Ä£ÐÍ½á¹û±í
 (

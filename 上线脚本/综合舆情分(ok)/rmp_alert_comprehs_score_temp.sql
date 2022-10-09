@@ -12,11 +12,11 @@ corp_chg as
 (
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
 	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
-		  where cid1.etl_date = (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
+		  where cid1.etl_date in (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
 			-- on cid1.etl_date=cid2.etl_date
 		 )	a 
 	join (select b1.* from pth_rmp.rmp_company_info_main b1 
-		  where b1.etl_date = (select max(etl_date) etl_date from pth_rmp.rmp_company_info_main )
+		  where b1.etl_date in (select max(etl_date) etl_date from pth_rmp.rmp_company_info_main )
 		  	-- on b1.etl_date=b2.etl_date
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
@@ -46,7 +46,9 @@ RMP_COMPANY_CORE_REL_ as
 (
 	select a.* 
 	from pth_rmp.RMP_COMPANY_CORE_REL a 
-	where a.relation_dt= (select max(relation_dt) max_relation_dt from pth_rmp.RMP_COMPANY_CORE_REL) b 
+	where 1 = 1
+	  -- 时间限制(自动取最大日期)
+	  and a.relation_dt in (select max(relation_dt) max_relation_dt from pth_rmp.RMP_COMPANY_CORE_REL)
 		-- on a.relation_dt=b.max_relation_dt
 ),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--

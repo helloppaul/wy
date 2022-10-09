@@ -9,11 +9,11 @@ corp_chg as
 (
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
 	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
-		  where cid1.etl_date = (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
+		  where cid1.etl_date in (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
 			-- on cid1.etl_date=cid2.etl_date
 		 )	a 
 	join (select b1.* from pth_rmp.rmp_company_info_main b1 
-		  where b1.etl_date = (select max(etl_date) etl_date from pth_rmp.rmp_company_info_main )
+		  where b1.etl_date in (select max(etl_date) etl_date from pth_rmp.rmp_company_info_main )
 		  	-- on b1.etl_date=b2.etl_date
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
