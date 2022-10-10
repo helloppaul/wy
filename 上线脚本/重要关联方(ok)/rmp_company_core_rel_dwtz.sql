@@ -258,13 +258,13 @@ FROM
 			'间接对外投资（3层穿透）' as relation_type_l1,
 			CASE
 				when cum_ratio>=0.5  THEN 51
-				when cum_ratio>=0.4  THEN 52
+				when cum_ratio>=0.3  THEN 52
 				when cum_ratio>=0.2  THEN 53
 			END as relation_type_l2_code,
 			CASE
 				when cum_ratio>=0.5 then '累积持股50%以上'
-				when cum_ratio>=0.4 then '累计持股比例40%-50%'
-				else '累计持股比例20%-40%'
+				when cum_ratio>=0.3 then '累计持股比例30%-50%'
+				else '累计持股比例20%-30%'
 			END as relation_type_l2,
 			'' as compy_type,  --关联方企业类型
 			cum_ratio,

@@ -196,8 +196,8 @@ Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
 		dimension,
 		dimension_ch,
 		type,
-		-- concat_ws('、',collect_set(idx_desc)) as idx_desc_one_row   -- hive 
-		group_concat(idx_desc,'、') as idx_desc_one_row    -- impala
+		-- concat_ws('、',collect_set(idx_desc)) as idx_desc_in_one_type   -- hive 
+		group_concat(idx_desc,'、') as idx_desc_in_one_type    -- impala
 	from Second_Part_Data
 	where factor_evaluate = 0
 	group by corp_id,corp_nm,score_dt,dimension,dimension_ch,type
@@ -248,11 +248,12 @@ Second_Msg_Dimension_Type as
 		select 
 			corp_id,
 			corp_nm,
+			score_dt,
 			dimension,
 			dimension_ch,
 			type,
 			concat(
-				type,,'异常：',idx_desc_in_one_type
+				type,'异常：',idx_desc_in_one_type
 			) as dim_type_msg
 		from Second_Part_Data_Dimension_Type
 	)A 
@@ -271,4 +272,3 @@ Second_Msg as
 	join Second_Msg_Dimension_Type b 
 		on a.corp_id=b.corp_id and a.dimension=b.dimension
 )
-
