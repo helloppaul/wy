@@ -62,5 +62,5 @@ from
 	left join (select * from corp_chg where source_code='FI') chg
 		on one.corp_id=chg.corp_id
 )A 
-where to_date(score_dt)=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),1)) ;
+where to_date(score_dt)=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),1)) 
 ;
