@@ -6,8 +6,8 @@ with
 RMP_ALERT_COMPREHS_SCORE_TEMP_Batch as  --最新批次的综合舆情分数据,且有关联方
 (
 	select distinct a.* from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
-	join (select max(batch_dt) as new_batch_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP )b  
-		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'')
+	join (select max(batch_dt) as new_batch_dt,score_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP group by score_dt)b  
+		on a.batch_dt = b.new_batch_dt and a.score_dt=b.score_dt
 	where a.r_score_cal is not null  --有关联方
 ),
 rmp_alert_score_summ_ as 
@@ -31,15 +31,18 @@ rmp_alert_score_summ_ as
 ),
 rmp_alert_score_summ_batch_ as --最新批次的单舆情分数据
 (
-	select distinct a.* from rmp_alert_score_summ_ a 
-	join (select max(batch_dt) as new_batch_dt from rmp_alert_score_summ_ )b  
-		on a.batch_dt=b.new_batch_dt
+	select a.* from rmp_alert_score_summ_ a 
+	join (select max(batch_dt) as new_batch_dt,score_dt from rmp_alert_score_summ_ group by score_dt)b  
+		on a.batch_dt=b.new_batch_dt and a.score_dt=b.score_dt
 ),
 company_core_rel_ as 
 (
-	select distinct a.* from pth_rmp.rmp_company_core_rel a 
-	join (select max(relation_dt) as max_relation_dt from pth_rmp.rmp_company_core_rel) b
-		on a.relation_dt=b.max_relation_dt
+	select distinct a.* 
+	from pth_rmp.RMP_COMPANY_CORE_REL a 
+	where 1 = 1
+	  -- 时间限制(自动取最大日期)
+	  and a.relation_dt in (select max(relation_dt) max_relation_dt from pth_rmp.RMP_COMPANY_CORE_REL)
+
 )
 insert into pth_rmp.RMP_COMPY_CONTRIB_DEGREE 
 select 
