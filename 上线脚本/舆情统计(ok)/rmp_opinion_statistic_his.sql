@@ -1,11 +1,11 @@
--- ÓßÇéÍ³¼ÆÀúÊ· RMP_OPINION_STATISTIC_HIS (Í¬²½·½Ê½£ºÒ»Ììµ¥Åú´Î) --
+-- ï¿½ï¿½ï¿½ï¿½Í³ï¿½ï¿½ï¿½ï¿½Ê· RMP_OPINION_STATISTIC_HIS (Í¬ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½Ò»ï¿½ìµ¥ï¿½ï¿½ï¿½ï¿½) --
 insert into pth_rmp.RMP_OPINION_STATISTIC_HIS partition(etl_date=${ETL_DATE})
 select 
 	distinct
 	a.sid_kw,
-	a.score_dt,   --£¡£¡£¡ÍÆËÍoracleÊ±£¬²»ÍÆËÍ¸Ã×Ö¶Î
-	a.statistic_dim,  --Í³¼ÆÎ¬¶È£¬1:'ÐÐÒµ' 2:'µØÇø'
-	a.industry_class,  -- -1:µØÇø 1:'ÉêÍòÐÐÒµ' 2:'windÐÐÒµ' 3:'¹ú±êÐÐÒµ' 4:'Ö¤¼à»áÐÐÒµ'  99:Î´ÖªÐÐÒµ
+	a.score_dt,   --ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½oracleÊ±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ï¿½Ö¶ï¿½
+	a.statistic_dim,  --Í³ï¿½ï¿½Î¬ï¿½È£ï¿½1:'ï¿½ï¿½Òµ' 2:'ï¿½ï¿½ï¿½ï¿½'
+	a.industry_class,  -- -1:ï¿½ï¿½ï¿½ï¿½ 1:'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òµ' 2:'windï¿½ï¿½Òµ' 3:'ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òµ' 4:'Ö¤ï¿½ï¿½ï¿½ï¿½ï¿½Òµ'  99:Î´Öªï¿½ï¿½Òµ
 	a.importance,
 	a.level_type_list,
 	a.level_type_ii,
@@ -20,6 +20,6 @@ from pth_rmp.RMP_OPINION_STATISTIC_DAY a
 join (select max(batch_dt) as max_batch_dt from pth_rmp.RMP_OPINION_STATISTIC_DAY where delete_flag=0) b
 	on a.batch_dt=b.max_batch_dt
 where a.delete_flag=0
-  and a.score_dt=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))  
+  and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
 ;
---   and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))  --µ±ÌìÒ»¿ªÊ¼£¬½«×òÌìµÄ×îÐÂÅú´ÎµÄÊý¾ÝÍ¬²½µ½ÀúÊ·±í
+--   and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))  --ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê·ï¿½ï¿½

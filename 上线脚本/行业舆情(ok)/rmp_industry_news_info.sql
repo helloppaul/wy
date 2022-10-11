@@ -1,12 +1,12 @@
--- RMP_INDUSTRY_NEWS_INFO (Í¬²½·½Ê½£ºÒ»Ìì¶àÅú´Î¸²¸Ç) --
--- Èë²Î£º${ETL_DATE}(20220818 int)  -> to_date(notice_dt)
-with gb AS  --¹ú±ê·ÖÀàÊý¾Ý
+-- RMP_INDUSTRY_NEWS_INFO (Í¬ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¸ï¿½ï¿½ï¿½) --
+-- ï¿½ï¿½Î£ï¿½${ETL_DATE}(20220818 int)  -> to_date(notice_dt)
+with gb AS  --ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 (
 	select * 
 	from hds.tr_ods_rmp_fi_tq_oa_industryclass
 	where isvalid='1' and indclasscode='2219'
 ),
-gb_drill_up_4 as --¹ú±ê·ÖÀàÊý¾ÝÉÏ×ê
+gb_drill_up_4 as --ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 (
 	select distinct
 		gb4.industryid as gb4_ind,gb4.industryname as gb4_ind_nm,
@@ -22,7 +22,7 @@ gb_drill_up_4 as --¹ú±ê·ÖÀàÊý¾ÝÉÏ×ê
 	join gb gb1 
 		on gb2.hindustryid = gb1.industryid
 ),
-gb_drill_up_3 as --¹ú±ê·ÖÀàÊý¾ÝÉÏ×ê
+gb_drill_up_3 as --ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 (
 	select distinct
 		gb3.industryid as gb3_ind,gb3.industryname as gb3_ind_nm,
@@ -35,7 +35,7 @@ gb_drill_up_3 as --¹ú±ê·ÖÀàÊý¾ÝÉÏ×ê
 	join gb gb1 
 		on gb2.hindustryid = gb1.industryid
 ),
-gb_drill_up_2 as --¹ú±ê·ÖÀàÊý¾ÝÉÏ×ê
+gb_drill_up_2 as --ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 (
 	select distinct
 		gb2.industryid as gb2_ind,gb2.industryname as gb2_ind_nm,
@@ -45,7 +45,7 @@ gb_drill_up_2 as --¹ú±ê·ÖÀàÊý¾ÝÉÏ×ê
 	join gb gb1 
 		on gb2.hindustryid = gb1.industryid
 ),
-gb_summ as --¹ú±ê·ÖÀàÊý¾Ý»ã×Ü
+gb_summ as --ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý»ï¿½ï¿½ï¿½
 (
 
 	select distinct
@@ -53,7 +53,7 @@ gb_summ as --¹ú±ê·ÖÀàÊý¾Ý»ã×Ü
 		industryname as gb_industry_tag,
 		'' as gb_industry_tag_ii_cd,
 		'' as gb_industry_tag_ii,
-		industryid,   --µÚ1²ãµÄid
+		industryid,   --ï¿½ï¿½1ï¿½ï¿½ï¿½id
 		industryname
 	from gb where industrylevel='1' 
 	UNION ALL
@@ -62,7 +62,7 @@ gb_summ as --¹ú±ê·ÖÀàÊý¾Ý»ã×Ü
 		gb1_ind_nm as gb_industry_tag,
 		gb2_ind as gb_industry_tag_ii_cd,
 		gb2_ind_nm as gb_industry_tag_ii,
-		industryid,   --µÚ2²ãµÄid
+		industryid,   --ï¿½ï¿½2ï¿½ï¿½ï¿½id
 		industryname
 	from gb_drill_up_2
 	UNION ALL 
@@ -71,7 +71,7 @@ gb_summ as --¹ú±ê·ÖÀàÊý¾Ý»ã×Ü
 		gb1_ind_nm as gb_industry_tag,
 		gb2_ind as gb_industry_tag_ii_cd,
 		gb2_ind_nm as gb_industry_tag_ii,
-		industryid,   ----µÚ3²ãµÄid
+		industryid,   ----ï¿½ï¿½3ï¿½ï¿½ï¿½id
 		industryname
 	from gb_drill_up_3
 	UNION ALL 
@@ -80,16 +80,16 @@ gb_summ as --¹ú±ê·ÖÀàÊý¾Ý»ã×Ü
 		gb1_ind_nm as gb_industry_tag,
 		gb2_ind as gb_industry_tag_ii_cd,
 		gb2_ind_nm as gb_industry_tag_ii,
-		industryid,   ----µÚ4²ãµÄid
+		industryid,   ----ï¿½ï¿½4ï¿½ï¿½ï¿½id
 		industryname
 	FROM gb_drill_up_4
 )
 insert  overwrite table pth_rmp.RMP_INDUSTRY_NEWS_INFO partition(etl_date=${ETL_DATE})
------------------------------- ÒÔÉÏ²¿·ÖÎªÁÙÊ±±í ---------------------------------------------------------
+------------------------------ ï¿½ï¿½ï¿½Ï²ï¿½ï¿½ï¿½Îªï¿½ï¿½Ê±ï¿½ï¿½ ---------------------------------------------------------
 select distinct 
 	md5(concat(cast(news.crnw0001_002 as string),news.newscode,gb_summ.gb_industry_tag_ii_cd,'0')) as sid_kw,
 	news.crnw0001_002 as notice_dt,
-	news.newscode as news_id,   --ÐÂÎÅ±àÂëÒÑ¾­°üº¬Ê±¼ä
+	news.newscode as news_id,   --ï¿½ï¿½ï¿½Å±ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
 	news.crnw0001_003 as news_title,
 	gb_summ.gb_industry_tag_cd,
 	gb_summ.gb_industry_tag,
@@ -111,5 +111,5 @@ left join gb_summ
 	on cast(hy.CRNW0006_001 as string) = gb_summ.industryid
 -- left join (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') news_detail
 -- 	on news.NEWSCODE = news_detail.NEWSCODE
-where to_date(news.crnw0001_002)=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),1)) 
+where to_date(news.crnw0001_002)=to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1)) 
 ;

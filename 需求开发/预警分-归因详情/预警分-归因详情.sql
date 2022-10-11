@@ -31,7 +31,7 @@ rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --Ô¤¾¯·Ö_ÈÚºÏµ÷Õûºó×ÛºÏ  Ô­Ê¼½Ó
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(rating_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(rating_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
@@ -80,7 +80,7 @@ rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_ as  --ÌØÕ÷Ô­Ê¼Öµ_¸ßÆµ Ô­Ê¼½Ó¿Ú
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select *
@@ -94,7 +94,7 @@ rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf_ as  --ÌØÕ÷Ô­Ê¼Öµ_µÍÆµ Ô­Ê¼½Ó¿
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
@@ -107,7 +107,7 @@ rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf_ as  --ÌØÕ÷Ô­Ê¼Öµ_ÖÐÆµ_³ÇÍ¶ Ô
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
@@ -120,7 +120,7 @@ rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf_ as  --ÌØÕ÷Ô­Ê¼Öµ_ÖÐÆµ_²úÒµÕ® Ô­Ê
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
@@ -134,7 +134,7 @@ rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as  --ÌØÕ÷¹±Ï×¶È_ÈÚºÏµ÷Õûºó×ÛºÏ
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
@@ -147,7 +147,7 @@ rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf_ as --ÌØÕ÷¹±Ï×¶È_¸ßÆµ
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
@@ -160,7 +160,7 @@ rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_ as  --ÌØÕ÷¹±Ï×¶È_µÍÆµ
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
@@ -173,7 +173,7 @@ rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf_ as  --ÌØÕ÷¹±Ï×¶È_ÖÐÆµ³ÇÍ¶
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
@@ -186,7 +186,7 @@ rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf_ as  --ÌØÕ÷¹±Ï×¶È_ÖÐÆµ²úÒµ
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
@@ -200,7 +200,7 @@ rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf_ as  --ÌØÕ÷µÃ·Ö_¸ßÆµ Ô­Ê¼½Ó¿Ú
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
@@ -213,7 +213,7 @@ rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf_ as  --ÌØÕ÷µÃ·Ö_µÍÆµ Ô­Ê¼½Ó¿Ú
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
@@ -226,7 +226,7 @@ rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf_ as  --ÌØÕ÷µÃ·Ö_ÖÐÆµ_³ÇÍ¶ Ô­Ê
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
@@ -239,7 +239,7 @@ rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf_ as  --ÌØÕ÷µÃ·Ö_ÖÐÆµ_²úÒµÕ® Ô­Ê¼½
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
@@ -946,6 +946,6 @@ select distinct
 	current_timestamp() as update_time,
 	0 as version
 from res4
--- where score_dt = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+-- where score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
 ; 
 

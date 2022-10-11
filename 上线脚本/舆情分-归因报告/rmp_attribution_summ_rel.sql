@@ -335,5 +335,5 @@ select
 			-- concat('	其次关联方层面，',sentence_3)
 	end as rel_sentence
 from Third_msg
-where to_date(score_dt)=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),1)) 
+where to_date(score_dt)=to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1)) 
 ;

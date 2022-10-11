@@ -20,6 +20,6 @@ from pth_rmp.RMP_ATTRIBUTION_SUMM a
 join (select score_dt,max(batch_dt) as max_batch_dt from pth_rmp.RMP_ATTRIBUTION_SUMM group by score_dt) b
 	on a.score_dt=b.score_dt and a.batch_dt=b.max_batch_dt
 where a.delete_flag=0
-  and a.score_dt=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
+  and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
 --   and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))  --当天一开始，将昨天的最新批次的数据同步到历史表
 ;

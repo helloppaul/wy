@@ -79,3 +79,5 @@ select
 	current_timestamp() update_time,
 	0 as version
 from warn_union_adj_sync_score
+WHERE score_date=to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
+;

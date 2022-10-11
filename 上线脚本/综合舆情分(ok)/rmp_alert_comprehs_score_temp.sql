@@ -574,5 +574,5 @@ from
 	)F1
 )G join label_hit_tab lb on G.corp_id=lb.corp_id and G.score_dt = lb.score_dt
    join corp_chg chg on g.corp_id=chg.corp_id and chg.source_code='FI'
-where G.score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),1))
+where G.score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
 ;

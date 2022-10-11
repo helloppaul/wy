@@ -1,5 +1,5 @@
--- RMP_WARNING_SCORE_MODEL_HIS (Í¬²½·½Ê½£ºÒ»Ììµ¥Åú´Î²åÈë) --
---¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª »ù±¾ÐÅÏ¢ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
+-- RMP_WARNING_SCORE_MODEL_HIS (Í¬ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½Ò»ï¿½ìµ¥ï¿½ï¿½ï¿½Î²ï¿½ï¿½ï¿½) --
+--ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½--
 insert into pth_rmp.RMP_WARNING_SCORE_MODEL_HIS partition(dt=${ETL_DATE})
 select 
 	a.sid_kw,  --@impala
@@ -7,10 +7,10 @@ select
 	a.corp_nm,
 	a.credit_cd,
 	a.score_date,
-	a.synth_warnlevel,  -- ×ÛºÏÔ¤¾¯µÈ¼¶
-	a.synth_score,  -- Ô¤¾¯·Ö
+	a.synth_warnlevel,  -- ï¿½Ûºï¿½Ô¤ï¿½ï¿½ï¿½È¼ï¿½
+	a.synth_score,  -- Ô¤ï¿½ï¿½ï¿½ï¿½
 	a.model_version,
-	a.adjust_warnlevel,   -- µ÷ÕûºóµÈ¼¶
+	a.adjust_warnlevel,   -- ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¼ï¿?
 	0 as delete_flag,
 	'' as create_by,
 	current_timestamp() as create_time,
@@ -21,8 +21,8 @@ from pth_rmp.RMP_WARNING_SCORE_MODEL a
 join (select max(batch_dt) as max_batch_dt,score_date from pth_rmp.RMP_WARNING_SCORE_MODEL where delete_flag=0 group by score_date) b
 	on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
 where a.delete_flag=0
-  and a.score_dt=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
---   and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))  --µ±ÌìÒ»¿ªÊ¼£¬½«×òÌìµÄ×îÐÂÅú´ÎµÄÊý¾ÝÍ¬²½µ½ÀúÊ·±í
+  and a.score_date=to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
+--   and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))  --ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½Í?ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê·ï¿½ï¿½
 ;
 
--- truncate table pth_rmp.RMP_WARNING_SCORE_MODEL; --ÀúÊ·±íÑÜÉúÍê³É£¬É¾³ýÇ°Ò»ÌìµÄÈÕ±íÊý¾Ý
+-- truncate table pth_rmp.RMP_WARNING_SCORE_MODEL; --ï¿½ï¿½Ê·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É£ï¿½É¾ï¿½ï¿½Ç°Ò»ï¿½ï¿½ï¿½ï¿½Õ±ï¿½ï¿½ï¿½ï¿½ï¿½
