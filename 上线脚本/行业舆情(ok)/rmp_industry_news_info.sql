@@ -111,5 +111,5 @@ left join gb_summ
 	on cast(hy.CRNW0006_001 as string) = gb_summ.industryid
 -- left join (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') news_detail
 -- 	on news.NEWSCODE = news_detail.NEWSCODE
-where to_date(news.crnw0001_002)=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))  ;
+where to_date(news.crnw0001_002)=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),1)) 
 ;

@@ -70,7 +70,7 @@ RMP_WARNING_SCORE_MODEL_ as  --预警分-模型结果表
     join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
         on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
     join corp_chg chg
-        on chg.source_code='FI' and chg.source_id=cast(a.corp_code as string)
+        on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
     -- from app_ehzh.RMP_WARNING_SCORE_MODEL  --@pth_rmp.RMP_WARNING_SCORE_MODEL
 ),
 -- 特征原始值 --

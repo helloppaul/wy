@@ -2,15 +2,15 @@
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 児云佚連 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
 insert into pth_rmp.RMP_WARNING_SCORE_MODEL_HIS partition(dt=${ETL_DATE})
 select 
-	sid_kw,  --@impala
-	corp_id,
-	corp_nm,
-	credit_cd,
-	score_date,
-	synth_warnlevel,  -- 忝栽圓少吉雫
-	synth_score,  -- 圓少蛍
-	model_version,
-	adjust_warnlevel,   -- 距屁朔吉雫
+	a.sid_kw,  --@impala
+	a.corp_id,
+	a.corp_nm,
+	a.credit_cd,
+	a.score_date,
+	a.synth_warnlevel,  -- 忝栽圓少吉雫
+	a.synth_score,  -- 圓少蛍
+	a.model_version,
+	a.adjust_warnlevel,   -- 距屁朔吉雫
 	0 as delete_flag,
 	'' as create_by,
 	current_timestamp() as create_time,
@@ -18,8 +18,8 @@ select
 	current_timestamp() update_time,
 	0 as version
 from pth_rmp.RMP_WARNING_SCORE_MODEL a
-join (select max(batch_dt) as max_batch_dt from pth_rmp.RMP_WARNING_SCORE_MODEL where delete_flag=0) b
-	on a.batch_dt=b.max_batch_dt
+join (select max(batch_dt) as max_batch_dt,score_date from pth_rmp.RMP_WARNING_SCORE_MODEL where delete_flag=0 group by score_date) b
+	on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
 where a.delete_flag=0
   and a.score_dt=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
 --   and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))  --輝爺匯蝕兵��繍恍爺議恷仟答肝議方象揖化欺煽雰燕

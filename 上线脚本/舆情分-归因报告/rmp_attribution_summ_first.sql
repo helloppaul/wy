@@ -74,5 +74,5 @@ select
 	label_hit,
 	sentence_1_1 as First_sentence
 from First_msg
-where to_date(score_dt)=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))  
+where to_date(score_dt)=tto_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),1)) 
 ;

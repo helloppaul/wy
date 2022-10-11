@@ -180,5 +180,5 @@ from
 		select * from region_class_yq
 	)A 
 )Fi
-where score_dt= to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
+where score_dt= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),1))
 ;

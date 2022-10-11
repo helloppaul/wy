@@ -219,5 +219,5 @@ from
 		)C
 	)D	
 )E 
-where E.score_dt = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+where E.score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),1))
 ; 

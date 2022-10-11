@@ -53,10 +53,10 @@ warn_union_adj_sync_score as --取最新批次的融合调整后综合预警分
 		a.model_name,
 		a.model_version
     from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a   
-    join (select max(rating_dt) as max_rating_dt from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ ) b
-        on a.rating_dt=b.max_rating_dt
+    join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
+        on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
     join corp_chg chg
-        on chg.source_code='FI' and chg.source_id=cast(a.corp_code as string)
+        on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
 )
 ------------------------------------以上部分为临时表-------------------------------------------------------------------
 -- insert into pth_rmp.RMP_WARNING_SCORE_MODEL

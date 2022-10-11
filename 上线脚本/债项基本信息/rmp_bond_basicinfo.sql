@@ -121,5 +121,5 @@ select
     current_timestamp() update_time,
     0 as version
 from res 
-where natural_dt= from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+-- where natural_dt= from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
 ;
