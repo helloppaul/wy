@@ -86,6 +86,13 @@ RMP_WARNING_SCORE_DETAIL_ as  --预警分--归因详情 原始接口
 (
 	select * 
 	from app_ehzh.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
+	where delete_flag=0
+),
+RMP_WARNING_SCORE_DETAIL_HIS_ as  --预警分--归因详情历史 原始接口
+(
+	select * 
+	from app_ehzh.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
+	where delete_flag=0
 ),
 rmp_cs_compy_region_ as   -- 区域经营数据 (每日全量采集)
 (
@@ -94,7 +101,12 @@ rmp_cs_compy_region_ as   -- 区域经营数据 (每日全量采集)
 	where a.isdel=0
 	  and a.etl_date in (select max(etl_date) as max_etl_date from hds.t_ods_rmp_cs_compy_region)
 ),
-
+RMP_WARNING_SCORE_CHG_ as 
+(
+	select *
+	from app_ehzh.RMP_WARNING_SCORE_CHG  --@pth_rmp.RMP_WARNING_SCORE_CHG
+	where delete_flag=0
+),
 -- -- 特征贡献度 --
 -- _rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf_ as --特征贡献度_高频
 -- (
@@ -206,7 +218,6 @@ RMP_WARNING_SCORE_DETAIL_Batch as -- 取每天最新批次数据
 	from RMP_WARNING_SCORE_DETAIL_ a
 	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
 		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
-	where a.delete_flag=0
 ),
 RMP_WARNING_SCORE_MODEL_Batch as  -- 取每天最新批次数据
 (
@@ -214,7 +225,6 @@ RMP_WARNING_SCORE_MODEL_Batch as  -- 取每天最新批次数据
 	from RMP_WARNING_SCORE_MODEL_ a 
 	join (select max(batch_dt) as max_batch_dt,score_date from RMP_WARNING_SCORE_MODEL_ group by score_date) b
 		on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
-	where a.delete_flag=0
 ),
 Second_Part_Data_Prepare as 
 (
@@ -233,6 +243,7 @@ Second_Part_Data_Prepare as
 		f_cfg.feature_name_target,  --特征名称-目标(系统)  used
 		main.contribution_ratio,
 		main.factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
+		main.dim_warn_level,
 		cfg.risk_lv_desc as dim_warn_level_desc  --维度风险等级(难点)  used
 	from RMP_WARNING_SCORE_DETAIL_Batch main
 	left join feat_CFG f_cfg 	
@@ -244,32 +255,38 @@ Second_Part_Data_Prepare as
 ),
 Second_Part_Data as 
 (
-	select 
-		batch_dt,
-		corp_id,
-		corp_nm,
-		score_dt,
-		synth_warnlevel,
-		dimension,
-		dimension_ch,
-		-- sum(contribution_ratio) as dim_contrib_ratio,
-		sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension) as dim_contrib_ratio,
-		sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate) as dim_factorEvalu_contrib_ratio,
-		dim_warn_level_desc,  --维度风险等级(难点)
-		type,
-		factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
-		idx_name,  -- 异常因子/异常指标
-		idx_value,
-		idx_unit,
-		concat(idx_name,'为',cast(idx_value as string),idx_unit) as idx_desc,
-		count(idx_name) over(partition by corp_id,batch_dt,score_dt,dimension)  as dim_factor_cnt,
-		count(idx_name) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate)  as dim_factorEvalu_factor_cnt
-	from Second_Part_Data_Prepare 
-	order by corp_id,score_dt desc,dim_contrib_ratio desc
+	select distinct *
+	from 
+	(
+		select 
+			batch_dt,
+			corp_id,
+			corp_nm,
+			score_dt,
+			synth_warnlevel,
+			dimension,
+			dimension_ch,
+			-- sum(contribution_ratio) as dim_contrib_ratio,
+			sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension) as dim_contrib_ratio,
+			sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate) as dim_factorEvalu_contrib_ratio,
+			dim_warn_level,
+			dim_warn_level_desc,  --维度风险等级(难点)
+			type,
+			factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
+			idx_name,  -- 异常因子/异常指标
+			idx_value,
+			idx_unit,
+			idx_score,   --指标评分 used
+			concat(idx_name,'为',cast(idx_value as string),idx_unit) as idx_desc,
+			count(idx_name) over(partition by corp_id,batch_dt,score_dt,dimension)  as dim_factor_cnt,
+			count(idx_name) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate)  as dim_factorEvalu_factor_cnt
+		from Second_Part_Data_Prepare 
+		order by corp_id,score_dt desc,dim_contrib_ratio desc
+	) A
 ),
 Second_Part_Data_Dimension as -- 按维度层汇总描述用数据
 (
-	select distinct
+	select 
 		batch_dt,
 		corp_id,
 		corp_nm,
@@ -441,8 +458,115 @@ Third_Part_Data as
 	) A where rm<=5
 ),
 -- 第四段数据 --
-
-
+RMP_WARNING_SCORE_CHG_Batch as  --取每天最新批次的预警变动等级数据
+(
+	select *
+	from RMP_WARNING_SCORE_CHG_ a 
+	join (select max(batch_dt) as max_batch_dt,score_date from RMP_WARNING_SCORE_CHG_ group by score_date) b 
+		on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
+),
+Fourth_Part_Data_synth_warnlevel as   --综合预警 等级变动
+(
+	select distinct
+		a.batch_dt,
+		a.corp_id,
+		a.corp_nm,
+		a.score_date as score_dt,
+		a.synth_warnlevel,   --当日综合预警等级
+		chg.warn_lv_desc as synth_warnlevel_desc,   -- used
+		a.chg_direction,
+		a.synth_warnlevel_l  --昨日综合预警等级
+		cfg_l.warn_lv as synth_warnlevel_l_desc   -- used
+	from RMP_WARNING_SCORE_CHG_Batch a 
+	join warn_level_ratio_cfg_ cfg 
+		on a.synth_warnlevel=b.warn_lv
+	join warn_level_ratio_cfg_ cfg_l
+		on a.synth_warnlevel_l=cfg_l.warn_lv
+	where a.chg_direction='上升'
+),
+RMP_WARNING_dim_warn_lv_And_idx_score_chg as --取每天最新批次的维度风险等级变动 以及 特征评分变动 数据
+(
+	select distinct
+		a.batch_dt,
+		a.corp_id,
+		a.corp_nm,
+		a.score_dt,
+		a.dimension,
+		a.dim_contrib_ratio,   --维度贡献度占比(排序用) used
+		a.dim_warn_level,	  --今日维度风险等级
+		a.dim_warn_level_desc,
+		b.dim_warn_level as dim_warn_level_1,   --昨日维度风险等级
+		b.dim_warn_level_desc as dim_warn_level_1_desc,
+		case 
+			when cast(a.dim_warn_level as int)-cast(b.dim_warn_level as int) >0 then '上升'
+			else ''
+		end as dim_warn_level_chg_desc,
+		
+		a.idx_name, 
+		a.idx_value,
+		a.idx_unit,
+		a.idx_score,   -- 今日指标打分
+		b.idx_score as idx_score_1, -- 昨日指标打分
+		case 
+			when cast(a.idx_score as int)-cast(b.idx_score as int) >0 then '恶化'  --特征评分卡得分变高则为恶化
+			else ''
+		end as idx_score_chg_desc
+	from Second_Part_Data a 
+	join RMP_WARNING_SCORE_DETAIL_HIS_ b
+		on a.corp_id=b.corp_id and unix_timestamp(to_date(a.score_dt),'yyyy-MM-dd')-1=unix_timestamp(to_date(b.score_dt),'yyyy-MM-dd') and a.dimension=b.dimension
+),
+Fourth_Part_Data_dim_warn_level_And_idx_score as  
+(
+	select 
+		batch_dt,
+		corp_id,
+		corp_nm,
+		score_dt,
+		dimension,
+		dim_contrib_ratio,  --维度贡献度占比(排序用) used
+		dim_warn_level,  --今日维度风险等级
+		dim_warn_level_desc,
+		dim_warn_level_1,  --昨日维度风险等级
+		dim_warn_level_1_desc,
+		dim_warn_level_chg_desc,  --维度风险等级变动 描述
+		idx_name,
+		idx_value,
+		idx_unit,
+		idx_score,
+		idx_score_1,
+		idx_score_chg_desc,
+		row_number() over(partition by corp_id,score_dt,dimension order by dim_contrib_ratio desc) as dim_contrib_ratio_rank
+	from RMP_WARNING_dim_warn_lv_And_idx_score_chg
+),
+Fourth_Part_Data as 
+(
+	select 
+		a.corp_id,
+		a.corp_nm,
+		a.score_dt,
+		a.synth_warnlevel,
+		a.synth_warnlevel_desc,
+		a.chg_direction as chg_direction_desc,
+		a.synth_warnlevel_l,
+		a.synth_warnlevel_l_desc,
+		b.dimension,
+		b.dim_contrib_ratio,  --维度贡献度占比(排序用) used
+		b.dim_warn_level,  --今日维度风险等级
+		b.dim_warn_level_desc,
+		b.dim_warn_level_1,  --昨日维度风险等级
+		b.dim_warn_level_1_desc,
+		b.dim_warn_level_chg_desc,  --维度风险等级变动 描述
+		b.idx_name,
+		b.idx_value,
+		b.idx_unit,
+		b.idx_score,
+		b.idx_score_1,
+		b.idx_score_chg_desc,
+		b.dim_contrib_ratio_rank
+	from Fourth_Part_Data_synth_warnlevel a 
+	join Fourth_Part_Data_dim_warn_level_And_idx_score b 
+		on a.corp_id=b.corp_id and a.score_dt=b.score_dt
+),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 -- 第一段信息 --
 First_Msg as --
@@ -559,4 +683,51 @@ Third_Msg as
 		on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id
 ),
 -- 第四段信息 --
+Fourth_Msg_Dim as 
+(
+	select 
+		batch_dt,
+		corp_id,
+		corp_nm,
+		score_dt,
+		dimension,
+		-- case 
+		-- 	when dim_contrib_ratio_rank = 1 then 
+		-- 		concat('主要由于',dimension,'由',dim_warn_level_1_desc,dim_warn_level_chg_desc,'至',dim_warn_level_desc)
+		-- end as first_reason, 
+		-- case 
+		-- 	when dim_contrib_ratio_rank = 2 then 
+		-- 		concat('其次由于',dimension,'由',dim_warn_level_1_desc,dim_warn_level_chg_desc,'至',dim_warn_level_desc)
+		-- end as second_reason, 
+		-- case 
+		-- 	when dim_contrib_ratio_rank = 3 then 
+		-- 		concat('第三由于',dimension,'由',dim_warn_level_1_desc,dim_warn_level_chg_desc,'至',dim_warn_level_desc)
+		-- end as third_reason, 
+		-- case 
+		-- 	when dim_contrib_ratio_rank = 4 then 
+		-- 		concat('第四由于',dimension,'由',dim_warn_level_1_desc,dim_warn_level_chg_desc,'至',dim_warn_level_desc)
+		-- end as fourth_reason, 
+		-- case 
+		-- 	when dim_contrib_ratio_rank = 5 then 
+		-- 		concat('第五由于',dimension,'由',dim_warn_level_1_desc,dim_warn_level_chg_desc,'至',dim_warn_level_desc)
+		-- end as fifth_reason, 
+
+		concat(
+			case 
+				when dim_contrib_ratio_rank = 1 then 
+					concat('主要由于',dimension,'由',dim_warn_level_1_desc,dim_warn_level_chg_desc,'至',dim_warn_level_desc)
+				when dim_contrib_ratio_rank = 2 then 
+					concat('其次由于',dimension,'由',dim_warn_level_1_desc,dim_warn_level_chg_desc,'至',dim_warn_level_desc)
+				when dim_contrib_ratio_rank = 3 then 
+					concat('第三由于',dimension,'由',dim_warn_level_1_desc,dim_warn_level_chg_desc,'至',dim_warn_level_desc)
+				when dim_contrib_ratio_rank = 4 then 
+					concat('第四由于',dimension,'由',dim_warn_level_1_desc,dim_warn_level_chg_desc,'至',dim_warn_level_desc)
+				when dim_contrib_ratio_rank = 5 then 
+					concat('第五由于',dimension,'由',dim_warn_level_1_desc,dim_warn_level_chg_desc,'至',dim_warn_level_desc)
+		) as msg_dim
+	from Fourth_Part_Data
+
+)
+
+
 
