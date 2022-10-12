@@ -45,6 +45,7 @@ from
 		nvl(Final.url_kw,'') as url_kw,
 		nvl(Final.news_from,'') as news_from,
 		Final.msg,
+		'' as CRNW0003_010,
 		to_date(Final.notice_dt) as notice_date, 
 		last_day(Final.notice_dt) as notice_month,
 		0 as delete_flag,

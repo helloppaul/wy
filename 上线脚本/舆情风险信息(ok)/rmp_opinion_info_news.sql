@@ -49,6 +49,7 @@ from
 		nvl(Final.url_kw,'') as url_kw,
 		nvl(Final.news_from,'') as news_from,
 		Final.msg,
+		Final.CRNW0003_010,
 		to_date(Final.notice_dt) as notice_date, 
 		last_day(Final.notice_dt) as notice_month,
 		0 as delete_flag,
@@ -77,10 +78,11 @@ from
 			url_kw,
 			news_from,
 			msg,
+			CRNW0003_010,
 			ROW_NUMBER() over(partition by corp_id,msg_id_,case_type_ii_cd order by 1) as rm1 --去除重复数据
 		FROM 
 		(	
-				--新闻舆情
+			--新闻舆情
 			select 
 				company_id as corp_id,
 				company_nm as corp_nm,
@@ -106,7 +108,8 @@ from
 				cast(src_sid as string) as src_sid,
 				url as url_kw,
 				news_from,
-				msg
+				msg,
+				CRNW0003_010
 			from 
 			(
 				select t0.*,0.5*t0.case_importance+0.5*t0.origin_importance as cal_importance
@@ -140,7 +143,8 @@ from
 							else o.crnw0001_010
 						end as URL,
 						o.crnw0001_007 as news_from,
-						'' as msg
+						'' as msg,
+						o1.CRNW0003_010
 					from (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0001 where flag<>'1') o,
 						(select * from hds.tr_ods_rmp_fi_x_news_tcrnw0003_all_v2 where flag<>'1') o1,
 						(select * from hds.tr_ods_rmp_fi_x_news_tcrnwitcode where flag<>'1' ) o2,
