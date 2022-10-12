@@ -417,5 +417,5 @@ select
 			-- concat('	其次主体层面，',sentence_2)
 	end as Main_sentence
 from second_msg
-where to_date(score_dt)=to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
+where to_date(score_dt)=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 ;

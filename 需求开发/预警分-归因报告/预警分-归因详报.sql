@@ -346,7 +346,7 @@ Third_Part_Data_CY_Prepare as   -- 主体为产业的数据
 	where a.bond_type = 1  --产业债
 	  and a.corp_id<>b.corp_id
 ),
-Third_Part_Data_CY as  
+Third_Part_Data_CY as    -- 和产业主体相同属性的 其他企业数量 计算
 (
 	select 
 		batch_dt,
@@ -364,7 +364,7 @@ Third_Part_Data_CY as
 		count(corp_id) over(partition by batch_dt,corp_id,score_dt,synth_warnlevel,bond_type,corp_property) as corp_id_cnt
 	from Third_Part_Data_CY_Prepare
 ),
-Third_Part_Data_CT_Prepare_I as -- 主体为城投的数据
+Third_Part_Data_CT_Prepare_I as -- 主体 为 城投的数据
 (
 	select distinct
 		a.batch_dt,
@@ -395,8 +395,9 @@ Third_Part_Data_CT_Prepare_II as
 	from Third_Part_Data_CT_Prepare_I a 
 	join Third_Part_Data_CT_Prepare_I b
 		on a.region_cd=b.region_cd and a.synth_warnlevel=b.synth_warnlevel
+	where a.corp_id<>b.corp_id
 ),
-Third_Part_Data_CT as 
+Third_Part_Data_CT as -- 和城投主体相同属性的 其他企业数量 计算
 (
 	select 
 		batch_dt,

@@ -27,6 +27,6 @@ select distinct
 from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a
 join (select max(batch_dt) as max_batch_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP) b
 	on a.batch_dt=b.max_batch_dt
-where a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
+where a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 ;
 
