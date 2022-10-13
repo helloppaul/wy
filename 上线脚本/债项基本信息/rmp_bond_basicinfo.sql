@@ -56,7 +56,8 @@ mid_bond_basic_info as --债项基本要素
         bondname,  --债券全称
         issuecompcode,  --发型机构代码
         from_unixtime(unix_timestamp(maturitydate,'yyyyMMdd'),'yyyy-MM-dd') as maturitydate, --到期日 yyyy-mm-dd 00:00:00
-        if(leaduwer<>'',concat(leaduwer,','),'') as leaduwer
+        leaduwer
+        -- if(leaduwer<>'',concat(leaduwer,','),'') as leaduwer
     from t_ods_fic_ic_tq_bd_basicinfo_ a 
     join (select max(etl_date) max_etl_date from t_ods_fic_ic_tq_bd_basicinfo_) b 
         on a.etl_date=b.max_etl_date 
