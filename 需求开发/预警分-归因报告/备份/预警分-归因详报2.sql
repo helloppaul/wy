@@ -1,4 +1,4 @@
--- RMP_WARNING_SCORE_REPORT 第二段-当前等级归因 --
+-- RMP_WARNING_SCORE_REPORT 第二段和第五段-当前等级归因和建议关注风险 --
 drop table if exists app_ehzh.RMP_WARNING_SCORE_REPORT2;  --@pth_rmp.RMP_WARNING_SCORE_REPORT2
 create table app_ehzh.RMP_WARNING_SCORE_REPORT2 as   --@pth_rmp.RMP_WARNING_SCORE_REPORT2
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
@@ -319,7 +319,48 @@ Second_Msg as    --！！！还未对 贡献度占比 从大到小排序
 		group_concat(msg_dim,'\\r\\n') as msg
 	from Second_Msg_Dim
 	group by batch_dt,corp_id,corp_nm,score_dt
+),
+Fifth_Data as 
+(
+	select 
+		batch_dt,
+		corp_id,
+		corp_nm,
+		score_dt,
+		-- concat_ws('、',collect_set(dimension_ch)) as abnormal_dim_msg  -- hive
+		group_concat(dimension_ch,'、') as abnormal_dim_msg -- impala
+	from 
+	(
+		select distinct
+			batch_dt,
+			corp_id,
+			corp_nm,
+			score_dt,
+			dimension_ch
+		from Second_Part_Data_Prepare
+		where factor_evaluate = 0   --因子评价，因子是否异常的字段 0：异常 1：正常
+	)A 
+),
+Fifth_Msg as 
+(
+	select 
+		batch_dt,
+		corp_id,
+		corp_nm,
+		score_dt,
+		concat('建议关注公司',abnormal_dim_msg,'带来的风险。') as msg
+	from Fifth_Data
 )
-select * from Second_Msg
+------------------------------------以上部分为临时表-------------------------------------------------------------------
+select 
+	a.batch_dt,
+	a.corp_id,
+	a.corp_nm,
+	a.score_dt,
+	a.msg as msg2,
+	b.msg as msg5
+from Second_Msg a 
+join Fifth_Msg b 
+	on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id and a.score_dt=b.score_dt
 ;
 
