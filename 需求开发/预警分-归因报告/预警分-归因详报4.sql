@@ -501,7 +501,7 @@ Fourth_Msg as
 	join Fourth_Msg_Dim b 
 		on a.corp_id=b.corp_id and a.batch_dt=b.batch_dt and a.dimension=b.dimension
 )
-select * from Fourth_Msg_Dim
+select * from Fourth_Msg
 ;
 
 
