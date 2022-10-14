@@ -1,6 +1,6 @@
 -- RMP_WARNING_SCORE_REPORT 及眉粁-揖窃欠�嫺麭� --
-drop table if exists app_ehzh.RMP_WARNING_SCORE_REPORT3;  --@pth_rmp.RMP_WARNING_SCORE_REPORT3
-create table app_ehzh.RMP_WARNING_SCORE_REPORT3 as  --@pth_rmp.RMP_WARNING_SCORE_REPORT3
+drop table if exists app_ehzh.rmp_warning_score_report3;  
+create table app_ehzh.rmp_warning_score_report3 as  --@pth_rmp.rmp_warning_score_report3
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 児云佚連 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
 with
 corp_chg as  --揮嗤 廓誘/恢匍登僅才忽炎匯雫佩匍/屬酌氏匯雫佩匍 議蒙歩corp_chg  (蒙歩2)

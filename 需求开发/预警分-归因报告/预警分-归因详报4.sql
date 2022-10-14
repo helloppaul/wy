@@ -1,6 +1,6 @@
 -- RMP_WARNING_SCORE_REPORT 第四段-归因变动 --
-drop table if exists app_ehzh.RMP_WARNING_SCORE_REPORT4;  --@pth_rmp.RMP_WARNING_SCORE_REPORT4
-create table app_ehzh.RMP_WARNING_SCORE_REPORT4 as  --@pth_rmp.RMP_WARNING_SCORE_REPORT4
+drop table if exists app_ehzh.rmp_warning_score_report4;  
+create table app_ehzh.rmp_warning_score_report4 as  --@pth_rmp.rmp_warning_score_report4
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (特殊2)
@@ -102,23 +102,13 @@ rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as --特征贡献度_综合预警等级
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
 warn_level_ratio_cfg_ as -- 综合预警等级等级划分档位-配置表
 (
-	select '-5' as warn_lv,'前10%' as percent_desc,'风险已暴露' as warn_lv_desc
-	union all 
-	select '-4' as warn_lv,'10%-30%' as percent_desc,'红色预警等级' as warn_lv_desc
-	union all 
-	select '-3' as warn_lv,'30%-60%' as percent_desc,'橙色预警等级' as warn_lv_desc
-	union all 
-	select '-2' as warn_lv,'60%-80%' as percent_desc,'黄色预警等级' as warn_lv_desc
-	union all 
-	select '-1' as warn_lv,'80%-100%' as percent_desc,'绿色预警等级' as warn_lv_desc
+	select * 
+	from pth_rmp.rmp_warn_level_ratio_cfg
 ),
 warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
 (
-	select 60 as low_contribution_percent,100 as high_contribution_percent,-3 as risk_lv ,'高风险' as risk_lv_desc   --(60,100]
-	union all  
-	select 40 as low_contribution_percent,60 as high_contribution_percent,-2 as risk_lv,'中风险' as risk_lv_desc   --(40,60]
-	union all  
-	select 0 as low_contribution_percent, 40 as high_contribution_percent,-1 as risk_lv,'低风险' as risk_lv_desc   --(0,40]
+	select * 
+	from pth_rmp.rmp_warn_dim_risk_level_cfg
 ),
 feat_CFG as --特征手工配置表
 (

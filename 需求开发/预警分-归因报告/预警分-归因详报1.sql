@@ -1,6 +1,6 @@
 -- RMP_WARNING_SCORE_REPORT 及匯粁 --
-drop table if exists app_ehzh.RMP_WARNING_SCORE_REPORT1;   --@pth_rmp.RMP_WARNING_SCORE_REPORT1
-create table app_ehzh.RMP_WARNING_SCORE_REPORT1 as    --@pth_rmp.RMP_WARNING_SCORE_REPORT1
+drop table if exists app_ehzh.RMP_WARNING_SCORE_REPORT1;  
+create table app_ehzh.RMP_WARNING_SCORE_REPORT1 as    --@pth_rmp.rmp_warning_score_report1
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 児云佚連 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
 with
 corp_chg as  --揮嗤 廓誘/恢匍登僅才忽炎匯雫佩匍/屬酌氏匯雫佩匍 議蒙歩corp_chg  (蒙歩2)
@@ -78,15 +78,8 @@ RMP_WARNING_SCORE_MODEL_ as  --圓少蛍-庁侏潤惚燕
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 塘崔燕 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
 warn_level_ratio_cfg_ as -- 忝栽圓少吉雫吉雫皿蛍亀了-塘崔燕
 (
-	select '-5' as warn_lv,'念10%' as percent_desc,'欠�孀儕�其' as warn_lv_desc
-	union all 
-	select '-4' as warn_lv,'10%-30%' as percent_desc,'碕弼圓少吉雫' as warn_lv_desc
-	union all 
-	select '-3' as warn_lv,'30%-60%' as percent_desc,'拡弼圓少吉雫' as warn_lv_desc
-	union all 
-	select '-2' as warn_lv,'60%-80%' as percent_desc,'仔弼圓少吉雫' as warn_lv_desc
-	union all 
-	select '-1' as warn_lv,'80%-100%' as percent_desc,'駄弼圓少吉雫' as warn_lv_desc
+	select * 
+	from pth_rmp.rmp_warn_level_ratio_cfg
 ),
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 嶄寂蚊 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
 -- 及匯粁方象 --

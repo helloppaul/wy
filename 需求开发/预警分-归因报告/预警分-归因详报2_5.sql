@@ -1,6 +1,6 @@
 -- RMP_WARNING_SCORE_REPORT µÚ¶þ¶ÎºÍµÚÎå¶Î-µ±Ç°µÈ¼¶¹éÒòºÍ½¨Òé¹Ø×¢·çÏÕ --
-drop table if exists app_ehzh.RMP_WARNING_SCORE_REPORT2;  --@pth_rmp.RMP_WARNING_SCORE_REPORT2
-create table app_ehzh.RMP_WARNING_SCORE_REPORT2 as   --@pth_rmp.RMP_WARNING_SCORE_REPORT2
+drop table if exists app_ehzh.rmp_warning_score_report2;    
+create table app_ehzh.rmp_warning_score_report2 as      --@pth_rmp.rmp_warning_score_report2
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª »ù±¾ÐÅÏ¢ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 with
 corp_chg as  --´øÓÐ ³ÇÍ¶/²úÒµÅÐ¶ÏºÍ¹ú±êÒ»¼¶ÐÐÒµ/Ö¤¼à»áÒ»¼¶ÐÐÒµ µÄÌØÊâcorp_chg  (ÌØÊâ2)
@@ -90,11 +90,8 @@ rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as --ÌØÕ÷¹±Ï×¶È_×ÛºÏÔ¤¾¯µÈ¼¶
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª ÅäÖÃ±í ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 warn_dim_risk_level_cfg_ as  -- Î¬¶È¹±Ï×¶ÈÕ¼±È¶ÔÓ¦·çÏÕË®Æ½-ÅäÖÃ±í
 (
-	select 60 as low_contribution_percent,100 as high_contribution_percent,-3 as risk_lv ,'¸ß·çÏÕ' as risk_lv_desc   --(60,100]
-	union all  
-	select 40 as low_contribution_percent,60 as high_contribution_percent,-2 as risk_lv,'ÖÐ·çÏÕ' as risk_lv_desc   --(40,60]
-	union all  
-	select 0 as low_contribution_percent, 40 as high_contribution_percent,-1 as risk_lv,'µÍ·çÏÕ' as risk_lv_desc   --(0,40]
+	select * 
+	from pth_rmp.rmp_warn_dim_risk_level_cfg
 ),
 feat_CFG as --ÌØÕ÷ÊÖ¹¤ÅäÖÃ±í
 (
