@@ -78,8 +78,27 @@ RMP_WARNING_SCORE_MODEL_ as  --圓少蛍-庁侏潤惚燕
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 塘崔燕 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
 warn_level_ratio_cfg_ as -- 忝栽圓少吉雫吉雫皿蛍亀了-塘崔燕
 (
-	select * 
+	select 
+		property_cd,  --1:恢匍  2:廓誘
+		property,  -- '廓誘' , '恢匍'
+		warn_lv,   -- '-5','-4','-3','-2','-1'
+		percent_desc,  -- 念1% 念1%-10% ...
+		warn_lv_desc   -- 駄弼圓少吉雫  ...
 	from pth_rmp.rmp_warn_level_ratio_cfg
+),
+warn_adj_rule_cfg as --圓少蛍-庁侏翌航号夸塘崔燕   函恷仟etl_date議方象 (厚仟撞楕:晩業厚仟)
+(
+	select distinct
+		a.etl_date,
+		b.corp_id, 
+		b.corp_name as corp_nm,
+		a.category,
+		a.reason
+	from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf a  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
+	join corp_chg b 
+		on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
+	where operator = '徭強-欠�孀儕�其号夸'
+	  and ETL_DATE in (select max(etl_date) from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf)  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
 ),
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 嶄寂蚊 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
 -- 及匯粁方象 --
@@ -103,7 +122,7 @@ First_Part_Data as  --癖喘 圓少蛍-拷咀酒烏議方象
 	left join (select * from corp_chg where source_code='FI') chg
 		on main.corp_id=chg.corp_id
 	join warn_level_ratio_cfg_ cfg
-		on main.synth_warnlevel=cfg.warn_lv
+		on main.synth_warnlevel=cfg.warn_lv and chg.bond_type=cfg.property_cd
 ),
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 哘喘蚊 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
 -- 及匯粁佚連 --

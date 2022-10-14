@@ -102,13 +102,36 @@ rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as --特征贡献度_综合预警等级
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
 warn_level_ratio_cfg_ as -- 综合预警等级等级划分档位-配置表
 (
-	select * 
+	select 
+		property_cd,  --1:产业  2:城投
+		property,  -- '城投' , '产业'
+		warn_lv,   -- '-5','-4','-3','-2','-1'
+		percent_desc,  -- 前1% 前1%-10% ...
+		warn_lv_desc   -- 绿色预警等级  ...
 	from pth_rmp.rmp_warn_level_ratio_cfg
 ),
 warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
 (
-	select * 
+	select
+		low_contribution_percent,   --60 ...
+		high_contribution_percent,  --100  ...
+		risk_lv,   -- -3 ...
+		risk_lv_desc  -- 高风险 ...
 	from pth_rmp.rmp_warn_dim_risk_level_cfg
+),
+warn_adj_rule_cfg as --预警分-模型外挂规则配置表   取最新etl_date的数据 (更新频率:日度更新)
+(
+	select distinct
+		a.etl_date,
+		b.corp_id, 
+		b.corp_name as corp_nm,
+		a.category,
+		a.reason
+	from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf a  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
+	join corp_chg b 
+		on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
+	where operator = '自动-风险已暴露规则'
+	  and ETL_DATE in (select max(etl_date) from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf)  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
 ),
 feat_CFG as --特征手工配置表
 (
@@ -255,9 +278,9 @@ Fourth_Part_Data_synth_warnlevel as   --综合预警 等级变动(限定了预警等级变动为上
 		a.synth_warnlevel_l,  --昨日综合预警等级
 		cfg_l.warn_lv as synth_warnlevel_l_desc   -- used
 	from RMP_WARNING_SCORE_CHG_Batch a 
-	join warn_level_ratio_cfg_ cfg 
-		on cast(a.synth_warnlevel as string)=cfg.warn_lv
-	join warn_level_ratio_cfg_ cfg_l
+	join (select distinct warn_lv,warn_lv_desc from warn_level_ratio_cfg_) cfg 
+		on cast(a.synth_warnlevel as string)=cfg.warn_lv and 
+	join (select distinct warn_lv,warn_lv_desc from warn_level_ratio_cfg_) cfg_l
 		on cast(a.synth_warnlevel_l as string)=cfg_l.warn_lv
 	where a.chg_direction='上升'
 ),
