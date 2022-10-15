@@ -1,6 +1,4 @@
--- RMP_WARNING_SCORE_REPORT 第二段和第五段-当前等级归因和建议关注风险 --
-drop table if exists app_ehzh.rmp_warning_score_report2;    
-create table app_ehzh.rmp_warning_score_report2 as      --@pth_rmp.rmp_warning_score_report2
+-- WARNING_SCORE_S_REPORT 归因简报 --
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (特殊2)
@@ -74,18 +72,54 @@ RMP_WARNING_SCORE_MODEL_ as  --预警分-模型结果表
         on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
     join corp_chg chg
         on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
+	where score_dt=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
 ),
 RMP_WARNING_SCORE_DETAIL_ as  --预警分--归因详情 原始接口
 (
-	select * 
-	from app_ehzh.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
-	where delete_flag=0
+	-- 时间限制部分 --
+    select * 
+    from app_ehzh.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
+    where 1 in (select max(flag) from timeLimit_switch) 
+      and to_date(score_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
+    union all
+    -- 非时间限制部分 --
+    select * 
+    from app_ehzh.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
+    where 1 in (select not max(flag) from timeLimit_switch) 
+),
+RMP_WARNING_SCORE_DETAIL_HIS_ as  --预警分--归因详情历史 原始接口
+(
+	-- 时间限制部分 --
+    select * 
+    from app_ehzh.RMP_WARNING_SCORE_DETAIL_HIS  --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
+    where 1 in (select max(flag) from timeLimit_switch) 
+      and to_date(score_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
+    union all
+    -- 非时间限制部分 --
+    select * 
+    from app_ehzh.RMP_WARNING_SCORE_DETAIL_HIS  --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
+    where 1 in (select not max(flag) from timeLimit_switch) 
+
+	-- select * 
+	-- from app_ehzh.RMP_WARNING_SCORE_DETAIL_HIS  --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
+	-- where delete_flag=0
 ),
 -- 特征贡献度 --
 rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as --特征贡献度_综合预警等级
 (
-	select *
-	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf  --@hds.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
+	-- 时间限制部分 --
+    select * 
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
+    where 1 in (select max(flag) from timeLimit_switch) 
+      and to_date(end_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
+    union all
+    -- 非时间限制部分 --
+    select * 
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
+    where 1 in (select not max(flag) from timeLimit_switch) 
+
+	-- select *
+	-- from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf  --@hds.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
 ),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
 warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
@@ -128,7 +162,7 @@ feat_CFG as --特征手工配置表
     where sub_model_type='中频城投'
 ),
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
-rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch as --取每天最新批次 综合预警-贡献度排行榜(用于限制今天特征范围，昨天的不用限制)
+rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch as --取每天最新批次 综合预警-特征贡献度(用于限制今天特征范围，昨天的不用限制)
 (
 	select distinct a.feature_name,cfg.feature_name_target
 	from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ a
@@ -151,6 +185,20 @@ RMP_WARNING_SCORE_DETAIL_Batch as -- 取每天最新批次数据（当天数据做范围限制）
 	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
 		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
 	where a.idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
+),
+-- RMP_WARNING_SCORE_DETAIL_Batch as 
+-- (
+-- 	select a.*
+-- 	from RMP_WARNING_SCORE_DETAIL_Batch_Tmp a 
+-- 	join rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch c 
+-- 		on a.idx_name=c.feature_name  --特征范围限制
+-- ),
+mid_RMP_WARNING_SCORE_DETAIL_HIS as --！！！检查
+(
+	select main.*,cfg.risk_lv_desc as dim_warn_level_desc
+	from RMP_WARNING_SCORE_DETAIL_HIS_ main
+	left join warn_dim_risk_level_cfg_ cfg 
+		on main.dim_warn_level=cast(cfg.risk_lv as string)
 ),
 -- 第二段数据 --
 Second_Part_Data_Prepare as 
@@ -213,6 +261,71 @@ Second_Part_Data as
 		order by corp_id,score_dt desc,dim_contrib_ratio desc
 	) A
 ),
+RMP_WARNING_dim_warn_lv_And_idx_score_chg as --取每天最新批次的维度风险等级变动 以及 特征评分变动 数据
+(
+	select distinct
+		a.batch_dt,
+		a.corp_id,
+		a.corp_nm,
+		a.score_dt,
+		a.dimension,
+		a.dimension_ch,
+		a.type,
+		a.dim_contrib_ratio,   --维度贡献度占比(排序用) used
+		a.dim_warn_level,	  --今日维度风险等级
+		a.dim_warn_level_desc,
+		b.dim_warn_level as dim_warn_level_1,   --昨日维度风险等级
+		b.dim_warn_level_desc as dim_warn_level_1_desc,
+		case 
+			when cast(a.dim_warn_level as int)-cast(b.dim_warn_level as int) >0 then '上升'
+			else ''
+		end as dim_warn_level_chg_desc,
+		a.idx_name, 
+		a.idx_value,
+		a.feature_name_target,
+		a.idx_unit,
+		a.idx_score,   -- 今日指标打分
+		b.idx_score as idx_score_1, -- 昨日指标打分
+		case 
+			when cast(a.idx_score as int)-cast(b.idx_score as int) >0 then '恶化'  --指标层 特征评分卡得分变高则为恶化
+			else ''
+		end as idx_score_chg_desc
+	from Second_Part_Data a 
+	join mid_RMP_WARNING_SCORE_DETAIL_HIS b
+		on  a.corp_id=b.corp_id 
+			and to_date(date_add(a.score_dt,-1)) = b.score_dt
+			-- and to_date(date_add(from_unixtime(unix_timestamp(a.score_dt,'yyyyMMdd')),-1)) = to_date(date_add(from_unixtime(unix_timestamp(b.score_dt,'yyyyMMdd')),0))
+			and a.dimension=b.dimension
+		-- from_unixtime(unix_timestamp(to_date(a.score_dt),'yyyy-MM-dd'))=unix_timestamp(to_date(b.score_dt),'yyyy-MM-dd') and a.dimension=b.dimension
+),
+Fourth_Part_Data_dim_warn_level_And_idx_score as  
+(
+	select 
+		batch_dt,
+		corp_id,
+		corp_nm,
+		score_dt,
+		dimension,
+		dimension_ch,
+		type,
+		dim_contrib_ratio,  --维度贡献度占比(排序用) used
+		dim_warn_level,  --今日维度风险等级
+		dim_warn_level_desc,
+		dim_warn_level_1,  --昨日维度风险等级
+		dim_warn_level_1_desc,
+		dim_warn_level_chg_desc,  --维度风险等级变动 描述
+		idx_name,
+		feature_name_target,
+		idx_value,
+		idx_unit,
+		idx_score,
+		idx_score_1,
+		idx_score_chg_desc,
+		max(idx_score_chg_desc) over(partition by corp_id,score_dt,dimension) as dim_idx_score_chg_desc,  --维度层指标是否恶化
+		count(idx_name) over(partition by corp_id,score_dt,dimension,idx_score_chg_desc) as dim_idx_score_cnt,  --按照得分恶化和非恶化分别统计指标数量
+		row_number() over(partition by corp_id,score_dt,dimension order by dim_contrib_ratio desc) as dim_contrib_ratio_rank
+	from RMP_WARNING_dim_warn_lv_And_idx_score_chg
+),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 Second_Part_Data_Dimension as -- 按维度层汇总描述用数据
 (
@@ -247,6 +360,13 @@ Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
 	where factor_evaluate = 0
 	group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type
 ),
+-- 简报信息wy --
+
+
+
+
+
+
 -- 第二段信息 --
 Second_Msg_Dimension as  -- 维度层的信息描述
 (

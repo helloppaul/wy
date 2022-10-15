@@ -172,9 +172,9 @@ RMP_WARNING_SCORE_MODEL_Batch as  -- 取每天最新批次数据
 		on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
 ),
 -- 归因详情类数据 -- 
-rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch as --取每天最新批次 综合预警-贡献度排行榜(用于限制今天特征范围，昨天的不用限制)
+rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch as --取每天最新批次 综合预警-特征贡献度(用于限制今天特征范围，昨天的不用限制)
 (
-	select a.*,cfg.feature_name_target
+	select distinct a.feature_name,cfg.feature_name_target
 	from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ a
 	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ group by to_date(end_dt)) b
 		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
@@ -187,8 +187,7 @@ RMP_WARNING_SCORE_DETAIL_Batch as -- 取每天最新批次数据（当天数据做范围限制）
 	from RMP_WARNING_SCORE_DETAIL_ a
 	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
 		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
-	join rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch c 
-		on a.idx_name=c.feature_name  --特征范围限制
+	where a.idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
 ),
 mid_RMP_WARNING_SCORE_DETAIL_HIS as 
 (
@@ -284,7 +283,7 @@ Fourth_Part_Data_synth_warnlevel as   --综合预警 等级变动(限定了预警等级变动为上
 		on cast(a.synth_warnlevel_l as string)=cfg_l.warn_lv
 	where a.chg_direction='上升'
 ),
--- 维度风险等级变动类数据(used by 归因详情数据) --
+-- 维度风险等级变动类数据 & 因子特征评分变动类数据(used by 归因详情数据) --
 RMP_WARNING_dim_warn_lv_And_idx_score_chg as --取每天最新批次的维度风险等级变动 以及 特征评分变动 数据
 (
 	select distinct
@@ -318,7 +317,7 @@ RMP_WARNING_dim_warn_lv_And_idx_score_chg as --取每天最新批次的维度风险等级变动 
 	join mid_RMP_WARNING_SCORE_DETAIL_HIS b
 		on a.corp_id=b.corp_id and unix_timestamp(to_date(a.score_dt),'yyyy-MM-dd')-1=unix_timestamp(to_date(b.score_dt),'yyyy-MM-dd') and a.dimension=b.dimension
 ),
--- 第四段数据(中间层) --
+-- 维度因子打分变动类数据(used by 归因详情数据) --
 Fourth_Part_Data_dim_warn_level_And_idx_score as  
 (
 	select 

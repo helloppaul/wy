@@ -86,7 +86,6 @@ rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_ as  --特征原始值_高频 原始接口
     select *
     from app_ehzh.rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf
     where 1 in (select not max(flag) from timeLimit_switch) 
-
 ),
 rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf_ as  --特征原始值_低频 原始接口
 (
@@ -256,16 +255,20 @@ RMP_WARNING_SCORE_DETAIL_HIS_ as
         sub_model_name,
         idx_name,
         idx_value,
-        idx_unit,
-        dt
+        idx_unit
+        -- dt
     from app_ehzh.RMP_WARNING_SCORE_DETAIL_HIS   --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
     --where score_dt=to_date(date_add(current_timestamp(),-1))
 ),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
 warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
 (
-    select * 
-    from pth_rmp.rmp_warn_dim_risk_level_cfg
+	select
+		low_contribution_percent,   --60 ...
+		high_contribution_percent,  --100  ...
+		risk_lv,   -- -3 ...
+		risk_lv_desc  -- 高风险 ...
+	from pth_rmp.rmp_warn_dim_risk_level_cfg
 ),
 feat_CFG as  --特征手工配置表
 (
@@ -496,7 +499,7 @@ warn_contribution_ratio as
         chg.corp_name as corp_nm,
         to_date(a.end_dt) as score_dt,
         feature_name,
-        feature_pct as contribution_ratio,
+        feature_pct*100 as contribution_ratio,
         feature_risk_interval as abnormal_flag,  --异常标识 
         sub_model_name
     from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ a 
@@ -511,7 +514,7 @@ warn_feature_contrib as --特征贡献度-合并高中低频
 		chg.corp_name as corp_nm,
 		to_date(end_dt) as score_dt,
 		feature_name,
-		feature_pct,
+		feature_pct,   --已经*100
         model_freq_type,  --特征所属子模型分类/模型频率分类
 		feature_risk_interval,  --特征异常标识
 		model_name as sub_model_name,
@@ -524,7 +527,7 @@ warn_feature_contrib as --特征贡献度-合并高中低频
 			corp_code,
 			end_dt,
 			feature_name,
-			cast(feature_pct as float) as feature_pct,  --特征贡献度
+			cast(feature_pct*100 as float) as feature_pct,  --特征贡献度
 			'高频' as model_freq_type,
 			feature_risk_interval,  --特征异常标识（0/1,1代表异常）
 			model_name,
@@ -537,7 +540,7 @@ warn_feature_contrib as --特征贡献度-合并高中低频
 			corp_code,
 			end_dt,
 			feature_name,
-			cast(feature_pct as float) as feature_pct,  --特征贡献度
+			cast(feature_pct*100 as float) as feature_pct,  --特征贡献度
 			'低频' as model_freq_type,
 			feature_risk_interval,  --特征异常标识（0/1,1代表异常）
 			model_name,
@@ -550,7 +553,7 @@ warn_feature_contrib as --特征贡献度-合并高中低频
 			corp_code,
 			end_dt,
 			feature_name,
-			cast(feature_pct as float) as feature_pct,  --特征贡献度
+			cast(feature_pct*100 as float) as feature_pct,  --特征贡献度
 			'中频-城投' as model_freq_type,
 			feature_risk_interval,  --特征异常标识（0/1,1代表异常）
 			model_name,
@@ -563,7 +566,7 @@ warn_feature_contrib as --特征贡献度-合并高中低频
 			corp_code,
 			end_dt,
 			feature_name,
-			cast(feature_pct as float) as feature_pct,  --特征贡献度
+			cast(feature_pct*100 as float) as feature_pct,  --特征贡献度
 			'中频-产业' as model_freq_type,
 			feature_risk_interval,  --特征异常标识（0/1,1代表异常）
 			model_name,
@@ -654,7 +657,7 @@ warn_feature_contrib_res3_tmp as
 warn_feature_contrib_res3 as  -- 根据综合预警等级调整后的维度风险水平 的特征贡献度-合并高中低频
 (
     select distinct
-        batch_dt, 
+        batch_dt,
         corp_id,
         corp_nm,
         score_dt,
@@ -667,6 +670,8 @@ warn_feature_contrib_res3 as  -- 根据综合预警等级调整后的维度风险水平 的特征贡献
             case 
                 when cast(dim_risk_lv as string)<>adjust_warnlevel then 
                     adjust_warnlevel
+                else 
+                    cast(dim_risk_lv as string)
             end as dim_warn_level  --根据综合预警等级调整后的维度风险水平
         from warn_feature_contrib_res3_tmp a 
         join (select max(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp) b  --获取获取最高风险水平对应的维度
@@ -921,7 +926,7 @@ select distinct
     corp_nm,
     score_dt,
     dimension,
-    dim_warn_level,  --！！！和模型融合方案有关，待定
+    dim_warn_level,  
     0 as type_cd,
     type,
     sub_model_name,
@@ -929,7 +934,7 @@ select distinct
     idx_value,   --！！！指标值最终需要转换为目标输出展示形态，和配置表的单位列有关，暂时输出原始值
     idx_unit,  
     idx_score,   
-    contribution_ratio,
+    cast(contribution_ratio as float),
     contribution_cnt,  
     factor_evaluate,
     median,  --！！！ 待测试
