@@ -166,7 +166,8 @@ Second_Part_Data_Prepare as
 		main.type,  	-- used
 		main.idx_name,  -- used 
 		main.idx_value,  -- used
-		main.idx_unit,  -- used
+		main.last_idx_value, -- used in 简报wy
+		main.idx_unit,  -- used 
 		main.idx_score,  -- used
 		f_cfg.feature_name_target,  --特征名称-目标(系统)  used
 		main.contribution_ratio,
@@ -204,6 +205,7 @@ Second_Part_Data as
 			idx_name,  -- 异常因子/异常指标
 			feature_name_target,
 			idx_value,
+			last_idx_value,
 			idx_unit,
 			idx_score,   --指标评分 used
 			concat(feature_name_target,'为',cast(idx_value as string),idx_unit) as idx_desc,

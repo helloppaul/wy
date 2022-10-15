@@ -214,6 +214,7 @@ Second_Part_Data_Prepare as
 		main.type,  	-- used
 		main.idx_name,  -- used 
 		main.idx_value,  -- used
+		main.last_idx_value, -- used
 		main.idx_unit,  -- used
 		main.idx_score,  -- used
 		f_cfg.feature_name_target,  --特征名称-目标(系统)  used
@@ -252,6 +253,7 @@ Second_Part_Data as
 			idx_name,  -- 异常因子/异常指标
 			feature_name_target,
 			idx_value,
+			last_idx_value,
 			idx_unit,
 			idx_score,   --指标评分 used
 			concat(feature_name_target,'为',cast(idx_value as string),idx_unit) as idx_desc,
@@ -286,6 +288,23 @@ RMP_WARNING_dim_warn_lv_And_idx_score_chg as --取每天最新批次的维度风险等级变动 
 		a.idx_unit,
 		a.idx_score,   -- 今日指标打分
 		b.idx_score as idx_score_1, -- 昨日指标打分
+		concat(
+			'由',
+			case 
+				when last_idx_value>=idx_value then 
+					concat(
+							concat(cast(last_idx_value as string),idx_unit)
+							'升至',
+							concat(cast(idx_value as string),idx_unit)
+					)
+				else 
+					concat(
+							concat(cast(last_idx_value as string),idx_unit)
+							'降至',
+							concat(cast(idx_value as string),idx_unit)
+					)
+			end
+		) as last_idx_chg_desc,
 		case 
 			when cast(a.idx_score as int)-cast(b.idx_score as int) >0 then '恶化'  --指标层 特征评分卡得分变高则为恶化
 			else ''
@@ -327,26 +346,26 @@ Fourth_Part_Data_dim_warn_level_And_idx_score as
 	from RMP_WARNING_dim_warn_lv_And_idx_score_chg
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
-Second_Part_Data_Dimension as -- 按维度层汇总描述用数据
+-- Second_Part_Data_Dimension as -- 按维度层汇总描述用数据
+-- (
+-- 	select 
+-- 		batch_dt,
+-- 		corp_id,
+-- 		corp_nm,
+-- 		score_dt,
+-- 		dimension,
+-- 		dimension_ch,
+-- 		dim_contrib_ratio,
+-- 		dim_factorEvalu_contrib_ratio,
+-- 		dim_warn_level_desc,
+-- 		dim_factor_cnt,
+-- 		dim_factorEvalu_factor_cnt
+-- 	from Second_Part_Data
+-- 	where factor_evaluate = 0  --因子评价，因子是否异常的字段 0：异常 1：正常
+-- ),
+S_Second_Part_Data as --简报wy专用数据
 (
 	select 
-		batch_dt,
-		corp_id,
-		corp_nm,
-		score_dt,
-		dimension,
-		dimension_ch,
-		dim_contrib_ratio,
-		dim_factorEvalu_contrib_ratio,
-		dim_warn_level_desc,
-		dim_factor_cnt,
-		dim_factorEvalu_factor_cnt
-	from Second_Part_Data
-	where factor_evaluate = 0
-),
-Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
-(
-	select
 		batch_dt,
 		corp_id,
 		corp_nm,
@@ -354,134 +373,113 @@ Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
 		dimension,
 		dimension_ch,
 		type,
-		-- concat_ws('、',collect_set(idx_desc)) as idx_desc_in_one_type   -- hive 
-		group_concat(idx_desc,'、') as idx_desc_in_one_type    -- impala
+		factor_evaluate,
+		idx_desc,
+		last_idx_chg_desc,
 	from Second_Part_Data
-	where factor_evaluate = 0
-	group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type
-),
+)
+
+-- Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
+-- (
+-- 	select
+-- 		batch_dt,
+-- 		corp_id,
+-- 		corp_nm,
+-- 		score_dt,
+-- 		dimension,
+-- 		dimension_ch,
+-- 		type,
+-- 		factor_evaluate,
+-- 		last_idx_chg_desc,
+-- 		-- concat_ws('、',collect_set(idx_desc)) as idx_desc_in_one_type   -- hive 
+-- 		group_concat(idx_desc,'、') as idx_desc_in_one_type,    -- impala
+		
+-- 		group_concat(
+-- 			concat(
+-- 				idx_desc,
+-- 				case 
+-- 					when factor_evaluate
+-- 			)
+-- 		)
+-- 	from Second_Part_Data
+-- 	-- where factor_evaluate = 0
+-- 	group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type,factor_evaluate
+-- ),
+-- 简报数据 --
+s_datg_dim_type as   --汇总到维度，类别层数据
+(
+	select distinct
+		a.batch_dt,
+		a.corp_id,
+		a.corp_nm,
+		a.score_dt,
+		a.dimension,
+		a.dimension_ch,
+		a.type,
+		-- a.idx_desc_in_one_type,
+		a.idx_desc,
+		a.last_idx_chg_desc,
+		a.factor_evaluate,
+		b.dim_idx_score_chg_desc,
+		case 
+			when a.factor_evaluate=0 and b.dim_idx_score_chg_desc='恶化'  then 
+				'异常'
+			else
+				''
+		end as s_dim_desc  --简报维度层 '异常'字样输出逻辑
+	from Second_Part_Data a --当日归因结果
+	join Fourth_Part_Data_dim_warn_level_And_idx_score b --当日和前一日维度各因子打分对比
+		on  a.batch_dt=b.batch_dt 
+			and a.corp_id=b.corp_id 
+			and a.score_dt=b.score_dt 
+			and a.dimension=b.dimension
+			and a.type=b.type
+) ,
 -- 简报信息wy --
-
-
-
-
-
-
--- 第二段信息 --
-Second_Msg_Dimension as  -- 维度层的信息描述
+s_msg_dim_type as 
 (
-	select 
+	select distinct
 		batch_dt,
 		corp_id,
 		corp_nm,
 		score_dt,
-		dimension,
-		dimension_ch,
+		type,
 		concat(
-			dimension_ch,'维度','（','贡献度占比',cast(round(dim_contrib_ratio*100,0) as string),'%','）','，',
-			'该维度当前处于',dim_warn_level_desc,'风险等级','，',
-			dimension_ch,'维度','纳入的',cast(dim_factor_cnt as string),'个指标中','，',cast(dim_factorEvalu_factor_cnt as string),'个指标表现异常','，',
-			'异常指标对主体总体风险贡献度为',cast(round(dim_factorEvalu_contrib_ratio*100,0) as string) ,'%','，'
-		) as dim_msg
-	from Second_Part_Data_Dimension
+			case s_dim_desc
+				when '异常' then 
+					concat(
+						type,s_dim_desc,'：'
+						case 
+							when factor_evaluate=0 and dim_idx_score_chg_desc<>'恶化' then 
+								last_idx_chg_desc
+							when factor_evaluate=0 and dim_idx_score_chg_desc='恶化' then 
+								concat(last_idx_chg_desc,'且发生恶化，',last_idx_chg_desc)
+					)
+				else 
+					s_dim_desc
+			end
+		) as dim_type_msg
+	from s_datg_dim_type
 ),
-Second_Msg_Dimension_Type as 
+s_msg as   --最终信息展示汇总到企业层
 (
 	select 
 		batch_dt,
 		corp_id,
 		corp_nm,
 		score_dt,
-		dimension,
-		dimension_ch,
-		-- concat(concat_ws('；',collect_set(dim_type_msg)),'。') as idx_desc_one_row   -- hive 
-		concat(group_concat(dim_type_msg,'；'),'。') as idx_desc_in_one_dimension  --impala
-	from
+		if(corp_msg_='','该主体当前无显著风险点。',corp_msg_) as corp_msg
+	from 
 	(
 		select 
 			batch_dt,
 			corp_id,
 			corp_nm,
 			score_dt,
-			dimension,
-			dimension_ch,
-			type,
-			concat(
-				type,'异常：',idx_desc_in_one_type
-			) as dim_type_msg
-		from Second_Part_Data_Dimension_Type
-	)A 
-	group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch
-),
-Second_Msg_Dim as 
-(
-	select 
-		a.batch_dt,
-		a.corp_id,
-		a.corp_nm,
-		a.score_dt,
-		a.dimension,
-		concat(
-			a.dim_msg,b.idx_desc_in_one_dimension
-		) as msg_dim
-	from Second_Msg_Dimension a
-	join Second_Msg_Dimension_Type b 
-		on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id and a.dimension=b.dimension
-),
-Second_Msg as    --！！！还未对 贡献度占比 从大到小排序
-(
-	select 
-		batch_dt,
-		corp_id,
-		corp_nm,
-		score_dt,
-		-- concat_ws('\\r\\n',collect_set(msg_dim)) as msg
-		group_concat(msg_dim,'\\r\\n') as msg
-	from Second_Msg_Dim
-	group by batch_dt,corp_id,corp_nm,score_dt
-),
-Fifth_Data as 
-(
-	select 
-		batch_dt,
-		corp_id,
-		corp_nm,
-		score_dt,
-		-- concat_ws('、',collect_set(dimension_ch)) as abnormal_dim_msg  -- hive
-		group_concat(dimension_ch,'、') as abnormal_dim_msg -- impala
-	from 
-	(
-		select distinct
-			batch_dt,
-			corp_id,
-			corp_nm,
-			score_dt,
-			dimension_ch
-		from Second_Part_Data_Prepare
-		where factor_evaluate = 0   --因子评价，因子是否异常的字段 0：异常 1：正常
-	)A 
-	group by batch_dt,corp_id,corp_nm,score_dt
-),
-Fifth_Msg as 
-(
-	select 
-		batch_dt,
-		corp_id,
-		corp_nm,
-		score_dt,
-		concat('建议关注公司',abnormal_dim_msg,'带来的风险。') as msg
-	from Fifth_Data
+			-- concat_ws('\\r\\n',collect_set(dim_type_msg)) as corp_msg  -- hive
+			group_concat(distinct dim_type_msg,'\\r\\n') as corp_msg_  -- impala
+		from s_msg_dim_type
+		group by batch_dt,corp_id,corp_nm,score_dt
+	)A
 )
-------------------------------------以上部分为临时表-------------------------------------------------------------------
-select 
-	a.batch_dt,
-	a.corp_id,
-	a.corp_nm,
-	a.score_dt,
-	a.msg as msg2,
-	b.msg as msg5
-from Second_Msg a 
-join Fifth_Msg b 
-	on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id and a.score_dt=b.score_dt
-;
 

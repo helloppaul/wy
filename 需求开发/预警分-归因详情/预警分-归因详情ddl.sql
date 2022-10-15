@@ -1,4 +1,4 @@
--- 预警分-归因详情 RMP_WARNING_SCORE_DETAIL --
+-- 归因详情 RMP_WARNING_SCORE_DETAIL --
 drop table if exists pth_rmp.RMP_WARNING_SCORE_DETAIL;
 create table pth_rmp.RMP_WARNING_SCORE_DETAIL
 (
@@ -29,4 +29,4 @@ create table pth_rmp.RMP_WARNING_SCORE_DETAIL
 	update_by	string,
 	update_time	TIMESTAMP,
 	version	int
-)stored as Parquet;
+)stored as textfile;
