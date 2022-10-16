@@ -69,7 +69,7 @@ with serdeproperties
 )stored as textfile;
 
 GRANT ALL ON URI "hdfs://htsecnew/user/pth_rmp/" TO ROLE pth_rmp;  --如果用户有all权限，导入数据还需要URI的权限
-load data inpath '/user/pth_rmp/importfile/WARNING_SCORE_FEATURE_CFG.csv' 
+load data inpath '/user/pth_rmp/importfile/预警分-特征手工表.csv' 
 into table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_;  
 
 CREATE table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG as select * from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_;
@@ -78,7 +78,7 @@ CREATE table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG as select * from pth_rmp.RMP_
 -- show grant role pth_rmp;  --查看用户pth_rmp的权限
 GRANT ALL ON URI "hdfs://htsecnew/user/pth_rmp/" TO ROLE pth_rmp;  --如果用户有all权限，导入数据还需要URI的权限
 
-load data inpath '/user/pth_rmp/importfile/WARNING_SCORE_FEATURE_CFG.csv' 
+load data inpath '/user/pth_rmp/importfile/预警分-特征手工表.csv' 
 into table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG;  --导入数据
 
 export table pth_rmp.alert_score_summ to '/user/pth_rmp/alert_score_summ';  --导出数据

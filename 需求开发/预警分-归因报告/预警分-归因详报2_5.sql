@@ -97,26 +97,12 @@ warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
 		risk_lv_desc  -- 高风险 ...
 	from pth_rmp.rmp_warn_dim_risk_level_cfg
 ),
-feat_CFG as --特征手工配置表
+feat_CFG as  --特征手工配置表
 (
-    select 
+    select distinct
         feature_cd,
         feature_name,
-        sub_model_type,
-        feature_name_target,  --used
-        dimension,
-        type,
-        cal_explain,
-        feature_explain,
-        unit_origin,
-        unit_target
-    from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
-    where sub_model_type<>'中频城投'
-    union all 
-    select 
-        feature_cd,
-        feature_name,
-        '中频-城投' as sub_model_type,
+        substr(sub_model_type,1,6) as sub_model_type,  --取前两个中文字符
         feature_name_target,
         dimension,
         type,
@@ -125,7 +111,21 @@ feat_CFG as --特征手工配置表
         unit_origin,
         unit_target
     from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
-    where sub_model_type='中频城投'
+    where sub_model_type not in ('中频-产业','中频-城投','无监督')
+    union all 
+    select distinct
+        feature_cd,
+        feature_name,
+        sub_model_type,
+        feature_name_target,
+        dimension,
+        type,
+        cal_explain,
+        feature_explain,
+        unit_origin,
+        unit_target
+    from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
+    where sub_model_type in ('中频-产业','中频-城投','无监督')
 ),
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
 rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch as --取每天最新批次 综合预警-贡献度排行榜(用于限制今天特征范围，昨天的不用限制)

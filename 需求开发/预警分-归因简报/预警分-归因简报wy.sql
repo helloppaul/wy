@@ -1,4 +1,5 @@
 -- WARNING_SCORE_S_REPORT 归因简报 --
+-- ！！！ 存在数据只能跑出一家企业
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (特殊2)
@@ -74,6 +75,7 @@ RMP_WARNING_SCORE_MODEL_ as  --预警分-模型结果表
         on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
 	where score_dt=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
 ),
+-- 归因详情 --
 RMP_WARNING_SCORE_DETAIL_ as  --预警分--归因详情 原始接口
 (
 	-- 时间限制部分 --
@@ -131,26 +133,12 @@ warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
 		risk_lv_desc  -- 高风险 ...
 	from pth_rmp.rmp_warn_dim_risk_level_cfg
 ),
-feat_CFG as --特征手工配置表
+feat_CFG as  --特征手工配置表
 (
-    select 
+    select distinct
         feature_cd,
         feature_name,
-        sub_model_type,
-        feature_name_target,  --used
-        dimension,
-        type,
-        cal_explain,
-        feature_explain,
-        unit_origin,
-        unit_target
-    from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
-    where sub_model_type<>'中频城投'
-    union all 
-    select 
-        feature_cd,
-        feature_name,
-        '中频-城投' as sub_model_type,
+        substr(sub_model_type,1,6) as sub_model_type,  --取前两个中文字符
         feature_name_target,
         dimension,
         type,
@@ -159,7 +147,21 @@ feat_CFG as --特征手工配置表
         unit_origin,
         unit_target
     from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
-    where sub_model_type='中频城投'
+    where sub_model_type not in ('中频-产业','中频-城投','无监督')
+    union all 
+    select distinct
+        feature_cd,
+        feature_name,
+        sub_model_type,
+        feature_name_target,
+        dimension,
+        type,
+        cal_explain,
+        feature_explain,
+        unit_origin,
+        unit_target
+    from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
+    where sub_model_type in ('中频-产业','中频-城投','无监督')
 ),
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
 rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch as --取每天最新批次 综合预警-特征贡献度(用于限制今天特征范围，昨天的不用限制)
@@ -263,7 +265,7 @@ Second_Part_Data as
 		order by corp_id,score_dt desc,dim_contrib_ratio desc
 	) A
 ),
-RMP_WARNING_dim_warn_lv_And_idx_score_chg as --取每天最新批次的维度风险等级变动 以及 特征评分变动 数据
+RMP_WARNING_dim_warn_lv_And_idx_score_chg as --取每天最新批次的维度风险等级变动 以及 特征评分变动 数据，因子层面
 (
 	select distinct
 		a.batch_dt,
@@ -282,159 +284,102 @@ RMP_WARNING_dim_warn_lv_And_idx_score_chg as --取每天最新批次的维度风险等级变动 
 			when cast(a.dim_warn_level as int)-cast(b.dim_warn_level as int) >0 then '上升'
 			else ''
 		end as dim_warn_level_chg_desc,
+		a.factor_evaluate,
 		a.idx_name, 
 		a.idx_value,
+		a.last_idx_value,
 		a.feature_name_target,
 		a.idx_unit,
 		a.idx_score,   -- 今日指标打分
 		b.idx_score as idx_score_1, -- 昨日指标打分
-		concat(
-			'由',
-			case 
-				when last_idx_value>=idx_value then 
-					concat(
-							concat(cast(last_idx_value as string),idx_unit)
-							'升至',
-							concat(cast(idx_value as string),idx_unit)
-					)
-				else 
-					concat(
-							concat(cast(last_idx_value as string),idx_unit)
-							'降至',
-							concat(cast(idx_value as string),idx_unit)
-					)
-			end
-		) as last_idx_chg_desc,
 		case 
-			when cast(a.idx_score as int)-cast(b.idx_score as int) >0 then '恶化'  --指标层 特征评分卡得分变高则为恶化
+			when cast(a.idx_score as float)-cast(b.idx_score as float) >0 then '恶化'  --指标层 特征评分卡得分变高则为恶化
 			else ''
 		end as idx_score_chg_desc
 	from Second_Part_Data a 
 	join mid_RMP_WARNING_SCORE_DETAIL_HIS b
 		on  a.corp_id=b.corp_id 
 			and to_date(date_add(a.score_dt,-1)) = b.score_dt
-			-- and to_date(date_add(from_unixtime(unix_timestamp(a.score_dt,'yyyyMMdd')),-1)) = to_date(date_add(from_unixtime(unix_timestamp(b.score_dt,'yyyyMMdd')),0))
 			and a.dimension=b.dimension
-		-- from_unixtime(unix_timestamp(to_date(a.score_dt),'yyyy-MM-dd'))=unix_timestamp(to_date(b.score_dt),'yyyy-MM-dd') and a.dimension=b.dimension
-),
-Fourth_Part_Data_dim_warn_level_And_idx_score as  
-(
-	select 
-		batch_dt,
-		corp_id,
-		corp_nm,
-		score_dt,
-		dimension,
-		dimension_ch,
-		type,
-		dim_contrib_ratio,  --维度贡献度占比(排序用) used
-		dim_warn_level,  --今日维度风险等级
-		dim_warn_level_desc,
-		dim_warn_level_1,  --昨日维度风险等级
-		dim_warn_level_1_desc,
-		dim_warn_level_chg_desc,  --维度风险等级变动 描述
-		idx_name,
-		feature_name_target,
-		idx_value,
-		idx_unit,
-		idx_score,
-		idx_score_1,
-		idx_score_chg_desc,
-		max(idx_score_chg_desc) over(partition by corp_id,score_dt,dimension) as dim_idx_score_chg_desc,  --维度层指标是否恶化
-		count(idx_name) over(partition by corp_id,score_dt,dimension,idx_score_chg_desc) as dim_idx_score_cnt,  --按照得分恶化和非恶化分别统计指标数量
-		row_number() over(partition by corp_id,score_dt,dimension order by dim_contrib_ratio desc) as dim_contrib_ratio_rank
-	from RMP_WARNING_dim_warn_lv_And_idx_score_chg
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
--- Second_Part_Data_Dimension as -- 按维度层汇总描述用数据
--- (
--- 	select 
--- 		batch_dt,
--- 		corp_id,
--- 		corp_nm,
--- 		score_dt,
--- 		dimension,
--- 		dimension_ch,
--- 		dim_contrib_ratio,
--- 		dim_factorEvalu_contrib_ratio,
--- 		dim_warn_level_desc,
--- 		dim_factor_cnt,
--- 		dim_factorEvalu_factor_cnt
--- 	from Second_Part_Data
--- 	where factor_evaluate = 0  --因子评价，因子是否异常的字段 0：异常 1：正常
--- ),
-S_Second_Part_Data as --简报wy专用数据
-(
-	select 
-		batch_dt,
-		corp_id,
-		corp_nm,
-		score_dt,
-		dimension,
-		dimension_ch,
-		type,
-		factor_evaluate,
-		idx_desc,
-		last_idx_chg_desc,
-	from Second_Part_Data
-)
-
--- Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
--- (
--- 	select
--- 		batch_dt,
--- 		corp_id,
--- 		corp_nm,
--- 		score_dt,
--- 		dimension,
--- 		dimension_ch,
--- 		type,
--- 		factor_evaluate,
--- 		last_idx_chg_desc,
--- 		-- concat_ws('、',collect_set(idx_desc)) as idx_desc_in_one_type   -- hive 
--- 		group_concat(idx_desc,'、') as idx_desc_in_one_type,    -- impala
-		
--- 		group_concat(
--- 			concat(
--- 				idx_desc,
--- 				case 
--- 					when factor_evaluate
--- 			)
--- 		)
--- 	from Second_Part_Data
--- 	-- where factor_evaluate = 0
--- 	group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type,factor_evaluate
--- ),
 -- 简报数据 --
-s_datg_dim_type as   --汇总到维度，类别层数据
+Warn_lv_Feat_score_Idx_value_Summ as --合并 维度风险等级，特征评分 以及 指标变动(简报wy用) 数据
 (
-	select distinct
-		a.batch_dt,
-		a.corp_id,
-		a.corp_nm,
-		a.score_dt,
-		a.dimension,
-		a.dimension_ch,
-		a.type,
-		-- a.idx_desc_in_one_type,
-		a.idx_desc,
-		a.last_idx_chg_desc,
-		a.factor_evaluate,
-		b.dim_idx_score_chg_desc,
+	select *,
 		case 
-			when a.factor_evaluate=0 and b.dim_idx_score_chg_desc='恶化'  then 
+			when factor_evaluate=0 and dim_idx_score_chg_desc='恶化'  then 
 				'异常'
 			else
 				''
 		end as s_dim_desc  --简报维度层 '异常'字样输出逻辑
-	from Second_Part_Data a --当日归因结果
-	join Fourth_Part_Data_dim_warn_level_And_idx_score b --当日和前一日维度各因子打分对比
-		on  a.batch_dt=b.batch_dt 
-			and a.corp_id=b.corp_id 
-			and a.score_dt=b.score_dt 
-			and a.dimension=b.dimension
-			and a.type=b.type
-) ,
+	from 
+	(
+		select
+			batch_dt,
+			corp_id,
+			corp_nm,
+			score_dt,
+			dimension,
+			dimension_ch,
+			max(idx_score_chg_desc) over(partition by batch_dt,corp_id,score_dt,dimension) as dim_idx_score_chg_desc, 
+			type,
+			factor_evaluate,
+			idx_name, 
+			idx_value,
+			last_idx_value,
+			idx_unit,
+			concat(
+				case 
+					when factor_evaluate=0 and idx_score_chg_desc<>'恶化' then 
+						concat(feature_name_target,'为',cast(idx_value as string),idx_unit)
+					when factor_evaluate=0 and idx_score_chg_desc='恶化' then 
+						concat(
+							concat(feature_name_target,'为',cast(idx_value as string),idx_unit),'，','且发生恶化','，','由',
+							case 
+								when last_idx_value>=idx_value then 
+									concat(
+											concat(cast(last_idx_value as string),idx_unit),
+											'升至',
+											concat(cast(idx_value as string),idx_unit)
+									)
+								else 
+									concat(
+											concat(cast(last_idx_value as string),idx_unit),
+											'降至',
+											concat(cast(idx_value as string),idx_unit)
+									)
+							end
+						)
+					else ''
+				end
+			) as s_report_idx_desc,   --简报用到的指标层的指标描述数据
+			idx_score_chg_desc
+		from rmp_warning_dim_warn_lv_and_idx_score_chg
+	) A
+),
+s_datg_dim_type as   --汇总到维度，类别层数据 
+(
+	select
+		batch_dt,
+		corp_id,
+		corp_nm,
+		score_dt,
+		dimension,
+		s_dim_desc,
+		dim_idx_score_chg_desc,
+		-- dimension_ch,
+		type,
+		-- idx_desc_in_one_type,
+		-- idx_desc,
+		-- factor_evaluate,
+		-- concat_ws('；'collect_set(s_report_idx_desc)) as s_report_idx_desc_in_one_type  -- hive
+		group_concat(distinct s_report_idx_desc,'；') as s_report_idx_desc_in_one_type  -- impala 
+		  --简报维度层 '异常'字样输出逻辑
+	from Warn_lv_Feat_score_Idx_value_Summ 
+	group by batch_dt,corp_id,corp_nm,score_dt,dimension,s_dim_desc,dim_idx_score_chg_desc,type
+
+),
 -- 简报信息wy --
 s_msg_dim_type as 
 (
@@ -448,17 +393,12 @@ s_msg_dim_type as
 			case s_dim_desc
 				when '异常' then 
 					concat(
-						type,s_dim_desc,'：'
-						case 
-							when factor_evaluate=0 and dim_idx_score_chg_desc<>'恶化' then 
-								last_idx_chg_desc
-							when factor_evaluate=0 and dim_idx_score_chg_desc='恶化' then 
-								concat(last_idx_chg_desc,'且发生恶化，',last_idx_chg_desc)
+						type,s_dim_desc,'：',s_report_idx_desc_in_one_type
 					)
 				else 
 					s_dim_desc
 			end
-		) as dim_type_msg
+		) as s_datg_dim_type
 	from s_datg_dim_type
 ),
 s_msg as   --最终信息展示汇总到企业层
@@ -476,10 +416,27 @@ s_msg as   --最终信息展示汇总到企业层
 			corp_id,
 			corp_nm,
 			score_dt,
-			-- concat_ws('\\r\\n',collect_set(dim_type_msg)) as corp_msg  -- hive
-			group_concat(distinct dim_type_msg,'\\r\\n') as corp_msg_  -- impala
+			-- concat_ws('\\r\\n',collect_set(s_datg_dim_type)) as corp_msg  -- hive
+			group_concat(distinct s_datg_dim_type,'\\r\\n') as corp_msg_  -- impala
 		from s_msg_dim_type
 		group by batch_dt,corp_id,corp_nm,score_dt
 	)A
 )
-
+------------------------------------以上部分为临时表-------------------------------------------------------------------
+-- insert into pth_rmp.WARNING_SCORE_S_REPORT
+select distinct
+	'' as sid_kw,
+	batch_dt,
+	corp_id,
+	corp_nm,
+	score_dt,
+	corp_msg as report_msg,
+	'v1.0' as model_version,
+	0 as delete_flag,
+	'' as create_by,
+	current_timestamp() as create_time,
+	'' as update_by,
+	current_timestamp() as update_time,
+	0 as version
+from s_msg
+;

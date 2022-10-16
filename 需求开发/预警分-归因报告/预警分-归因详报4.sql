@@ -133,26 +133,12 @@ warn_adj_rule_cfg as --Ô¤¾¯·Ö-Ä£ĞÍÍâ¹Ò¹æÔòÅäÖÃ±í   È¡×îĞÂetl_dateµÄÊı¾İ (¸üĞÂÆµÂ
 	where operator = '×Ô¶¯-·çÏÕÒÑ±©Â¶¹æÔò'
 	  and ETL_DATE in (select max(etl_date) from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf)  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
 ),
-feat_CFG as --ÌØÕ÷ÊÖ¹¤ÅäÖÃ±í
+feat_CFG as  --ÌØÕ÷ÊÖ¹¤ÅäÖÃ±í
 (
-    select 
+    select distinct
         feature_cd,
         feature_name,
-        sub_model_type,
-        feature_name_target,  --used
-        dimension,
-        type,
-        cal_explain,
-        feature_explain,
-        unit_origin,
-        unit_target
-    from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
-    where sub_model_type<>'ÖĞÆµ³ÇÍ¶'
-    union all 
-    select 
-        feature_cd,
-        feature_name,
-        'ÖĞÆµ-³ÇÍ¶' as sub_model_type,
+        substr(sub_model_type,1,6) as sub_model_type,  --È¡Ç°Á½¸öÖĞÎÄ×Ö·û
         feature_name_target,
         dimension,
         type,
@@ -161,7 +147,21 @@ feat_CFG as --ÌØÕ÷ÊÖ¹¤ÅäÖÃ±í
         unit_origin,
         unit_target
     from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
-    where sub_model_type='ÖĞÆµ³ÇÍ¶'
+    where sub_model_type not in ('ÖĞÆµ-²úÒµ','ÖĞÆµ-³ÇÍ¶','ÎŞ¼à¶½')
+    union all 
+    select distinct
+        feature_cd,
+        feature_name,
+        sub_model_type,
+        feature_name_target,
+        dimension,
+        type,
+        cal_explain,
+        feature_explain,
+        unit_origin,
+        unit_target
+    from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
+    where sub_model_type in ('ÖĞÆµ-²úÒµ','ÖĞÆµ-³ÇÍ¶','ÎŞ¼à¶½')
 ),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª ÖĞ¼ä²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 RMP_WARNING_SCORE_MODEL_Batch as  -- È¡Ã¿Ìì×îĞÂÅú´ÎÊı¾İ
@@ -286,7 +286,7 @@ Fourth_Part_Data_synth_warnlevel as   --×ÛºÏÔ¤¾¯ µÈ¼¶±ä¶¯(ÏŞ¶¨ÁËÔ¤¾¯µÈ¼¶±ä¶¯ÎªÉÏ
 	where a.chg_direction='ÉÏÉı'
 ),
 -- Î¬¶È·çÏÕµÈ¼¶±ä¶¯ÀàÊı¾İ & Òò×ÓÌØÕ÷ÆÀ·Ö±ä¶¯ÀàÊı¾İ(used by ¹éÒòÏêÇéÊı¾İ) --
-RMP_WARNING_dim_warn_lv_And_idx_score_chg as --È¡Ã¿Ìì×îĞÂÅú´ÎµÄÎ¬¶È·çÏÕµÈ¼¶±ä¶¯ ÒÔ¼° ÌØÕ÷ÆÀ·Ö±ä¶¯ Êı¾İ
+RMP_WARNING_dim_warn_lv_And_idx_score_chg as --È¡Ã¿Ìì×îĞÂÅú´ÎµÄÎ¬¶È·çÏÕµÈ¼¶±ä¶¯ ÒÔ¼° ÌØÕ÷ÆÀ·Ö±ä¶¯ Êı¾İ£¬Òò×Ó²ãÃæ
 (
 	select distinct
 		a.batch_dt,
@@ -305,19 +305,23 @@ RMP_WARNING_dim_warn_lv_And_idx_score_chg as --È¡Ã¿Ìì×îĞÂÅú´ÎµÄÎ¬¶È·çÏÕµÈ¼¶±ä¶¯ 
 			when cast(a.dim_warn_level as int)-cast(b.dim_warn_level as int) >0 then 'ÉÏÉı'
 			else ''
 		end as dim_warn_level_chg_desc,
+		a.factor_evaluate,
 		a.idx_name, 
 		a.idx_value,
+		a.last_idx_value,
 		a.feature_name_target,
 		a.idx_unit,
 		a.idx_score,   -- ½ñÈÕÖ¸±ê´ò·Ö
 		b.idx_score as idx_score_1, -- ×òÈÕÖ¸±ê´ò·Ö
 		case 
-			when cast(a.idx_score as int)-cast(b.idx_score as int) >0 then '¶ñ»¯'  --Ö¸±ê²ã ÌØÕ÷ÆÀ·Ö¿¨µÃ·Ö±ä¸ßÔòÎª¶ñ»¯
+			when cast(a.idx_score as float)-cast(b.idx_score as float) >0 then '¶ñ»¯'  --Ö¸±ê²ã ÌØÕ÷ÆÀ·Ö¿¨µÃ·Ö±ä¸ßÔòÎª¶ñ»¯
 			else ''
 		end as idx_score_chg_desc
 	from Second_Part_Data a 
 	join mid_RMP_WARNING_SCORE_DETAIL_HIS b
-		on a.corp_id=b.corp_id and unix_timestamp(to_date(a.score_dt),'yyyy-MM-dd')-1=unix_timestamp(to_date(b.score_dt),'yyyy-MM-dd') and a.dimension=b.dimension
+		on  a.corp_id=b.corp_id 
+			and to_date(date_add(a.score_dt,-1)) = b.score_dt
+			and a.dimension=b.dimension
 ),
 -- Î¬¶ÈÒò×Ó´ò·Ö±ä¶¯ÀàÊı¾İ(used by ¹éÒòÏêÇéÊı¾İ) --
 Fourth_Part_Data_dim_warn_level_And_idx_score as  

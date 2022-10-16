@@ -38,41 +38,14 @@ rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接
     from app_ehzh.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
     where 1 in (select not max(flag) from timeLimit_switch) 
 ),
-RMP_WARNING_SCORE_MODEL_ as  --预警分-模型结果表
+rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_batch as 
 (
-    select distinct
-        cast(a.rating_dt as string) as batch_dt,
-        chg.corp_id,
-        chg.corp_name as corp_nm,
-		chg.credit_code as credit_cd,
-        to_date(a.rating_dt) as score_date,
-        a.total_score_adjusted as synth_score,  -- 预警分
-		case a.interval_text_adjusted
-			when '绿色预警' then '-1' 
-			when '黄色预警' then '-2'
-			when '橙色预警' then '-3'
-			when '红色预警' then '-4'
-			when '风险已暴露' then '-5'
-		end as synth_warnlevel,  -- 综合预警等级,
-		case
-			when a.interval_text_adjusted in ('绿色预警','黄色预警') then 
-				'-1'   --低风险
-			when a.interval_text_adjusted  = '橙色预警' then 
-				'-2'  --中风险
-			when a.interval_text_adjusted  ='红色预警' then 
-				'-3'  --高风险
-			when a.interval_text_adjusted  ='风险已暴露' then 
-				'-4'   --风险已暴露
-		end as adjust_warnlevel,
-		a.model_name,
-		a.model_version
-    from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a   
-    join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
-        on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
-    join corp_chg chg
-        on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
-    -- from app_ehzh.RMP_WARNING_SCORE_MODEL  --@pth_rmp.RMP_WARNING_SCORE_MODEL
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a 
+	join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
+		on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
 ),
+
 -- 特征原始值 --
 rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_ as  --特征原始值_高频 原始接口
 (
@@ -272,7 +245,21 @@ warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
 ),
 feat_CFG as  --特征手工配置表
 (
-    select 
+    select distinct
+        feature_cd,
+        feature_name,
+        substr(sub_model_type,1,6) as sub_model_type,  --取前两个中文字符
+        feature_name_target,
+        dimension,
+        type,
+        cal_explain,
+        feature_explain,
+        unit_origin,
+        unit_target
+    from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
+    where sub_model_type not in ('中频-产业','中频-城投','无监督')
+    union all 
+    select distinct
         feature_cd,
         feature_name,
         sub_model_type,
@@ -284,21 +271,7 @@ feat_CFG as  --特征手工配置表
         unit_origin,
         unit_target
     from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
-    where sub_model_type<>'中频城投'
-    union all 
-    select 
-        feature_cd,
-        feature_name,
-        '中频-城投' as sub_model_type,
-        feature_name_target,
-        dimension,
-        type,
-        cal_explain,
-        feature_explain,
-        unit_origin,
-        unit_target
-    from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
-    where sub_model_type='中频城投'
+    where sub_model_type in ('中频-产业','中频-城投','无监督')
 ),
 --映射后 特征手工配置表 --
 warn_feat_CFG as 
@@ -323,6 +296,136 @@ warn_feat_CFG as
         count(feature_cd) over(partition by dimension) as contribution_cnt
     from feat_CFG
 ),
+--—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
+-- 预警分 --
+RMP_WARNING_SCORE_MODEL_ as  --预警分-模型结果表（已是最新批次）
+(
+    select distinct
+        cast(a.rating_dt as string) as batch_dt,
+        chg.corp_id,
+        chg.corp_name as corp_nm,
+		chg.credit_code as credit_cd,
+        to_date(a.rating_dt) as score_date,
+        a.total_score_adjusted as synth_score,  -- 预警分
+		case a.interval_text_adjusted
+			when '绿色预警' then '-1' 
+			when '黄色预警' then '-2'
+			when '橙色预警' then '-3'
+			when '红色预警' then '-4'
+			when '风险已暴露' then '-5'
+		end as synth_warnlevel,  -- 综合预警等级,
+		case
+			when a.interval_text_adjusted in ('绿色预警','黄色预警') then 
+				'-1'   --低风险
+			when a.interval_text_adjusted  = '橙色预警' then 
+				'-2'  --中风险
+			when a.interval_text_adjusted  ='红色预警' then 
+				'-3'  --高风险
+			when a.interval_text_adjusted  ='风险已暴露' then 
+				'-4'   --风险已暴露
+		end as adjust_warnlevel,
+		a.model_name,
+		a.model_version
+    from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_batch a 
+    join corp_chg chg
+        on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
+	-- where score_dt=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
+    -- from app_ehzh.RMP_WARNING_SCORE_MODEL  --@pth_rmp.RMP_WARNING_SCORE_MODEL
+),
+-- 特征原始值 --
+rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_batch as  --特征原始值_高频 原始接口
+(
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_ group by to_date(end_dt)) b
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
+),
+rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf_batch as  --特征原始值_低频 原始接口
+(
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf_ group by to_date(end_dt)) b
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
+),
+rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf_batch as  --特征原始值_中频_城投 原始接口
+(
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf_ group by to_date(end_dt)) b
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
+),
+rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf_batch as  --特征原始值_中频_产业债 原始接口
+(
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf_ group by to_date(end_dt)) b
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
+),
+-- 特征贡献度 --
+rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_batch as  --特征贡献度_融合调整后综合 原始接口（增加了无监督特征：creditrisk_highfreq_unsupervised  ）
+(
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ group by to_date(end_dt)) b
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
+),
+rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf_batch as --特征贡献度_高频
+(
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf_ group by to_date(end_dt)) b
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
+),
+rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_batch as  --特征贡献度_低频
+(
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_ group by to_date(end_dt)) b
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
+),
+rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf_batch as  --特征贡献度_中频城投
+(
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf_ group by to_date(end_dt)) b
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
+),
+rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf_batch as  --特征贡献度_中频产业
+(
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf_ group by to_date(end_dt)) b
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
+),
+-- 特征得分(特征打分卡) --
+rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf_batch as  --特征得分_高频 原始接口 
+(
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf_ group by to_date(end_dt)) b
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
+),
+rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf_batch as  --特征得分_低频 原始接口
+(
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf_ group by to_date(end_dt)) b
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
+),
+rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf_batch as  --特征得分_中频_城投 原始接口
+(
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf_ group by to_date(end_dt)) b
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
+),
+rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf_batch as  --特征得分_中频_产业债 原始接口
+(
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf_ a 
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf_ group by to_date(end_dt)) b
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
+),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 -- 预警分 --
 warn_union_adj_sync_score as --取最新批次的预警分-模型结果表
@@ -337,8 +440,6 @@ warn_union_adj_sync_score as --取最新批次的预警分-模型结果表
         a.adjust_warnlevel,
         a.model_version
     from RMP_WARNING_SCORE_MODEL_ a
-    join (select max(batch_dt) as max_batch_dt,score_date from RMP_WARNING_SCORE_MODEL_ group by score_date) b
-        on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
 ),
 -- warn_union_adj_sync_score as --取最新批次的融合调整后综合预警分
 -- (
@@ -388,7 +489,7 @@ warn_feature_value as --原始特征值_合并高中低频
             '高频' as model_freq_type,
             model_name,
             model_version
-        from rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_ 
+        from rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_batch 
         union all 
         --低频
         select distinct
@@ -400,7 +501,7 @@ warn_feature_value as --原始特征值_合并高中低频
             '低频' as model_freq_type,
             model_name,
             model_version
-        from rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf_ 
+        from rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf_batch  
         union all 
         --中频_城投
         select distinct
@@ -412,7 +513,7 @@ warn_feature_value as --原始特征值_合并高中低频
             '中频-城投' as model_freq_type,
             model_name,
             model_version
-        from rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf_ 
+        from rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf_batch 
         union all 
         --中频_产业债
         select distinct
@@ -424,9 +525,9 @@ warn_feature_value as --原始特征值_合并高中低频
             '中频-产业' as model_freq_type,
             model_name,
             model_version
-        from rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf_ 
+        from rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf_batch 
     )A join corp_chg chg 
-        on cast(a.corp_code as string)=chg.source_id and chg.source_code='FI'
+        on cast(a.corp_code as string)=chg.source_id and chg.source_code='ZXZX'
 ),
 warn_feature_value_with_median as --原始特征值_合并高中低频+中位数计算
 (
@@ -443,7 +544,7 @@ warn_feature_value_with_median as --原始特征值_合并高中低频+中位数计算
         nvl(b.industryphy_name,'') as gb,
         nvl(b.bond_type,0) as bond_type  --0：非产业和城投 1：产业债 2：城投债
     from warn_feature_value a 
-    left join (select corp_id,corp_name,bond_type,industryphy_name from corp_chg where source_code='FI') b 
+    left join (select corp_id,corp_name,bond_type,industryphy_name from corp_chg where source_code='ZXZX') b 
         on a.corp_id=b.corp_id 
 ),
 warn_feature_value_with_median_cal as 
@@ -502,9 +603,9 @@ warn_contribution_ratio as
         feature_pct*100 as contribution_ratio,
         feature_risk_interval as abnormal_flag,  --异常标识 
         sub_model_name
-    from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ a 
+    from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_batch a 
     join corp_chg chg 
-        on cast(a.corp_code as string)=chg.source_id and chg.source_code='FI'
+        on cast(a.corp_code as string)=chg.source_id and chg.source_code='ZXZX'
 ),
 warn_feature_contrib as --特征贡献度-合并高中低频
 (
@@ -532,7 +633,7 @@ warn_feature_contrib as --特征贡献度-合并高中低频
 			feature_risk_interval,  --特征异常标识（0/1,1代表异常）
 			model_name,
 			model_version
-		from rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf_
+		from rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf_batch
 		union all 
 		--低频
 		select distinct
@@ -545,7 +646,7 @@ warn_feature_contrib as --特征贡献度-合并高中低频
 			feature_risk_interval,  --特征异常标识（0/1,1代表异常）
 			model_name,
 			model_version
-		from rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_
+		from rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_batch
 		union all 
 		--中频-城投
 		select distinct
@@ -558,7 +659,7 @@ warn_feature_contrib as --特征贡献度-合并高中低频
 			feature_risk_interval,  --特征异常标识（0/1,1代表异常）
 			model_name,
 			model_version
-		from rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf_ 
+		from rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf_batch 
 		union all 
 		--中频-产业
 		select distinct
@@ -571,9 +672,9 @@ warn_feature_contrib as --特征贡献度-合并高中低频
 			feature_risk_interval,  --特征异常标识（0/1,1代表异常）
 			model_name,
 			model_version
-		from rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf_
+		from rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf_batch
 	)A join corp_chg chg 
-        on cast(a.corp_code as string)=chg.source_id and chg.source_code='FI'
+        on cast(a.corp_code as string)=chg.source_id and chg.source_code='ZXZX'
 ),
 warn_feature_contrib_res1 as  --带有 维度贡献度占比 的特征贡献度-合并高中低频  
 (
@@ -601,7 +702,7 @@ warn_feature_contrib_res1 as  --带有 维度贡献度占比 的特征贡献度-合并高中低频
             a.sub_model_name
         from warn_feature_contrib a 
         left join warn_feat_CFG f_cfg 
-            on a.feature_name=f_cfg.feature_cd and a.model_freq_type=substr(f_cfg.sub_model_type,1,6)
+            on a.feature_name=f_cfg.feature_cd and a.model_freq_type=f_cfg.sub_model_type --and a.model_freq_type=substr(f_cfg.sub_model_type,1,6)
     )B group by batch_dt,corp_id,corp_nm,score_dt,dimension,model_freq_type
 ),
 warn_feature_contrib_res2 as  -- 带有 维度风险等级 的特征贡献度-合并高中低频
@@ -725,7 +826,7 @@ warn_score_card as
             feature_score,
             model_name,
             model_version
-        from rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf_ --高频-频分卡
+        from rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf_batch --高频-频分卡
         union all
         select distinct
             end_dt as batch_dt,
@@ -735,7 +836,7 @@ warn_score_card as
             feature_score,
             model_name,
             model_version
-        from rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf_ --低频-频分卡
+        from rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf_batch --低频-频分卡
         union all
         select distinct
             end_dt as batch_dt,
@@ -745,7 +846,7 @@ warn_score_card as
             feature_score,
             model_name,
             model_version
-        from rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf_ --中频_城投-频分卡
+        from rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf_batch --中频_城投-频分卡
         union all
         select distinct
             end_dt as batch_dt,
@@ -755,9 +856,9 @@ warn_score_card as
             feature_score,
             model_name,
             model_version
-        from rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf_ --中频_产业债-频分卡
+        from rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf_batch --中频_产业债-频分卡
     )A join corp_chg chg 
-        on cast(a.corp_code as string)=chg.source_id and chg.source_code='FI'
+        on cast(a.corp_code as string)=chg.source_id and chg.source_code='ZXZX'
 ),
 -- -- 上一日指标值 --
 warn_lastday_idx_value as 
@@ -804,7 +905,7 @@ res1 as   --预警分+特征原始值+综合贡献度
         on main.corp_id=b.corp_id and main.batch_dt=b.batch_dt and main.sub_model_name=b.sub_model_name
     union all 
     --特征贡献度的无监督子模型 特殊处理  （只有贡献度占比数据，其余均为空，不下钻至因子层面）
-    select
+    select distinct
         batch_dt,
         corp_id,
         corp_nm,
@@ -818,10 +919,11 @@ res1 as   --预警分+特征原始值+综合贡献度
         contribution_ratio,
         NULL as factor_evaluate, 
         '' as sub_model_name_zhgxd 
-    from ( select distinct a1.* FROM warn_contribution_ratio a1
-           join warn_contribution_ratio_with_factor_evl a2
-                on a1.batch_dt=a2.batch_dt   --a1表的batch_dt和a2表需保持一致
+    from ( select  a1.* FROM warn_contribution_ratio a1
             where a1.feature_name = 'creditrisk_highfreq_unsupervised'
+        --    where a1.batch_dt in (select max(batch_dt) as max_batch_dt from warn_contribution_ratio_with_factor_evl)
+                -- on a1.batch_dt and a2.batch_dt   --a1表的batch_dt和a2表需保持一致
+            -- and a1.feature_name = 'creditrisk_highfreq_unsupervised'
         ) A 
 ),
 res2 as --预警分+特征原始值+综合贡献度+指标评分卡
@@ -876,10 +978,11 @@ res3 as   --预警分+特征原始值+综合贡献度+指标评分卡+特征配置表
         f_cfg.contribution_cnt  --归因个数
     from res2 main
     left join warn_feat_CFG f_cfg
-        on main.idx_name=f_cfg.feature_cd and  main.model_freq_type=substr(f_cfg.sub_model_type,1,6)
+        on main.idx_name=f_cfg.feature_cd and main.model_freq_type=f_cfg.sub_model_type --and  main.model_freq_type=substr(f_cfg.sub_model_type,1,6)
     left join warn_lastday_idx_value lst  --昨日预警分-归因详情数据。若为空，则表示当日为首次数据衍生
         on main.corp_id=lst.corp_id and 
-           unix_timestamp(to_date(main.score_dt),'yyyy-MM-dd')-1=unix_timestamp(to_date(lst.score_dt),'yyyy-MM-dd') and 
+            to_date(date_add(main.score_dt,-1)) = lst.score_dt and 
+        --    unix_timestamp(to_date(main.score_dt),'yyyy-MM-dd')-1=unix_timestamp(to_date(lst.score_dt),'yyyy-MM-dd') and 
            main.sub_model_name=lst.sub_model_name and 
            main.idx_name=lst.idx_name
 ),
