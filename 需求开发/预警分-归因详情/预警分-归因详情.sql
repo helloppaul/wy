@@ -1,5 +1,6 @@
 -- RMP_WARNING_SCORE_DETAIL (Í¬²½·½Ê½£ºÒ»Ìì¶ÔÅú´Î²åÈë) --
 -- ÒÀÀµ Ä£ĞÍ ×ÛºÏÔ¤¾¯·Ö£¬ÌØÕ÷Ô­Ê¼Öµ¸ßÖĞµÍ£¬ÌØÕ÷¹±Ï×¶È¸ßÖĞµÍÎŞ¼à¶½ÒÔ¼°×ÛºÏ£¬ÆÀ·Ö¿¨¸ßÖĞµÍ£¬¹éÒòÏêÇé¼°ÆäÀúÊ· PS:²»ÒÀÀµpth_rmp.Ä£ĞÍ½á¹û±í
+--Î¬¶È·çÏÕµÈ¼¶µÄ¼ÆËãÒÀ¿¿¹±Ï×¶ÈÕ¼±È£¬¹±Ï×¶ÈÕ¼±ÈÌØÕ÷»áÉÙÓÚÌØÕ÷Ô­Ê¼Öµ£¬´ËÊ±×îºó¹ØÁª½«»á²úÉúÄ³Ğ©Î¬¶È¹ØÁª²¹ÉÏÎ¬¶È·çÏÕµÈ¼¶£¬µ¼ÖÂÎªNULL(ÔİÊ±¾ö¶¨Ìßµô)
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª »ù±¾ĞÅÏ¢ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 with
 corp_chg as  --´øÓĞ ³ÇÍ¶/²úÒµÅĞ¶ÏºÍ¹ú±êÒ»¼¶ĞĞÒµ µÄÌØÊâcorp_chg
@@ -231,7 +232,7 @@ RMP_WARNING_SCORE_DETAIL_HIS_ as
         idx_unit
         -- dt
     from app_ehzh.RMP_WARNING_SCORE_DETAIL_HIS   --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
-    --where score_dt=to_date(date_add(current_timestamp(),-1))
+    where score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
 ),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª ÅäÖÃ±í ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 warn_dim_risk_level_cfg_ as  -- Î¬¶È¹±Ï×¶ÈÕ¼±È¶ÔÓ¦·çÏÕË®Æ½-ÅäÖÃ±í
@@ -802,8 +803,11 @@ warn_contribution_ratio_with_factor_evl as  --´øÒò×ÓÆÀ¼ÛµÄÌØÕ÷¹±Ï×¶ÈÓ¦ÓÃ²ãÊı¾İ(²
         end as factor_evaluate,
         a.sub_model_name
     from (select * from warn_contribution_ratio where feature_name <> 'creditrisk_highfreq_unsupervised') a 
-    left join warn_feature_value b 
-        on a.corp_id=b.corp_id and a.batch_dt=b.batch_dt and a.sub_model_name=b.sub_model_name
+    left join (select * from warn_feature_value where idx_value is not null) b 
+        on  a.corp_id=b.corp_id 
+            and a.batch_dt=b.batch_dt 
+            and a.sub_model_name=b.sub_model_name 
+            and a.feature_name=b.idx_name
 ),
 -- ÆÀ·Ö¿¨ --
 warn_score_card as 
@@ -902,7 +906,10 @@ res1 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È
         b.sub_model_name as sub_model_name_zhgxd   --×ÛºÏ¹±Ï×¶ÈµÄ×ÓÄ£ĞÍÃû³Æ
     from res0 main
     left join warn_contribution_ratio_with_factor_evl b  
-        on main.corp_id=b.corp_id and main.batch_dt=b.batch_dt and main.sub_model_name=b.sub_model_name
+        on  main.corp_id=b.corp_id 
+            and main.batch_dt=b.batch_dt 
+            and main.sub_model_name=b.sub_model_name 
+            and main.idx_name=b.feature_name
     union all 
     --ÌØÕ÷¹±Ï×¶ÈµÄÎŞ¼à¶½×ÓÄ£ĞÍ ÌØÊâ´¦Àí  £¨Ö»ÓĞ¹±Ï×¶ÈÕ¼±ÈÊı¾İ£¬ÆäÓà¾ùÎª¿Õ£¬²»ÏÂ×êÖÁÒò×Ó²ãÃæ£©
     select distinct
@@ -946,7 +953,10 @@ res2 as --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨
         b.sub_model_name as sub_model_name_zbpfk  --Ö¸±êÆÀ·Ö¿¨µÄ×ÖÄ£ĞÍÃû³Æ
     from  res1 main 
     left join warn_score_card b 
-        on main.corp_id=b.corp_id and main.batch_dt=b.batch_dt and main.sub_model_name=b.sub_model_name
+        on  main.corp_id=b.corp_id 
+            and main.batch_dt=b.batch_dt 
+            and main.sub_model_name=b.sub_model_name 
+            and main.idx_name=b.idx_name
 ),
 res3 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í
 (
