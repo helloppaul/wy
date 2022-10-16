@@ -1,16 +1,14 @@
--- 预警分-模型结果表 RMP_WARNING_SCORE_MODEL --
-create table pth_rmp.RMP_WARNING_SCORE_MODEL 
+-- 预警分-归因简报wy RMP_WARNING_SCORE_S_REPORT --
+drop table if exists pth_rmp.RMP_WARNING_SCORE_S_REPORT_ZX ;
+create table pth_rmp.RMP_WARNING_SCORE_S_REPORT_ZX 
 (
 	sid_kw string,
 	batch_dt string,
 	corp_id string,
 	corp_nm string,
-	credit_cd string,
-	score_date timestamp,
-	synth_warnlevel string,
-	synth_score double,
+	score_dt timestamp,
+	report_msg string,
 	model_version string,
-	adjust_warnlevel string,
 	delete_flag	tinyint,
 	create_by	string,
 	create_time	TIMESTAMP,

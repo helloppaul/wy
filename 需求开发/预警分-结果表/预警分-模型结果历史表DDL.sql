@@ -16,5 +16,5 @@ create table pth_rmp.RMP_WARNING_SCORE_MODEL_HIS
 	update_by	string,
 	update_time	TIMESTAMP,
 	version	tinyint
-)partitioned by (dt int)
- stored as Parquet;
+)partitioned by (etl_date int)
+ stored as textfile;

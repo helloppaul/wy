@@ -1,5 +1,4 @@
--- WARNING_SCORE_S_REPORT 归因简报 --
--- ！！！ 存在数据只能跑出一家企业
+-- RMP_WARNING_SCORE_S_REPORT 归因简报 --
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (特殊2)
@@ -425,7 +424,8 @@ s_msg as   --最终信息展示汇总到企业层
 ------------------------------------以上部分为临时表-------------------------------------------------------------------
 -- insert into pth_rmp.WARNING_SCORE_S_REPORT
 select distinct
-	'' as sid_kw,
+	-- concat(corp_id,md5(concat(batch_dt,corp_id))) as sid_kw,  -- hive
+	'' as sid_kw,  -- impala
 	batch_dt,
 	corp_id,
 	corp_nm,
