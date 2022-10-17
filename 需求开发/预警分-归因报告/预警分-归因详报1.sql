@@ -119,7 +119,7 @@ First_Part_Data as  --适用 预警分-归因简报的数据
 		cfg.warn_lv_desc, --预警等级描述 used
 		cfg.percent_desc  --预警等级档位百分比划分 used
 	from RMP_WARNING_SCORE_MODEL_ main 
-	left join (select * from corp_chg where source_code='FI') chg
+	left join (select * from corp_chg where source_code='ZXZX') chg
 		on main.corp_id=chg.corp_id
 	join warn_level_ratio_cfg_ cfg
 		on main.synth_warnlevel=cfg.warn_lv and chg.bond_type=cfg.property_cd

@@ -80,64 +80,70 @@ cm_property as
 insert into pth_rmp.rmp_COMPANY_CORE_REL partition(etl_date=${ETL_DATE},type_='skr')
 ------------------------------ 以上部分为临时表 ---------------------------------------------------------
 select 
-	md5(concat(chg_main.corp_id,L.relation_id,cast(L.relation_type_l2_code as string),L.type6)) as sid_kw,
-	to_date(CURRENT_TIMESTAMP()) relation_dt,
-	chg_main.corp_id,
-	case 
-		when chg.corp_id is null then L.relation_id 
-		else chg.corp_id 
-	end as relation_id,
-	-- L.relation_id,
-	-- chg.corp_id as relation_id,
-	chg.corp_name as relation_nm,
-	case L.rela_party_type
-		WHEN 'E' then 2  --企业 
-		WHEN 'P' THEN 1 --个人
-		WHEN 'O' THEN 3  --产品
-		ELSE 99
-	end as rela_party_type,
-	L.relation_type_l1_code,
-	L.relation_type_l1,
-	L.relation_type_l2_code,
-	L.relation_type_l2,
-	cmp.compy_type,
-	L.cum_ratio,
-	L.type6,
-	L.rel_remark1,
-	0 as delete_flag,
-	'' as create_by,
-	current_timestamp() as create_time,
-	'' as update_by,
-	current_timestamp() update_time,
-	0 as version
-	--to_date(CURRENT_TIMESTAMP()) as dt,
-	-- 'skr' as type_
-FROM
+	md5(concat(corp_id,relation_id,cast(relation_type_l2_code as string),type6)) as sid_kw,
+	T.*
+from 
 (
-	select DISTINCT
-		cast(corp_code as string) as corp_id,
-		actual_controller_id as relation_id,
-		actual_controller as relation_nm,
-		'' as rela_party_type,  --关联方类型 1:个人 2:企业 3:产品 99:其他 0:自身
-		1 as relation_type_l1_code,
-		'实际控制人' as relation_type_l1,
-		11 as relation_type_l2_code,
-		'实际控制人' as relation_type_l2,
-		'' as compy_type,
-		0 as cum_ratio,
-		0 as type6,
-		'' as rel_remark1
-	from (	select *,max(announcement_date) over(partition by corp_code) as newest_date 
-			from hds.t_ods_fic_hb_corp_actual_controller
-			where etl_date=${ETL_DATE}
-			  and isvalid=1
-			  --and controller_type='个人'   不要加实际控制人类型限制
-		 )k 
-	where announcement_date=newest_date and actual_controller<>'无实际控制人'
-	  and announcement_date >= add_months(to_date(CURRENT_TIMESTAMP()),-60)
-) L join compy_range cr on cr.corp_id=L.corp_id
-	left join cm_property cmp on L.corp_id = cmp.corp_id
-	LEFT JOIN corp_chg chg on L.relation_id=chg.source_id --and chg.source_code='FI'
-	join corp_chg chg_main 
-		on L.corp_id=chg_main.source_id and chg_main.source_code='FI'
+	select 
+		-- md5(concat(chg_main.corp_id,L.relation_id,cast(L.relation_type_l2_code as string),L.type6)) as sid_kw,
+		to_date(CURRENT_TIMESTAMP()) relation_dt,
+		chg_main.corp_id,
+		case 
+			when chg.corp_id is null then L.relation_id 
+			else chg.corp_id 
+		end as relation_id,
+		-- L.relation_id,
+		-- chg.corp_id as relation_id,
+		chg.corp_name as relation_nm,
+		case L.rela_party_type
+			WHEN 'E' then 2  --企业 
+			WHEN 'P' THEN 1 --个人
+			WHEN 'O' THEN 3  --产品
+			ELSE 99
+		end as rela_party_type,
+		L.relation_type_l1_code,
+		L.relation_type_l1,
+		L.relation_type_l2_code,
+		L.relation_type_l2,
+		cmp.compy_type,
+		L.cum_ratio,
+		L.type6,
+		L.rel_remark1,
+		0 as delete_flag,
+		'' as create_by,
+		current_timestamp() as create_time,
+		'' as update_by,
+		current_timestamp() update_time,
+		0 as version
+		--to_date(CURRENT_TIMESTAMP()) as dt,
+		-- 'skr' as type_
+	FROM
+	(
+		select DISTINCT
+			cast(corp_code as string) as corp_id,
+			actual_controller_id as relation_id,
+			actual_controller as relation_nm,
+			'' as rela_party_type,  --关联方类型 1:个人 2:企业 3:产品 99:其他 0:自身
+			1 as relation_type_l1_code,
+			'实际控制人' as relation_type_l1,
+			11 as relation_type_l2_code,
+			'实际控制人' as relation_type_l2,
+			'' as compy_type,
+			0 as cum_ratio,
+			0 as type6,
+			'' as rel_remark1
+		from (	select *,max(announcement_date) over(partition by corp_code) as newest_date 
+				from hds.t_ods_fic_hb_corp_actual_controller
+				where etl_date=${ETL_DATE}
+				and isvalid=1
+				--and controller_type='个人'   不要加实际控制人类型限制
+			)k 
+		where announcement_date=newest_date and actual_controller<>'无实际控制人'
+		and announcement_date >= add_months(to_date(CURRENT_TIMESTAMP()),-60)
+	) L join compy_range cr on cr.corp_id=L.corp_id
+		left join cm_property cmp on L.corp_id = cmp.corp_id
+		LEFT JOIN corp_chg chg on L.relation_id=chg.source_id --and chg.source_code='FI'
+		join corp_chg chg_main 
+			on L.corp_id=chg_main.source_id and chg_main.source_code='FI'
+)T
 ; 

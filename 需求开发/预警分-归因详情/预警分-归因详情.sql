@@ -1027,7 +1027,7 @@ res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í+¸÷Î¬¶È·çÏÕË®Æ½(¸
         main.unit_target,
         main.contribution_cnt  --¹éÒò¸öÊı
     from res3 main
-    join warn_feature_contrib_res3 b
+    join warn_feature_contrib_res3 b  --ÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶ÈµÄÌØÕ÷ÖµÎª»ù×¼
     -- left join warn_feature_contrib_res3 b
         on main.batch_dt=b.batch_dt and main.corp_id=b.corp_id and main.dimension=b.dimension
 )
