@@ -94,24 +94,39 @@ corp_bond_stock_chg as   --主体_债券_债券存量变动
 ),
 res as 
 (
-    select 
+    select  
         corp_id,
         natural_dt,
-        max(maturity_date) as maturity_date,
-        max(lead_underwriter) as lead_underwriter,  --每个到期日对应一个主承销商
-        count(bond_cd) as stock_bond_count,  --存量债券只数
-        sum(chg_amt) as stock_bond_balance  --存量债券余额
-    from corp_bond_stock_chg
-    group by corp_id,natural_dt
+        recent_maturity_date,
+        max(recent_lead_underwriter) as recent_lead_underwriter,
+        concat_ws('，',collect_set(lead_underwriter)) as lead_underwriter,  -- hive
+        -- group_concat(distinct lead_underwriter,'，') as lead_underwriter,  -- impala
+        max(stock_bond_count) as stock_bond_count,
+        max(stock_bond_balance) as stock_bond_balance
+    from 
+    (
+        select 
+            corp_id,
+            natural_dt,
+            max(maturity_date) over(partition by corp_id,natural_dt) as recent_maturity_date,  --最近到期日
+            last_value(lead_underwriter) over(partition by corp_id,natural_dt order by maturity_date asc) as recent_lead_underwriter,
+            -- max(maturity_date) as maturity_date,  --最近到期日
+            lead_underwriter,  --所有主承销商
+            count(bond_cd) over(partition by corp_id,natural_dt) as stock_bond_count,  --存量债券只数
+            sum(chg_amt) over(partition by corp_id,natural_dt) as stock_bond_balance  --存量债券余额
+        from corp_bond_stock_chg
+        -- group by corp_id,natural_dt
+    ) A group by corp_id,natural_dt,recent_maturity_date
 )
 ------------------------------------temp table above-------------------------------------------------------------------
 insert into pth_rmp.RMP_BOND_BASICINFO PARTITION(ETL_DATE=${ETL_DATE})
 select 
     -- '' as sid_kw,  -- impala
-    md5(concat(corp_id,natural_dt,maturity_date,lead_underwriter)) as sid_kw,
+    md5(concat(corp_id,cast(natural_dt as string),lead_underwriter)) as sid_kw,  -- hive
     corp_id,
     natural_dt,
-    maturity_date,
+    recent_maturity_date,
+    recent_lead_underwriter,
     lead_underwriter,
     stock_bond_count,
     stock_bond_balance,

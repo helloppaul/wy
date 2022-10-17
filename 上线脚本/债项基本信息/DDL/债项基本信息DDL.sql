@@ -1,12 +1,13 @@
--- Õ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ RMP_BOND_BASICINFO --
+-- Õ®Ïî»ù±¾ÐÅÏ¢ RMP_BOND_BASICINFO --
 drop table  if exists pth_rmp.RMP_BOND_BASICINFO ;
 create table pth_rmp.RMP_BOND_BASICINFO 
 (	
 	sid_kw string,
 	corp_id string,
     natural_dt timestamp,
-    maturity_date timestamp,
+    recent_maturity_date timestamp,
     lead_underwriter string,
+	recent_lead_underwriter string,
     stock_bond_count bigint,
     stock_bond_balance double,
 	delete_flag	int,

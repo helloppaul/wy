@@ -19,7 +19,7 @@ create table pth_rmp.rmp_opinion_risk_info
 	url_kw STRING,
 	news_from STRING,
 	msg STRING,
-	CRNW0003_010 as string,
+	CRNW0003_010 string,
 	notice_date timestamp,
 	notice_month timestamp,
 	delete_flag int,
