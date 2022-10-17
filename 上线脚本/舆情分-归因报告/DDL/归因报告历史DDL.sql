@@ -17,4 +17,6 @@ create table pth_rmp.RMP_ATTRIBUTION_SUMM_HIS
 	update_time TIMESTAMP,
 	version int
 )partitioned by (etl_date int)
- stored as textfile;
+row format
+delimited fields terminated by '\16' escaped by '\\'
+stored as textfile;

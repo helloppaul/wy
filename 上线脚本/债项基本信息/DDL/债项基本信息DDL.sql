@@ -1,4 +1,4 @@
--- Õ®Ïî»ù±¾ÐÅÏ¢ RMP_BOND_BASICINFO --
+-- Õ®ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ RMP_BOND_BASICINFO --
 drop table  if exists pth_rmp.RMP_BOND_BASICINFO ;
 create table pth_rmp.RMP_BOND_BASICINFO 
 (	
@@ -16,5 +16,7 @@ create table pth_rmp.RMP_BOND_BASICINFO
 	update_time	TIMESTAMP,
 	version	int
 )partitioned by (etl_date int)
- stored as textfile
+row format
+delimited fields terminated by '\16' escaped by '\\'
+stored as textfile
 ;

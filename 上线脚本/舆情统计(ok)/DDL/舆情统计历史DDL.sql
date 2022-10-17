@@ -18,4 +18,6 @@ create table pth_rmp.RMP_OPINION_STATISTIC_HIS
 	version	tinyint
 )
 partitioned by (etl_date int)
- stored as textfile;
+row format
+delimited fields terminated by '\16' escaped by '\\'
+stored as textfile;

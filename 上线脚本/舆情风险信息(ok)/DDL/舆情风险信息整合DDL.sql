@@ -29,4 +29,6 @@ create table pth_rmp.rmp_opinion_risk_info
 	update_time TIMESTAMP,
 	version int
 )partitioned by (etl_date int,type_ string) 
- stored as textfile;
+row format
+delimited fields terminated by '\16' escaped by '\\'
+stored as textfile;

@@ -1,4 +1,4 @@
--- 预警分-归因简报wy RMP_WARNING_SCORE_S_REPORT --
+-- 预警分-归因简报zx RMP_WARNING_SCORE_S_REPORT_ZX --
 drop table if exists pth_rmp.RMP_WARNING_SCORE_S_REPORT_ZX ;
 create table pth_rmp.RMP_WARNING_SCORE_S_REPORT_ZX 
 (
@@ -15,4 +15,7 @@ create table pth_rmp.RMP_WARNING_SCORE_S_REPORT_ZX
 	update_by	string,
 	update_time	TIMESTAMP,
 	version	tinyint
-) stored as textfile;
+) 
+row format
+delimited fields terminated by '\16' escaped by '\\'
+stored as textfile;
