@@ -1,6 +1,7 @@
 -- RMP_WARNING_SCORE_DETAIL (Í¬²½·½Ê½£ºÒ»Ìì¶ÔÅú´Î²åÈë) --
 -- ÒÀÀµ Ä£ÐÍ ×ÛºÏÔ¤¾¯·Ö£¬ÌØÕ÷Ô­Ê¼Öµ¸ßÖÐµÍ£¬ÌØÕ÷¹±Ï×¶È¸ßÖÐµÍÎÞ¼à¶½ÒÔ¼°×ÛºÏ£¬ÆÀ·Ö¿¨¸ßÖÐµÍ£¬¹éÒòÏêÇé¼°ÆäÀúÊ· PS:²»ÒÀÀµpth_rmp.Ä£ÐÍ½á¹û±í
---Î¬¶È·çÏÕµÈ¼¶µÄ¼ÆËãÒÀ¿¿¹±Ï×¶ÈÕ¼±È£¬¹±Ï×¶ÈÕ¼±ÈÌØÕ÷»áÉÙÓÚÌØÕ÷Ô­Ê¼Öµ£¬´ËÊ±×îºó¹ØÁª½«»á²úÉúÄ³Ð©Î¬¶È¹ØÁª²¹ÉÏÎ¬¶È·çÏÕµÈ¼¶£¬µ¼ÖÂÎªNULL(ÔÝÊ±¾ö¶¨Ìßµô)
+--q1£ºÎ¬¶È·çÏÕµÈ¼¶µÄ¼ÆËãÒÀ¿¿¹±Ï×¶ÈÕ¼±È£¬¹±Ï×¶ÈÕ¼±ÈÌØÕ÷»áÉÙÓÚÌØÕ÷Ô­Ê¼Öµ£¬´ËÊ±×îºó¹ØÁª½«»á²úÉúÄ³Ð©Î¬¶È¹ØÁª²¹ÉÏÎ¬¶È·çÏÕµÈ¼¶£¬µ¼ÖÂÎªNULL(ÔÝÊ±¾ö¶¨Ìßµô)
+--q2£ºÌØÕ÷ÖµÒÔ¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÎª»ù×¼£¬Ö÷±íÓÐÌØÕ÷Ô­Ê¼ÖµÇÐ»»Îª¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±í
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª »ù±¾ÐÅÏ¢ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 with
 corp_chg as  --´øÓÐ ³ÇÍ¶/²úÒµÅÐ¶ÏºÍ¹ú±êÒ»¼¶ÐÐÒµ µÄÌØÊâcorp_chg
@@ -1026,7 +1027,8 @@ res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í+¸÷Î¬¶È·çÏÕË®Æ½(¸
         main.unit_target,
         main.contribution_cnt  --¹éÒò¸öÊý
     from res3 main
-    left join warn_feature_contrib_res3 b
+    join warn_feature_contrib_res3 b
+    -- left join warn_feature_contrib_res3 b
         on main.batch_dt=b.batch_dt and main.corp_id=b.corp_id and main.dimension=b.dimension
 )
 ------------------------------------ÒÔÉÏ²¿·ÖÎªÁÙÊ±±í-------------------------------------------------------------------

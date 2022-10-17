@@ -212,9 +212,9 @@ s_report_msg as
 		corp_id,
 		corp_nm,
 		score_dt,
-		concat(
-			if(reason_nvl<>'',concat('该主体发生',reason_nvl,'且'),''),
+		concat(		
 			'最新信用违约预警处于',interval_text_adjusted,'等级','，',
+			if(reason_nvl<>'',concat('主要由于发生',reason_nvl,'同时'),''),
 			'风险涉及',dimension_ch,'（','贡献度占比',cast(dim_contrib_ratio as string),'%','）','，',
 			case 
 				when  abnormal_idx_desc<>'' then 
