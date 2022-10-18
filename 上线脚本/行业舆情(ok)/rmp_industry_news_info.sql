@@ -86,30 +86,36 @@ gb_summ as --国标分类数据汇总
 )
 insert  overwrite table pth_rmp.RMP_INDUSTRY_NEWS_INFO partition(etl_date=${ETL_DATE})
 ------------------------------ 以上为临时表 ---------------------------------------------------------
-select distinct 
-	md5(concat(cast(news.crnw0001_002 as string),news.newscode,gb_summ.gb_industry_tag_ii_cd,'0')) as sid_kw,
-	news.crnw0001_002 as notice_dt,
-	news.newscode as news_id,   --新闻编码已经包含时间
-	news.crnw0001_003 as news_title,
-	gb_summ.gb_industry_tag_cd,
-	gb_summ.gb_industry_tag,
-	gb_summ.gb_industry_tag_ii_cd,
-	gb_summ.gb_industry_tag_ii,
-	news.CRNW0001_007 as news_from,
-	news.CRNW0001_010 as news_url,
-	-- news_detail.CRNW0002_001 as news
-	0 as delete_flag,
-	'' as create_by,
-	current_timestamp() as create_time,
-	'' as update_by,
-	current_timestamp() update_time,
-	0 as version
-from (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0006 where flag<>'1') hy
-join (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0001 where flag<>'1')news
-	on hy.NEWSCODE = news.NEWSCODE 
-left join gb_summ
-	on cast(hy.CRNW0006_001 as string) = gb_summ.industryid
--- left join (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') news_detail
--- 	on news.NEWSCODE = news_detail.NEWSCODE
-where to_date(news.crnw0001_002)=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),1)) 
+select 
+	concat(cast(news_id as string),gb_industry_tag_ii_cd) as sid_kw,
+	A.*
+from 
+(
+	select distinct 
+		-- concat(cast(news.newscode as string),gb_summ.gb_industry_tag_ii_cd) as sid_kw,
+		news.crnw0001_002 as notice_dt,
+		news.newscode as news_id,   --新闻编码已经包含时间
+		news.crnw0001_003 as news_title,
+		gb_summ.gb_industry_tag_cd,
+		gb_summ.gb_industry_tag,
+		gb_summ.gb_industry_tag_ii_cd,
+		gb_summ.gb_industry_tag_ii,
+		news.CRNW0001_007 as news_from,
+		news.CRNW0001_010 as news_url,
+		news_detail.CRNW0002_001 as news,
+		0 as delete_flag,
+		'' as create_by,
+		current_timestamp() as create_time,
+		'' as update_by,
+		current_timestamp() update_time,
+		0 as version
+	from (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0006 where flag<>'1') hy
+	join (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0001 where flag<>'1')news
+		on hy.NEWSCODE = news.NEWSCODE 
+	left join gb_summ
+		on cast(hy.CRNW0006_001 as string) = gb_summ.industryid
+	left join (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') news_detail
+		on news.NEWSCODE = news_detail.NEWSCODE
+)A
+where to_date(notice_dt)=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),1)) 
 ;

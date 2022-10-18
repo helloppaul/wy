@@ -182,3 +182,4 @@ from
 )Fi
 where score_dt= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)) 
 ;
+

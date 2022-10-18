@@ -1,4 +1,4 @@
--- ???? RMP_INDUSTRY_NEWS_INFO --
+-- 行业舆情 RMP_INDUSTRY_NEWS_INFO --
 create table pth_rmp.RMP_INDUSTRY_NEWS_INFO 
 (
 	sid_kw string,
@@ -11,6 +11,7 @@ create table pth_rmp.RMP_INDUSTRY_NEWS_INFO
 	gb_industry_tag_ii string,
 	news_from string,
 	news_url string,
+	news string,
 	delete_flag	tinyint,
 	create_by	string,
 	create_time	TIMESTAMP,

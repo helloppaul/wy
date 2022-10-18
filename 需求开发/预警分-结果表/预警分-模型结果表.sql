@@ -1,7 +1,7 @@
--- RMP_WARNING_SCORE_MODEL (Í¬²½·½Ê½£ºÒ»Ìì¶àÅú´Î²åÈë) --
---¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª »ù±¾ĞÅÏ¢ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
+-- RMP_WARNING_SCORE_MODEL (åŒæ­¥æ–¹å¼ï¼šä¸€å¤©å¤šæ‰¹æ¬¡æ’å…¥) --
+--â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€” åŸºæœ¬ä¿¡æ¯ â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”--
 with
-corp_chg as  --´øÓĞ ³ÇÍ¶/²úÒµÅĞ¶ÏºÍ¹ú±êÒ»¼¶ĞĞÒµ µÄÌØÊâcorp_chg
+corp_chg as  --å¸¦æœ‰ åŸæŠ•/äº§ä¸šåˆ¤æ–­å’Œå›½æ ‡ä¸€çº§è¡Œä¸š çš„ç‰¹æ®Šcorp_chg
 (
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
     ,b.bond_type,b.industryphy_name
@@ -16,15 +16,15 @@ corp_chg as  --´øÓĞ ³ÇÍ¶/²úÒµÅĞ¶ÏºÍ¹ú±êÒ»¼¶ĞĞÒµ µÄÌØÊâcorp_chg
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
 ),
---¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª ½Ó¿Ú²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
--- Ô¤¾¯·Ö --
-_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --Ô¤¾¯·Ö_ÈÚºÏµ÷Õûºó×ÛºÏ  Ô­Ê¼½Ó¿Ú
+--â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€” æ¥å£å±‚ â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”--
+-- é¢„è­¦åˆ† --
+_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --é¢„è­¦åˆ†_èåˆè°ƒæ•´åç»¼åˆ  åŸå§‹æ¥å£
 (
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
 ),
---¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª Ó¦ÓÃ²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
-warn_union_adj_sync_score as --È¡×îĞÂÅú´ÎµÄÈÚºÏµ÷Õûºó×ÛºÏÔ¤¾¯·Ö
+--â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€” åº”ç”¨å±‚ â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”â€”--
+warn_union_adj_sync_score as --å–æœ€æ–°æ‰¹æ¬¡çš„èåˆè°ƒæ•´åç»¼åˆé¢„è­¦åˆ†
 (
     select distinct
         cast(a.rating_dt as string) as batch_dt,
@@ -32,23 +32,23 @@ warn_union_adj_sync_score as --È¡×îĞÂÅú´ÎµÄÈÚºÏµ÷Õûºó×ÛºÏÔ¤¾¯·Ö
         chg.corp_name as corp_nm,
 		chg.credit_code as credit_cd,
         to_date(a.rating_dt) as score_date,
-        a.total_score_adjusted as synth_score,  -- Ô¤¾¯·Ö
+        a.total_score_adjusted as synth_score,  -- é¢„è­¦åˆ†
 		case a.interval_text_adjusted
-			when 'ÂÌÉ«Ô¤¾¯' then '-1' 
-			when '»ÆÉ«Ô¤¾¯' then '-2'
-			when '³ÈÉ«Ô¤¾¯' then '-3'
-			when 'ºìÉ«Ô¤¾¯' then '-4'
-			when '·çÏÕÒÑ±©Â¶' then '-5'
-		end as synth_warnlevel,  -- ×ÛºÏÔ¤¾¯µÈ¼¶,
+			when 'ç»¿è‰²é¢„è­¦' then '-1' 
+			when 'é»„è‰²é¢„è­¦' then '-2'
+			when 'æ©™è‰²é¢„è­¦' then '-3'
+			when 'çº¢è‰²é¢„è­¦' then '-4'
+			when 'é£é™©å·²æš´éœ²' then '-5'
+		end as synth_warnlevel,  -- ç»¼åˆé¢„è­¦ç­‰çº§,
 		case
-			when a.interval_text_adjusted in ('ÂÌÉ«Ô¤¾¯','»ÆÉ«Ô¤¾¯') then 
-				'-1'   --µÍ·çÏÕ
-			when a.interval_text_adjusted  = '³ÈÉ«Ô¤¾¯' then 
-				'-2'  --ÖĞ·çÏÕ
-			when a.interval_text_adjusted  ='ºìÉ«Ô¤¾¯' then 
-				'-3'  --¸ß·çÏÕ
-			when a.interval_text_adjusted  ='·çÏÕÒÑ±©Â¶' then 
-				'-4'   --·çÏÕÒÑ±©Â¶
+			when a.interval_text_adjusted in ('ç»¿è‰²é¢„è­¦','é»„è‰²é¢„è­¦') then 
+				'-1'   --ä½é£é™©
+			when a.interval_text_adjusted  = 'æ©™è‰²é¢„è­¦' then 
+				'-2'  --ä¸­é£é™©
+			when a.interval_text_adjusted  ='çº¢è‰²é¢„è­¦' then 
+				'-3'  --é«˜é£é™©
+			when a.interval_text_adjusted  ='é£é™©å·²æš´éœ²' then 
+				'-4'   --é£é™©å·²æš´éœ²
 		end as adjust_warnlevel,
 		a.model_name,
 		a.model_version
@@ -58,7 +58,7 @@ warn_union_adj_sync_score as --È¡×îĞÂÅú´ÎµÄÈÚºÏµ÷Õûºó×ÛºÏÔ¤¾¯·Ö
     join corp_chg chg
         on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
 )
-------------------------------------ÒÔÉÏ²¿·ÖÎªÁÙÊ±±í-------------------------------------------------------------------
+------------------------------------ä»¥ä¸Šéƒ¨åˆ†ä¸ºä¸´æ—¶è¡¨-------------------------------------------------------------------
 -- insert into pth_rmp.RMP_WARNING_SCORE_MODEL
 select 
 	'' as sid_kw,  --@impala
@@ -68,10 +68,10 @@ select
 	corp_nm,
 	credit_cd,
 	score_date,
-	synth_warnlevel,  -- ×ÛºÏÔ¤¾¯µÈ¼¶
-	synth_score,  -- Ô¤¾¯·Ö
+	synth_warnlevel,  -- ç»¼åˆé¢„è­¦ç­‰çº§
+	synth_score,  -- é¢„è­¦åˆ†
 	model_version,
-	adjust_warnlevel,   -- µ÷ÕûºóµÈ¼¶
+	adjust_warnlevel,   -- è°ƒæ•´åç­‰çº§
 	0 as delete_flag,
 	'' as create_by,
 	current_timestamp() as create_time,
@@ -79,5 +79,5 @@ select
 	current_timestamp() update_time,
 	0 as version
 from warn_union_adj_sync_score
-WHERE score_date=to_date(date_add(from_unixtime(unix_timestamp(cast(${DAYPRO_1} as string),'yyyyMMdd')),1))
+WHERE score_date=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 ;
