@@ -3,7 +3,7 @@
 -- (
 -- 	select * from 
 -- )
-insert into pth_rmp.RMP_ALERT_COMPREHS_SCORE
+insert into pth_rmp.RMP_ALERT_COMPREHS_SCORE partition(etl_date=${ETL_DATE})
 select distinct
 	a.sid_kw,
 	a.batch_dt,

@@ -120,7 +120,7 @@ label_hit_tab AS
 		group by o.corp_id,o.rating_dt
 	)K
 )
-insert into pth_rmp.rmp_alert_score_summ
+insert into pth_rmp.rmp_alert_score_summ partition(etl_date=${ETL_DATE})
 select
 	MD5(concat(E.batch_dt,E.corp_id,'0')) as sid_kw,
 	E.batch_dt,     --batch_dt来自于模型 单主体舆情分-调整后的模型结果
