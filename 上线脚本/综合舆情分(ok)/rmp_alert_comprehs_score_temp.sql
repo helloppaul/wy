@@ -44,7 +44,7 @@ rmp_opinion_risk_info_ as
 ),
 RMP_COMPANY_CORE_REL_ as 
 (
-	select a.* 
+	select distinct a.* 
 	from pth_rmp.RMP_COMPANY_CORE_REL a 
 	where 1 = 1
 	  -- 时间限制(自动取最大日期)
