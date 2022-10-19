@@ -16,7 +16,7 @@ corp_chg as
 	where a.delete_flag=0 and b.delete_flag=0
 ),
 ---------------------- 以上部分为临时表 --------------------------------------------------------------------------
-insert into pth_rmp.RMP_ATTRIBUTION_SUMM 
+insert into pth_rmp.RMP_ATTRIBUTION_SUMM partition(etl_date=${ETL_DATE})
 select 
 	md5(concat(batch_dt,corp_id,'0')) as sid_kw,
 	batch_dt,

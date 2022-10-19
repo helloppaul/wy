@@ -44,7 +44,7 @@ company_core_rel_ as
 	  and a.relation_dt in (select max(relation_dt) max_relation_dt from pth_rmp.RMP_COMPANY_CORE_REL)
 
 )
-insert into pth_rmp.RMP_COMPY_CONTRIB_DEGREE 
+insert into pth_rmp.RMP_COMPY_CONTRIB_DEGREE partition(etl_date=${ETL_DATE})
 select 
 	md5(concat(batch_dt,corp_id,relation_id)) as sid_kw,
 	batch_dt,

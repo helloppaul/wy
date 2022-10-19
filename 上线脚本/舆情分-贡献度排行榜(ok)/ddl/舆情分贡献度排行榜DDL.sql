@@ -18,7 +18,9 @@ create table pth_rmp.RMP_COMPY_CONTRIB_DEGREE
 	update_by	string,
 	update_time	TIMESTAMP,
 	version	tinyint
-)stored as textfile
+)
+partitioned by (etl_date int)
 row format
 delimited fields terminated by '\16' escaped by '\\'
+stored as textfile
 ;
