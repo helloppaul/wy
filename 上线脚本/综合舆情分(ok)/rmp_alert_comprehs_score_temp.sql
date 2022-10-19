@@ -491,7 +491,7 @@ select distinct
 	0 as version
 from 
 (
-	select 
+	select distinct
 		batch_dt,
 		corp_id,
 		score_dt,
@@ -521,7 +521,8 @@ from
 			mu,
 			sqrt(sigma_tmp/12-1) as sigma,
 			mu + sqrt(sigma_tmp/12-1) as ci,  --置信区间下限
-			fluctuated
+			fluctuated,
+			row_number() over(partition by corp_id,score_dt order by fluctuated desc) as fluctuated_rm
 		from 
 		(
 			select 
@@ -571,7 +572,7 @@ from
 				)D where rm<=12
 			)E
 		)F
-	)F1
+	)F1 where fluctuated_rm=1
 )G join label_hit_tab lb on G.corp_id=lb.corp_id and G.score_dt = lb.score_dt
    join corp_chg chg on g.corp_id=chg.corp_id and chg.source_code='FI'
 where G.score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
