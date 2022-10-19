@@ -33,7 +33,6 @@ from
 		Final.corp_nm,
 		Final.notice_dt,
 		-- Final.msg_id,  --impala
-		-- concat(corp_id,'_',md5(RISK_DESC)) as msg_id,   -- hive版本支持：MD5(corp_id,notice_dt,case_type_ii,RISK_DESC)*/
 		concat(Final.corp_id,'_',md5(concat(cast(Final.notice_dt as string),Final.msg_title,Final.case_type_ii,Final.msg))) as msg_id,   -- hive版本支持：MD5(corp_id,notice_dt,case_type_ii,RISK_DESC)*/
 		Final.msg_title,
 		Final.case_type_cd,

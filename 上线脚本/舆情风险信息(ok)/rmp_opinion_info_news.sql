@@ -71,7 +71,7 @@ from
 			msg_title,
 			case_type_cd,case_type,
 			case_type_ii_cd,case_type_ii,
-			importance,
+			cast(importance as tinyint) as importance,
 			signal_type,
 			src_table,
 			src_sid,
@@ -143,7 +143,7 @@ from
 							else o.crnw0001_010
 						end as URL,
 						o.crnw0001_007 as news_from,
-						'' as msg,
+						o3.CRNW0002_001 as msg,
 						o1.CRNW0003_010
 					from (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0001 where flag<>'1') o,
 						(select * from hds.tr_ods_rmp_fi_x_news_tcrnw0003_all_v2 where flag<>'1') o1,
@@ -159,10 +159,10 @@ from
 							left join (select tag,tag_cd,tag_ii,tag_ii_cd,importance,tag_type from pth_rmp.rmp_opinion_risk_info_tag) tag
 								on a.indexname=tag.tag_ii and tag.tag_type=0
 						-- where   a.flag<>'1'  and a.indexlevel in ('3','4')
-						) idx
-						--  (select distinct newscode,NEWSDATE,CRNW0002_001 --正文数据
-						--   from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') o3
-					where o.newscode=o1.newscode and o1.itcode2=o2.itcode2 and idx.indexcode=o1.crnw0003_001 --and o.newscode=o3.newscode 
+						) idx,
+						 (select distinct newscode,NEWSDATE,CRNW0002_001 --正文数据
+						  from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') o3
+					where o.newscode=o1.newscode and o1.itcode2=o2.itcode2 and idx.indexcode=o1.crnw0003_001 and o.newscode=o3.newscode 
 					and cast(o1.crnw0003_006 as int)<0
 				)t0
 			)Final_Part
