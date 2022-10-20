@@ -54,11 +54,11 @@ from
 		end as report_msg2
 	from pth_rmp.RMP_ATTRIBUTION_SUMM_FIRST_TEMP one 
 	left join pth_rmp.RMP_ATTRIBUTION_SUMM_MAIN_TEMP main
-		on one.corp_id=main.corp_id and one.score_dt=main.score_dt
+		on one.corp_id=main.corp_id and one.score_dt=main.score_dt and one.batch_dt=main.batch_dt 
 	left join pth_rmp.RMP_ATTRIBUTION_SUMM_REL_TEMP rel 
-		on one.corp_id = rel.corp_id and one.score_dt = rel.score_dt
+		on one.corp_id = rel.corp_id and one.score_dt = rel.score_dt and one.batch_dt=rel.batch_dt
 	left join pth_rmp.RMP_ATTRIBUTION_SUMM_LAST_TEMP lst 
-		on one.corp_id = lst.corp_id and one.score_dt = lst.score_dt 
+		on one.corp_id = lst.corp_id and one.score_dt = lst.score_dt and one.batch_dt=lst.batch_dt
 	left join (select * from corp_chg where source_code='FI') chg
 		on one.corp_id=chg.corp_id
 )A 

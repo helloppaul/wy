@@ -336,7 +336,7 @@ Warn_lv_Feat_score_Idx_value_Summ as --合并 维度风险等级，特征评分 以及 指标变动
 						concat(
 							concat(feature_name_target,'为',cast(idx_value as string),idx_unit),'，','且发生恶化','，','由',
 							case 
-								when last_idx_value>=idx_value then 
+								when last_idx_value<=idx_value then 
 									concat(
 											concat(cast(last_idx_value as string),idx_unit),
 											'升至',

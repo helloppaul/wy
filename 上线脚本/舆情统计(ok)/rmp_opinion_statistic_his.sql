@@ -1,5 +1,5 @@
--- ÓßÇéÍ³¼ÆÈÕ±íÀúÊ·±í RMP_OPINION_STATISTIC_HIS (Í¬²½·½Ê½£ºÒ»Ìì¶àÅú´Î¸²¸Ç) --
-insert into pth_rmp.RMP_OPINION_STATISTIC_HIS partition(etl_date=${ETL_DATE})
+-- èˆ†æƒ…ç»Ÿè®¡å†å²è¡¨ RMP_OPINION_STATISTIC_HIS (ä¸€å¤©å¤šæ‰¹æ¬¡è¦†ç›–) --
+insert overwrite table pth_rmp.RMP_OPINION_STATISTIC_HIS partition(etl_date=${ETL_DATE})
 select 
 	distinct
 	a.sid_kw,
@@ -22,4 +22,4 @@ join (select max(batch_dt) as max_batch_dt from pth_rmp.RMP_OPINION_STATISTIC_DA
 where a.delete_flag=0
   and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 ;
---   and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))  --ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îµï¿½ï¿½ï¿½ï¿½ï¿½Í?ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê·ï¿½ï¿½
+--   and a.score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))  
