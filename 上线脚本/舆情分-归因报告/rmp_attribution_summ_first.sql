@@ -9,9 +9,9 @@ create table if not exists pth_rmp.RMP_ATTRIBUTION_SUMM_FIRST_TEMP AS
 with 
 RMP_ALERT_COMPREHS_SCORE_TEMP_Batch as  --最新批次的综合舆情分数据,且有关联方
 (
-	select * from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
-	join (select max(batch_dt) as new_batch_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP )b  
-		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'')
+	select a.* from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
+	join (select max(batch_dt) as new_batch_dt,score_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP group by score_dt)b  
+		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'') and a.score_dt=b.score_dt
 	where a.alert=1 
 	  --and a.corp_id='pz00e1c32133191ee1a9cc3556af92f8ea' and to_date(a.score_dt)='2022-08-02'  --and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
 ),

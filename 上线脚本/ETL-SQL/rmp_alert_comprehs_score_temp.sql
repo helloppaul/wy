@@ -320,7 +320,7 @@ com_score_temp as  --计算得到综合舆情分
 		from 
 		(
 			select distinct
-				nvl(rc.batch_dt,sc.batch_dt) as batch_dt,
+				rc.batch_dt,
 				nvl(rc.corp_id,sc.corp_id) as corp_id,   --合并左右连接的企业id
 				rc.corp_nm,
 				nvl(rc.score_dt,sc.score_dt) as score_dt,
@@ -508,7 +508,7 @@ from
 		fluctuated
 	from 
 	(
-		select 
+		select distinct
 			batch_dt,
 			corp_id,
 			score_dt,
@@ -575,6 +575,5 @@ from
 	)F1 where fluctuated_rm=1
 )G join label_hit_tab lb on G.corp_id=lb.corp_id and G.score_dt = lb.score_dt
    join corp_chg chg on g.corp_id=chg.corp_id and chg.source_code='FI'
-where G.batch_dt is not null
-  and G.score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+where G.score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 ;

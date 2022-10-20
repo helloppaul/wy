@@ -1,4 +1,5 @@
 -- RMP_WARNING_SCORE_MODEL (同步方式：一天多批次插入) --
+--/*2022-10-20 调整后预警等级 映射逻辑调整为R1-R6*/
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg
@@ -41,15 +42,27 @@ warn_union_adj_sync_score as --取最新批次的融合调整后综合预警分
 			when '风险已暴露' then '-5'
 		end as synth_warnlevel,  -- 综合预警等级,
 		case
-			when a.interval_text_adjusted in ('绿色预警','黄色预警') then 
-				'-1'   --低风险
+			when a.interval_text_adjusted in ('绿色预警') then 
+				'R1'   --低风险
+			when a.interval_text_adjusted in ('黄色预警') then
+				'R3'
 			when a.interval_text_adjusted  = '橙色预警' then 
-				'-2'  --中风险
+				'R4'  --中风险
 			when a.interval_text_adjusted  ='红色预警' then 
-				'-3'  --高风险
+				'R5'  --高风险
 			when a.interval_text_adjusted  ='风险已暴露' then 
-				'-4'   --风险已暴露
+				'R6'   --风险已暴露
 		end as adjust_warnlevel,
+		-- case
+		-- 	when a.interval_text_adjusted in ('绿色预警','黄色预警') then 
+		-- 		'-1'   --低风险
+		-- 	when a.interval_text_adjusted  = '橙色预警' then 
+		-- 		'-2'  --中风险
+		-- 	when a.interval_text_adjusted  ='红色预警' then 
+		-- 		'-3'  --高风险
+		-- 	when a.interval_text_adjusted  ='风险已暴露' then 
+		-- 		'-4'   --风险已暴露
+		-- end as adjust_warnlevel,
 		a.model_name,
 		a.model_version
     from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a   

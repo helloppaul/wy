@@ -12,15 +12,16 @@ create table if not exists pth_rmp.RMP_ATTRIBUTION_SUMM_REL_TEMP AS
 with 
 RMP_ALERT_COMPREHS_SCORE_TEMP_Batch as  --最新批次的综合舆情分数据,且有关联方
 (
-	select * from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
-	join (select max(batch_dt) as new_batch_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP )b  
-		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'')
+	select a.* from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
+	join (select max(batch_dt) as new_batch_dt,score_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP group by score_dt )b  
+		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'') and a.score_dt=b.score_dt
 	where a.alert=1 
 	  --and a.corp_id='pz00e1c32133191ee1a9cc3556af92f8ea' and to_date(a.score_dt)='2022-08-02'  --and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
 ),
 com_score_with_contrib_degree as 
 (
 	select distinct
+		com.batch_dt,
 		com.corp_id,
 		com.corp_nm,
 		com.score_dt,
@@ -48,10 +49,11 @@ Third_one as  --放关联方归因
 (
 	select 
 		'关联方舆情风险' as fix1,
+		batch_dt,
 		second_score,
 		third_score,
 		score,
-		(second_score+third_score)/origin_comprehensive_score as rel_contrib_degree,  --关联方贡献度
+		(max(second_score)+max(third_score))/max(origin_comprehensive_score) as rel_contrib_degree,  --关联方贡献度
 		corp_id,
 		corp_nm,
 		score_dt,
@@ -67,6 +69,7 @@ Third_one as  --放关联方归因
 		from 
 		(
 			select 
+				batch_dt,
 				score,
 				second_score,
 				third_score,
@@ -87,11 +90,12 @@ Third_one as  --放关联方归因
 			from com_score_with_contrib_degree
 		) B 
 	)A where rm <=5
-	   group by corp_id,corp_nm,score_dt,score_hit,label_hit,rel_cnt,max_rel_contrib_corp_nm,score,second_score,third_score,comprehensive_score
+	   group by batch_dt,corp_id,corp_nm,score_dt,score_hit,label_hit,rel_cnt,max_rel_contrib_corp_nm,score,second_score,third_score,comprehensive_score
 ),
 Third_one_msg as 
 (
 	select
+		batch_dt,
 		corp_id,
 		corp_nm,
 		score_dt,
@@ -280,6 +284,7 @@ Third_four_msg as
 Third_msg as 
 (
 	select 
+		a.batch_dt,
 		a.corp_id,
 		a.corp_nm,a.score_dt,
 		a.score,
@@ -290,6 +295,7 @@ Third_msg as
 	FROM
 	(
 		select 
+			a.batch_dt,
 			a.corp_id,
 			a.corp_nm,a.score_dt,
 			a.second_score,

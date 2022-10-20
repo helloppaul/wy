@@ -73,7 +73,7 @@ from
 		com.relation_id,
 		com.relation_nm,
 		concat_ws('，',collect_set(rel.rel_type_desc)) as relation_type_l2_line,
-		-- group_concat(CFG.rel_type_desc,'，') as relation_type_l2_line,
+		-- group_concat(distinct CFG.rel_type_desc,'，') as relation_type_l2_line,
 		com.r_score_cal as contribution_degree,
 		sc.alert as abnormal_flag
 	from RMP_ALERT_COMPREHS_SCORE_TEMP_Batch com

@@ -9,11 +9,11 @@ with
 RMP_ALERT_COMPREHS_SCORE_TEMP_Batch_Main as  --最新批次的综合舆情分数据,仅主体信息
 (
 	select distinct 
-		batch_dt,corp_id,corp_nm,score_dt,cast(score as float) as score,
-		second_score,third_score,origin_comprehensive_score,comprehensive_score 
+		a.batch_dt,a.corp_id,a.corp_nm,a.score_dt,cast(a.score as float) as score,
+		a.second_score,a.third_score,a.origin_comprehensive_score,a.comprehensive_score 
 	from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
-	join (select max(batch_dt) as new_batch_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP )b  
-		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'')
+	join (select max(batch_dt) as new_batch_dt,score_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP group by score_dt)b  
+		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'') and a.score_dt=b.score_dt
 	where a.alert=1 --and to_date(a.score_dt)='2022-08-03' 
 	  --and a.corp_id='pz00e1c32133191ee1a9cc3556af92f8ea' and to_date(a.score_dt)='2022-08-02'  --and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
 ),

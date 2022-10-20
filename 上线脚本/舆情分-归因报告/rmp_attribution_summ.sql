@@ -14,7 +14,7 @@ corp_chg as
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
-),
+)
 ---------------------- 以上部分为临时表 --------------------------------------------------------------------------
 insert into pth_rmp.RMP_ATTRIBUTION_SUMM partition(etl_date=${ETL_DATE})
 select 
@@ -24,8 +24,8 @@ select
 	corp_nm,
 	credit_code as credit_cd,
 	score_dt,
-	report_msg1,
-	report_msg2,
+	nvl(report_msg1,'') as report_msg1,
+	nvl(report_msg2,'') as report_msg2,
 	'' as report_msg5,
 	0 as delete_flag,
 	'' as create_by,
