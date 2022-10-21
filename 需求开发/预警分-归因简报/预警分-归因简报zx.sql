@@ -163,14 +163,14 @@ s_report_Data_Prepare as
 			-- nvl(a.synth_warnlevel,'0') as synth_warnlevel, --综合预警等级
 			main.dimension,    --维度编码
 			sum(contribution_ratio) over(partition by main.corp_id,main.batch_dt,main.score_dt,f_cfg.dimension) as dim_contrib_ratio,
-			f_cfg.dimension as dimension_ch,  --维度名称
+			nvl(f_cfg.dimension,'') as dimension_ch,  --维度名称
 			main.type,  	-- used
 			main.idx_name,  -- used 
 			main.idx_value,  -- used
 			main.last_idx_value, -- used in 简报wy
 			main.idx_unit,  -- used 
 			main.idx_score,  -- used
-			f_cfg.feature_name_target,  --特征名称-目标(系统)  used
+			nvl(f_cfg.feature_name_target,'') as feature_name_target,  --特征名称-目标(系统)  used
 			main.contribution_ratio,
 			main.factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
 			nvl(ru.category,'') as category_nvl,
