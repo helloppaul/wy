@@ -77,6 +77,21 @@ feat_CFG as  --特征手工配置表
     from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG
     where sub_model_type in ('中频-产业','中频-城投','无监督')
 ),
+-- 模型外挂规则 --
+warn_adj_rule_cfg as --预警分-模型外挂规则配置表   取最新etl_date的数据 (更新频率:日度更新)
+(
+	select distinct
+		a.etl_date,
+		b.corp_id, 
+		b.corp_name as corp_nm,
+		a.category,
+		a.reason
+	from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf a  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
+	join corp_chg b 
+		on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
+	where a.operator = '自动-风险已暴露规则'
+	  and a.ETL_DATE in (select max(etl_date) from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf)  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
+),
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
 -- 预警分 --
 rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_batch as 
@@ -132,21 +147,6 @@ RMP_WARNING_SCORE_DETAIL_Batch as -- 取每天最新批次数据（当天数据做范围限制）
 	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
 		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
 	-- where a.idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
-),
--- 模型外挂规则 --
-warn_adj_rule_cfg as --预警分-模型外挂规则配置表   取最新etl_date的数据 (更新频率:日度更新)
-(
-	select distinct
-		a.etl_date,
-		b.corp_id, 
-		b.corp_name as corp_nm,
-		a.category,
-		a.reason
-	from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf a  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
-	join corp_chg b 
-		on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
-	where a.operator = '自动-风险已暴露规则'
-	  and a.ETL_DATE in (select max(etl_date) from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf)  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 s_report_Data_Prepare as 
@@ -214,7 +214,7 @@ s_report_msg as
 		score_dt,
 		concat(		
 			'最新信用违约预警处于',interval_text_adjusted,'等级','，',
-			if(reason_nvl<>'',concat('主要由于发生',reason_nvl,'同时'),''),
+			if(reason_nvl<>'',concat('主要由于触发',reason_nvl,'同时'),''),
 			'风险涉及',dimension_ch,'（','贡献度占比',cast(dim_contrib_ratio as string),'%','）','，',
 			case 
 				when  abnormal_idx_desc<>'' then 

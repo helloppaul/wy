@@ -703,7 +703,8 @@ warn_feature_contrib_res1 as  --带有 维度贡献度占比 的特征贡献度-合并高中低频
             -- a.model_name,
             a.sub_model_name
         from warn_feature_contrib a 
-        left join warn_feat_CFG f_cfg 
+        join warn_feat_CFG f_cfg    --讨论后，直接采用join做关联，特征原始值没有的不考虑展示
+        -- left join warn_feat_CFG f_cfg 
             on a.feature_name=f_cfg.feature_cd and a.model_freq_type=f_cfg.sub_model_type --and a.model_freq_type=substr(f_cfg.sub_model_type,1,6)
     )B group by batch_dt,corp_id,corp_nm,score_dt,dimension,model_freq_type
 ),
@@ -988,7 +989,8 @@ res3 as   --预警分+特征原始值+综合贡献度+指标评分卡+特征配置表
         f_cfg.unit_target,
         f_cfg.contribution_cnt  --归因个数
     from res2 main
-    left join warn_feat_CFG f_cfg
+    join join warn_feat_CFG f_cfg
+    -- left join warn_feat_CFG f_cfg
         on main.idx_name=f_cfg.feature_cd and main.model_freq_type=f_cfg.sub_model_type --and  main.model_freq_type=substr(f_cfg.sub_model_type,1,6)
     left join warn_lastday_idx_value lst  --昨日预警分-归因详情数据。若为空，则表示当日为首次数据衍生
         on main.corp_id=lst.corp_id and 

@@ -122,6 +122,21 @@ rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as --特征贡献度_综合预警等级
 	-- select *
 	-- from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf  --@hds.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
 ),
+-- 模型外挂规则 --
+warn_adj_rule_cfg as --预警分-模型外挂规则配置表   取最新etl_date的数据 (更新频率:日度更新)
+(
+	select distinct
+		a.etl_date,
+		b.corp_id, 
+		b.corp_name as corp_nm,
+		a.category,
+		a.reason
+	from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf a  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
+	join corp_chg b 
+		on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
+	where a.operator = '自动-风险已暴露规则'
+	  and a.ETL_DATE in (select max(etl_date) from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf)  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
+),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
 warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
 (
