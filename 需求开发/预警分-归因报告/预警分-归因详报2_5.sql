@@ -1,6 +1,6 @@
 -- RMP_WARNING_SCORE_REPORT 第二段和第五段-当前等级归因和建议关注风险 --
-drop table if exists app_ehzh.rmp_warning_score_report2;    
-create table app_ehzh.rmp_warning_score_report2 as      --@pth_rmp.rmp_warning_score_report2
+-- drop table if exists app_ehzh.rmp_warning_score_report2;    
+-- create table app_ehzh.rmp_warning_score_report2 as      --@pth_rmp.rmp_warning_score_report2
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (特殊2)
@@ -34,58 +34,120 @@ rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
     where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
+      and to_date(rating_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
     union all
     -- 非时间限制部分 --
     select * 
     from app_ehzh.rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
     where 1 in (select not max(flag) from timeLimit_switch) 
 ),
-RMP_WARNING_SCORE_MODEL_ as  --预警分-模型结果表
+rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_batch as 
 (
-    select distinct
-        cast(a.rating_dt as string) as batch_dt,
-        chg.corp_id,
-        chg.corp_name as corp_nm,
-		chg.credit_code as credit_cd,
-        to_date(a.rating_dt) as score_date,
-        a.total_score_adjusted as synth_score,  -- 预警分
-		case a.interval_text_adjusted
-			when '绿色预警' then '-1' 
-			when '黄色预警' then '-2'
-			when '橙色预警' then '-3'
-			when '红色预警' then '-4'
-			when '风险已暴露' then '-5'
-		end as synth_warnlevel,  -- 综合预警等级,
-		case
-			when a.interval_text_adjusted in ('绿色预警','黄色预警') then 
-				'-1'   --低风险
-			when a.interval_text_adjusted  = '橙色预警' then 
-				'-2'  --中风险
-			when a.interval_text_adjusted  ='红色预警' then 
-				'-3'  --高风险
-			when a.interval_text_adjusted  ='风险已暴露' then 
-				'-4'   --风险已暴露
-		end as adjust_warnlevel,
-		a.model_name,
-		a.model_version
-    from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a   
-    join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
-        on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
-    join corp_chg chg
-        on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
+    select a.*
+	from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a 
+	join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
+		on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
 ),
+-- 归因详情 --
 RMP_WARNING_SCORE_DETAIL_ as  --预警分--归因详情 原始接口
 (
+	-- 时间限制部分 --
 	select * 
 	from app_ehzh.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
-	where delete_flag=0
+	where 1 in (select max(flag) from timeLimit_switch)  and delete_flag=0
+      and to_date(score_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	union all 
+	-- 非时间限制部分 --
+    select * 
+    from app_ehzh.RMP_WARNING_SCORE_DETAIL  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+    where 1 in (select not max(flag) from timeLimit_switch)  and delete_flag=0
 ),
 -- 特征贡献度 --
 rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as --特征贡献度_综合预警等级
 (
-	select *
-	from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf  --@hds.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
+	-- 时间限制部分 --
+    select * 
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
+    where 1 in (select max(flag) from timeLimit_switch) 
+      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+    union all 
+    -- 非时间限制部分 --
+    select * 
+    from app_ehzh.rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
+    where 1 in (select not max(flag) from timeLimit_switch) 
+),
+-- 新闻公告 --
+news_intf_ as 
+(
+	-- 时间限制部分 --
+    select *
+    from app_ehzh.rmp_opinion_risk_info --@pth_rmp.rmp_opinion_risk_info
+    where 1 in (select max(flag) from timeLimit_switch) and crnw0003_010 in ('1','4') 
+	  -- 近12个月的新闻数据 --
+      and to_date(notice_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-365))
+	  and to_date(notice_dt)<= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+    union all 
+    -- 非时间限制部分 --
+    select * 
+    from app_ehzh.rmp_opinion_risk_info --@pth_rmp.rmp_opinion_risk_info
+    where 1 in (select not max(flag) from timeLimit_switch) 
+),
+-- 诚信 --
+cx_intf_ as 
+(
+	-- 时间限制部分 --
+    select 
+		*,
+		to_date(notice_dt) as notice_date
+    from app_ehzh.RMP_WARNING_SCORE_CX --@pth_rmp.RMP_WARNING_SCORE_CX
+    where 1 in (select max(flag) from timeLimit_switch)
+	  -- 近12个月的新闻数据 --
+      and to_date(notice_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-365))
+	  and to_date(notice_dt)<= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+    union all 
+    -- 非时间限制部分 --
+    select 
+		*,
+		to_date(notice_dt) as notice_date
+    from app_ehzh.RMP_WARNING_SCORE_CX --@pth_rmp.RMP_WARNING_SCORE_CX
+    where 1 in (select not max(flag) from timeLimit_switch) 
+),
+-- 司法 --
+sf_ktts_inft_ as --开庭庭审
+(
+	select 
+		*,
+		to_date(notice_dt) as notice_date
+    from app_ehzh.RMP_WARNING_SCORE_KTGG --@pth_rmp.RMP_WARNING_SCORE_KTGG
+    where 1 in (select max(flag) from timeLimit_switch)
+	  -- 近12个月的开庭庭审数据 --
+      and to_date(notice_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-365))
+	  and to_date(notice_dt)<= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+    union all 
+    -- 非时间限制部分 --
+    select 
+		*,
+		to_date(notice_dt) as notice_date
+    from app_ehzh.RMP_WARNING_SCORE_KTGG --@pth_rmp.RMP_WARNING_SCORE_KTGG
+    where 1 in (select not max(flag) from timeLimit_switch) 
+),
+sf_cpws_inft_ as --裁判文书
+(
+	 select 
+		*,
+		to_date(notice_dt) as notice_date
+    from app_ehzh.RMP_WARNING_SCORE_CPWS --@pth_rmp.RMP_WARNING_SCORE_CPWS
+    where 1 in (select max(flag) from timeLimit_switch)
+	  -- 近12个月的开庭庭审数据 --
+      and to_date(notice_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-365))
+	  and to_date(notice_dt)<= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+    union all 
+    -- 非时间限制部分 --
+    select 
+		*,
+		to_date(notice_dt) as notice_date
+    from app_ehzh.RMP_WARNING_SCORE_CPWS --@pth_rmp.RMP_WARNING_SCORE_CPWS
+    where 1 in (select not max(flag) from timeLimit_switch) 
 ),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
 warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
@@ -128,6 +190,50 @@ feat_CFG as  --特征手工配置表
     where sub_model_type in ('中频-产业','中频-城投','无监督')
 ),
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
+-- 预警分 --
+RMP_WARNING_SCORE_MODEL_ as  --预警分-模型结果表
+(
+    select distinct
+        cast(a.rating_dt as string) as batch_dt,
+        chg.corp_id,
+        chg.corp_name as corp_nm,
+		chg.credit_code as credit_cd,
+        to_date(a.rating_dt) as score_date,
+        a.total_score_adjusted as synth_score,  -- 预警分
+		case a.interval_text_adjusted
+			when '绿色预警' then '-1' 
+			when '黄色预警' then '-2'
+			when '橙色预警' then '-3'
+			when '红色预警' then '-4'
+			when '风险已暴露' then '-5'
+		end as synth_warnlevel,  -- 综合预警等级,
+		case
+			when a.interval_text_adjusted in ('绿色预警','黄色预警') then 
+				'-1'   --低风险
+			when a.interval_text_adjusted  = '橙色预警' then 
+				'-2'  --中风险
+			when a.interval_text_adjusted  ='红色预警' then 
+				'-3'  --高风险
+			when a.interval_text_adjusted  ='风险已暴露' then 
+				'-4'   --风险已暴露
+		end as adjust_warnlevel,
+		a.model_name,
+		a.model_version
+    from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_batch a   
+    join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
+        on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
+    join corp_chg chg
+        on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
+),
+RMP_WARNING_SCORE_MODEL_Batch as  -- 取每天最新批次数据
+(
+	select *
+	from RMP_WARNING_SCORE_MODEL_
+	-- select a.*
+	-- from RMP_WARNING_SCORE_MODEL_ a 
+	-- join (select max(batch_dt) as max_batch_dt,score_date from RMP_WARNING_SCORE_MODEL_ group by score_date) b
+	-- 	on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
+),
 rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch as --取每天最新批次 综合预警-贡献度排行榜(用于限制今天特征范围，昨天的不用限制)
 (
 	select distinct a.feature_name,cfg.feature_name_target
@@ -137,13 +243,6 @@ rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch as --取每天最新批次 综合预
 	join feat_CFG cfg
 		on a.feature_name=cfg.feature_cd
 ),
-RMP_WARNING_SCORE_MODEL_Batch as  -- 取每天最新批次数据
-(
-	select a.*
-	from RMP_WARNING_SCORE_MODEL_ a 
-	join (select max(batch_dt) as max_batch_dt,score_date from RMP_WARNING_SCORE_MODEL_ group by score_date) b
-		on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
-),
 RMP_WARNING_SCORE_DETAIL_Batch as -- 取每天最新批次数据（当天数据做范围限制）
 (
 	select a.*
@@ -151,6 +250,536 @@ RMP_WARNING_SCORE_DETAIL_Batch as -- 取每天最新批次数据（当天数据做范围限制）
 	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
 		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
 	where a.idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
+),
+-- 新闻公告类数据 --
+mid_news as 
+(
+	--近6个月比近12个月_新闻_标签_问询关注_数量(last6Mto12M_news_label_6008001_num)
+	select distinct
+		'last6Mto12M_news_label_6008001_num' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where case_type_ii_cd='6008001' --问询关注
+	union all 
+	--行业相对_近6个月比近12个月_新闻_标签_其他财务预警_情感平均值(indus_rela_last6Mto12M_news_label_6002012_meanimportance)
+	select distinct
+		'indus_rela_last6Mto12M_news_label_6002012_meanimportance' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where case_type_ii_cd='6002012'  --其他财务预警
+	union all 
+	--行业相对_近12个月_新闻_标签_其他财务预警_数量(indus_rela_last12M_news_label_6002012_num)
+	select distinct
+		'indus_rela_last12M_news_label_6002012_num' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where case_type_ii_cd='6002012'  --其他财务预警
+	union all
+	--近1周_新闻_数量(last1W_news_count)
+	select distinct
+		'last1W_news_count' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where 1=1
+	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-7))
+	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	union all 
+	--行业相对_近2周_新闻_数量(indus_rela_last2W_news_count)
+	select distinct
+		'indus_rela_last2W_news_count' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where 1=1
+	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-14))
+	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	union all
+	--行业相对_近1个月_新闻_标签_财务亏损_占比(indus_rela_last1M_news_label_6002001_rate)
+	select distinct
+		'indus_rela_last1M_news_label_6002001_rate' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where 1=1
+	  and case_type_ii_cd='6002001' --财务亏损
+	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-30))
+	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	union all 
+	--行业相对_近3个月_新闻_标签_财务亏损_占比(indus_rela_last3M_news_label_6002001_rate)
+	select distinct
+		'indus_rela_last3M_news_label_6002001_rate' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where 1=1
+	  and case_type_ii_cd='6002001' --财务亏损
+	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-90))
+	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	union all
+	--近6个月_新闻_标签_财务亏损_数量(last6M_news_label_6002001_num)
+	select distinct
+		'last6M_news_label_6002001_num' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where 1=1
+	  and case_type_ii_cd='6002001' --财务亏损
+	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-180))
+	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	union all 
+	--行业相对_近3个月_新闻_标签_关联企业出现问题_数量(indus_rela_last3M_news_label_6003007_num)
+	select distinct
+		'indus_rela_last3M_news_label_6003007_num' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where 1=1
+	  and case_type_ii_cd='6003007' --关联企业出现问题
+	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-90))
+	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	union all 
+	--近12个月_新闻_标签_流动性风险_占比(last12M_news_label_6002002_rate)
+	select distinct
+		'last12M_news_label_6002002_rate' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where 1=1
+	  and case_type_ii_cd='6002002' --流动性风险
+	union all 
+	--近12个月_新闻_标签_评级下调_数量(last12M_news_label_6001002_num)
+	select distinct
+		'last12M_news_label_6001002_num' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where 1=1
+	  and case_type_ii_cd='6001002' --评级下调
+	union all 
+	--近12个月_新闻_数量(last12M_news_count)
+	select distinct
+		'last12M_news_count' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where 1=1
+	union all 
+	--近12个月_新闻_标签_其他管理预警_数量(last12M_news_label_6004024_num)
+	select distinct
+		'last12M_news_label_6004024_num' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where 1=1
+	  and case_type_ii_cd='6004024' --其他管理预警
+	union all 
+	--近12个月_新闻_标签_担保过多_占比(last12M_news_label_6007002_rate)
+	select distinct
+		'last12M_news_label_6007002_rate' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where 1=1
+	  and case_type_ii_cd='6007002' --担保过多
+	union all 
+	--近12个月_新闻_标签_其他经营预警_数量(last12M_news_label_6003064_num)
+	select distinct
+		'last12M_news_label_6003064_num' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where 1=1
+	  and case_type_ii_cd='6003064' --其他经营预警
+	union all 
+	--近6个月比近12个月_新闻_标签_其他经营预警_数量(last6Mto12M_news_label_6003064_num)
+	select distinct
+		'last6Mto12M_news_label_6003064_num' as feature_cd,
+		corp_id,
+		corp_nm,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from news_intf_
+	where 1=1
+	  and case_type_ii_cd='6003064' --其他经营预警
+),
+-- 诚信类数据 --
+mid_cx_ as 
+(
+	--近3个月比近12个月_诚信_处罚实施状态_实际处罚_数量(last3Mto12M_honesty_penaltystatus_2_num)
+	select distinct
+		'last3Mto12M_honesty_penaltystatus_2_num' as feature_cd,
+		corp_id,
+		notice_date,
+		tit0026_1id as msg_id,
+		msg_title,
+		msg
+	from cx_intf_
+	where 1=1
+	  and it0026_013='2'
+	union all 
+	--近6个月比近12个月_诚信_二级分类_纳入被执行人_占比(last6Mto12M_honesty_secclass_22000078_rate)
+	select distinct
+		'last6Mto12M_honesty_secclass_22000078_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		tit0026_1id as msg_id,
+		msg_title,
+		msg
+	from cx_intf_
+	where 1=1
+	  and tit0026_typelevel6='22000078'  --tIT0026_TypeLevel7='纳入被执行人'
+	union all 
+	--近6个月_诚信_数量(last6M_honesty_num)
+	select distinct
+		'last6M_honesty_num' as feature_cd,
+		corp_id,
+		notice_date,
+		tit0026_1id as msg_id,
+		msg_title,
+		msg
+	from cx_intf_
+	where 1=1
+	  and tit0026_typelevel6='22000078'  --tIT0026_TypeLevel7='纳入被执行人'
+	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-180))
+	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+),
+mid_cx as --去除诚信数据里面重复性的msg_id
+(
+	select distinct 
+		feature_cd,
+		corp_id,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from 
+	(
+		select 
+			*,
+			row_number() over(partition by feature_cd,corp_id,notice_date,msg_title order by msg_id desc) as rm
+		from mid_cx_
+	) A where rm=1
+),
+mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
+(
+	--近6个月比近12个月_法院诉讼_案由明细_买卖合同纠纷_占比(last6Mto12M_lawsuit_detailedreason_4_rate)
+	select distinct
+		'last6Mto12M_honesty_secclass_22000078_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_cpws_inft_ 
+	where cr0055_030='买卖合同纠纷'
+	union all 
+	--近3个月比近12个月_法院诉讼_案由明细_合同纠纷_占比(last3Mto12M_lawsuit_detailedreason_7_rate)
+	select distinct
+		'last3Mto12M_lawsuit_detailedreason_7_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_cpws_inft_ 
+	where cr0055_030='合同纠纷'
+	union all 
+	--近6个月比近12个月_法院诉讼_案由明细_合同纠纷_数量(last6Mto12M_lawsuit_detailedreason_7_num)
+	select distinct
+		'last6Mto12M_lawsuit_detailedreason_7_num' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_cpws_inft_ 
+	where cr0055_030='合同纠纷'
+	union all 
+	--近12个月_法院诉讼_案件类型_执行类案件_占比(last12M_lawsuit_casetype_3_rate)
+	select distinct
+		'last12M_lawsuit_casetype_3_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_cpws_inft_ 
+	where cr0055_003='执行类案件'
+	union all 
+	--近12个月_法院诉讼_当事人类型_被执行人_占比(last12M_lawsuit_partyrole_8_rate)
+	select distinct
+		'last12M_lawsuit_partyrole_8_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_cpws_inft_ 
+	where cr0081_003='8'  --被执行人
+	union all 
+	--近12个月_法院诉讼_案由明细_金融借款合同纠纷_占比(last12M_lawsuit_detailedreason_0_rate)
+	select distinct
+		'last12M_lawsuit_detailedreason_0_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_cpws_inft_ 
+	where cr0055_030='金融借款合同纠纷'
+	union all 
+	--近12个月_法院诉讼_案由明细_合同纠纷_占比(last12M_lawsuit_detailedreason_7_rate)
+	select distinct
+		'last12M_lawsuit_detailedreason_7_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_cpws_inft_ 
+	where cr0055_030='合同纠纷' 
+	union all 
+	--近12个月_法院诉讼_案由明细_合同纠纷_占比(last12M_lawsuit_lawsuitamt_mean)
+	select distinct
+		'近12个月_法院诉讼_涉案金额_平均值' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_cpws_inft_ 
+	union all
+	--近12个月_法院诉讼_当事人类型_被申请人_占比(last12M_lawsuit_partyrole_4_rate)
+	select distinct
+		'last12M_lawsuit_partyrole_4_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_cpws_inft_ 
+	where cr0081_003='4'  --被申请人
+),
+mid_sf_cpws as --去除司法_裁判文书数据里面重复性的msg_id
+(
+	select distinct 
+		feature_cd,
+		corp_id,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from 
+	(
+		select 
+			*,
+			row_number() over(partition by feature_cd,corp_id,notice_date,msg_title order by msg_id desc) as rm
+		from mid_sf_cpws_
+	) A where rm=1
+),
+mid_sf_ktts_ as 
+(
+	--近6个月比近12个月_开庭庭审_诉讼地位代码_上诉人_占比(last6Mto12M_courttrial_trialstatus_5_rate)
+	select distinct
+		'last6Mto12M_courttrial_trialstatus_5_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_ktts_inft_
+	where cr0169_002='5'  --上诉人
+	union all 
+	--近6个月比近12个月_开庭庭审_诉讼地位代码_当事人_占比(last6Mto12M_courttrial_trialstatus_10_rate)
+	select distinct
+		'last6Mto12M_courttrial_trialstatus_10_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_ktts_inft_
+	where cr0169_002='10'  --当事人
+	union all
+	--近1个月_开庭庭审_诉讼地位代码_原审被告_占比(last1M_courttrial_trialstatus_2_rate)
+	select distinct
+		'last1M_courttrial_trialstatus_2_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_ktts_inft_
+	where cr0169_002='2'  --原审被告
+	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-30))
+	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	union all
+	--近3个月_开庭庭审_诉讼地位代码_原审被告_占比(last3M_courttrial_trialstatus_2_rate)
+	select distinct
+		'last3M_courttrial_trialstatus_2_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_ktts_inft_
+	where cr0169_002='2'  --原审被告
+	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-90))
+	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	union all
+	--近3个月_开庭庭审_诉讼地位代码_原审被告_数量(last3M_courttrial_trialstatus_2_num)
+	select distinct
+		'last3M_courttrial_trialstatus_2_num' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_ktts_inft_
+	where cr0169_002='2'  --原审被告
+	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-90))
+	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	union all
+	--近6个月_开庭庭审_诉讼地位代码_当事人_占比(last6M_courttrial_trialstatus_10_rate)
+	select distinct
+		'last6M_courttrial_trialstatus_10_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_ktts_inft_
+	where cr0169_002='10'  --原审被告
+	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-180))
+	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	union all
+	--近12个月_开庭庭审_诉讼地位代码_原审被告_占比(last12M_courttrial_trialstatus_2_rate)
+	select distinct
+		'last12M_courttrial_trialstatus_2_rate' as feature_cd,
+		corp_id,
+		
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_ktts_inft_
+	where cr0169_002='2'  --原审被告
+	union all
+	--近12个月_开庭庭审_诉讼地位代码_原审被告_占比(last12M_courttrial_trialstatus_2_rate)
+	select distinct
+		'last12M_courttrial_trialstatus_2_rate' as feature_cd,
+		corp_id,		
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_ktts_inft_
+	where cr0169_002='2'  --原审被告
+	union all 
+	--近12个月_开庭庭审_诉讼地位代码_上诉人_占比(last12M_courttrial_trialstatus_5_rate)
+	select distinct
+		'last12M_courttrial_trialstatus_5_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_ktts_inft_
+	where cr0169_002='5'  --上诉人
+	union all 
+	--近12个月_开庭庭审_诉讼地位代码_当事人_占比(last12M_courttrial_trialstatus_10_rate)
+	select distinct
+		'last12M_courttrial_trialstatus_10_rate' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title,
+		msg
+	from sf_ktts_inft_
+	where cr0169_002='10'  --当事人
+),
+mid_sf_ktts as --去除司法_开庭庭审数据里面重复性的msg_id
+(
+	select distinct 
+		feature_cd,
+		corp_id,
+		notice_date,
+		msg_id,
+		msg_title,
+		msg
+	from 
+	(
+		select 
+			*,
+			row_number() over(partition by feature_cd,corp_id,notice_date,msg_title order by msg_id desc) as rm
+		from mid_sf_ktts_
+	) A where rm=1
 ),
 -- 第二段数据 --
 Second_Part_Data_Prepare as 
@@ -198,6 +827,7 @@ Second_Part_Data as
 			-- sum(contribution_ratio) as dim_contrib_ratio,
 			sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension) as dim_contrib_ratio,
 			sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate) as dim_factorEvalu_contrib_ratio,
+			contribution_ratio,
 			dim_warn_level,
 			dim_warn_level_desc,  --维度风险等级(难点)
 			type,
@@ -208,7 +838,12 @@ Second_Part_Data as
 			last_idx_value,
 			idx_unit,
 			idx_score,   --指标评分 used
-			concat(feature_name_target,'为',cast(idx_value as string),idx_unit) as idx_desc,
+			case idx_unit
+				when '%' then 
+					concat(feature_name_target,'为',cast(cast(round(idx_value,2) as decimal(10,2))as string),idx_unit)
+				else 
+					concat(feature_name_target,'为',cast(idx_value as string),idx_unit)
+			end as idx_desc,				
 			count(idx_name) over(partition by corp_id,batch_dt,score_dt,dimension)  as dim_factor_cnt,
 			count(idx_name) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate)  as dim_factorEvalu_factor_cnt
 		from Second_Part_Data_Prepare 
@@ -235,7 +870,7 @@ Second_Part_Data_Dimension as -- 按维度层汇总描述用数据
 ),
 Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
 (
-	select
+	select 
 		batch_dt,
 		corp_id,
 		corp_nm,
@@ -244,10 +879,25 @@ Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
 		dimension_ch,
 		type,
 		-- concat_ws('、',collect_set(idx_desc)) as idx_desc_in_one_type   -- hive 
-		group_concat(idx_desc,'、') as idx_desc_in_one_type    -- impala
-	from Second_Part_Data
-	where factor_evaluate = 0
+		group_concat(distinct idx_desc,'、') as idx_desc_in_one_type    -- impala
+	from 
+	(
+		select
+			batch_dt,
+			corp_id,
+			corp_nm,
+			score_dt,
+			dimension,
+			dimension_ch,
+			type,
+			idx_desc,
+			row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type order by dim_contrib_ratio desc) as rm
+		from Second_Part_Data
+		where factor_evaluate = 0
+		-- group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type
+	) A where rm<=5   --取贡献度排名最高的5个异常因子
 	group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type
+
 ),
 -- 第二段信息 --
 Second_Msg_Dimension as  -- 维度层的信息描述
@@ -260,10 +910,10 @@ Second_Msg_Dimension as  -- 维度层的信息描述
 		dimension,
 		dimension_ch,
 		concat(
-			dimension_ch,'维度','（','贡献度占比',cast(round(dim_contrib_ratio*100,0) as string),'%','）','，',
+			dimension_ch,'维度','（','贡献度占比',cast(cast(round(dim_contrib_ratio,0) as decimal(10,0)) as string),'%','）','，',
 			'该维度当前处于',dim_warn_level_desc,'风险等级','，',
 			dimension_ch,'维度','纳入的',cast(dim_factor_cnt as string),'个指标中','，',cast(dim_factorEvalu_factor_cnt as string),'个指标表现异常','，',
-			'异常指标对主体总体风险贡献度为',cast(round(dim_factorEvalu_contrib_ratio*100,0) as string) ,'%','，'
+			'异常指标对主体总体风险贡献度为',cast(cast(round(dim_factorEvalu_contrib_ratio,0) as decimal(10,0)) as string) ,'%','，'
 		) as dim_msg
 	from Second_Part_Data_Dimension
 ),
@@ -277,7 +927,7 @@ Second_Msg_Dimension_Type as
 		dimension,
 		dimension_ch,
 		-- concat(concat_ws('；',collect_set(dim_type_msg)),'。') as idx_desc_one_row   -- hive 
-		concat(group_concat(dim_type_msg,'；'),'。') as idx_desc_in_one_dimension  --impala
+		concat(group_concat(distinct dim_type_msg,'；'),'。') as idx_desc_in_one_dimension  --impala
 	from
 	(
 		select 
