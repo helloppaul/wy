@@ -1,6 +1,10 @@
 -- RMP_WARNING_SCORE_REPORT µÚÒ»¶Î --
-drop table if exists app_ehzh.RMP_WARNING_SCORE_REPORT1;  
-create table app_ehzh.RMP_WARNING_SCORE_REPORT1 as    --@pth_rmp.rmp_warning_score_report1
+--/**2022-10-22 Ê×¶Î£¬ĞÂÔöÍâ¹Ò¹æÔòÂß¼­/
+--/**2022-10-22 Ê×¶Î£¬ĞÂÔö ÌáÊ¾ÑÕÉ«/
+
+
+-- drop table if exists app_ehzh.RMP_WARNING_SCORE_REPORT1;  
+-- create table app_ehzh.RMP_WARNING_SCORE_REPORT1 as    --@pth_rmp.rmp_warning_score_report1
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª »ù±¾ĞÅÏ¢ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 with
 corp_chg as  --´øÓĞ ³ÇÍ¶/²úÒµÅĞ¶ÏºÍ¹ú±êÒ»¼¶ĞĞÒµ/Ö¤¼à»áÒ»¼¶ĞĞÒµ µÄÌØÊâcorp_chg  (ÌØÊâ2)
@@ -50,6 +54,7 @@ RMP_WARNING_SCORE_MODEL_ as  --Ô¤¾¯·Ö-Ä£ĞÍ½á¹û±í
 		chg.credit_code as credit_cd,
         to_date(a.rating_dt) as score_date,
         a.total_score_adjusted as synth_score,  -- Ô¤¾¯·Ö
+		a.interval_text_adjusted,  --Ô­Ê¼Ä£ĞÍÌá¹©µÄ×ÛºÏÔ¤¾¯µÈ¼¶
 		case a.interval_text_adjusted
 			when 'ÂÌÉ«Ô¤¾¯' then '-1' 
 			when '»ÆÉ«Ô¤¾¯' then '-2'
@@ -100,15 +105,31 @@ warn_adj_rule_cfg as --Ô¤¾¯·Ö-Ä£ĞÍÍâ¹Ò¹æÔòÅäÖÃ±í   È¡×îĞÂetl_dateµÄÊı¾İ (¸üĞÂÆµÂ
 	where operator = '×Ô¶¯-·çÏÕÒÑ±©Â¶¹æÔò'
 	  and ETL_DATE in (select max(etl_date) from app_ehzh.rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf)  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
 ),
+warn_color_cfg as --Ô¤¾¯±¨¸æÏµÁĞ×¨ÓÃ-ÑÕÉ«ÅäÖÃ£¨½ö¹©²Î¿¼£¬²»×÷Îª´úÂëÒıÓÃ£©
+(
+	select	1 as id,' ÂÌÉ«Ô¤¾¯' as ori_msg,'<span class="GREEN">ÂÌÉ«ÄÚÈİ</span>' as color_msg
+	union all
+	select	2 as id, '»ÆÉ«Ô¤¾¯' as ori_msg,'<span class="YELLOW">»ÆÉ«ÄÚÈİ</span>' as color_msg
+	union all
+	select	3 as id, '³ÈÉ«Ô¤¾¯' as ori_msg,'<span class="ORANGE">»ÆÉ«ÄÚÈİ</span>' as color_msg
+	union all
+	select	4 as id, 'ºìÉ«Ô¤¾¯' as ori_msg,'<span class="RED">ºìÉ«ÄÚÈİ</span>' as color_msg
+	union all
+	select	5 as id, '·çÏÕÒÑ±©Â¶' as ori_msg,'<span class="RED">·çÏÕÒÑ±©Â¶ÄÚÈİ</span>' as color_msg
+	union all
+	select	6 as id, '¼Ó´Ö+ºìÉ«' as ori_msg,'<span class="RED"><span class="WEIGHT">ºìÉ«¼Ó´ÖÄÚÈİ</span></span>' as color_msg 
+),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª ÖĞ¼ä²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 -- µÚÒ»¶ÎÊı¾İ --
-First_Part_Data as  --ÊÊÓÃ Ô¤¾¯·Ö-¹éÒò¼ò±¨µÄÊı¾İ
+First_Part_Data as  --ÊÊÓÃ Ô¤¾¯·Ö-¹éÒò¼ò±¨µÄÊı¾İ £¨Ö÷Ìå²ã´Î£©
 (
 	select distinct
 		main.batch_dt,
 		main.corp_id,
 		main.corp_nm,
 		main.score_date as score_dt,
+		nvl(ru.category,'') as category_nvl,
+		nvl(ru.reason,'') as reason_nvl,
 		main.credit_cd,
 		main.synth_warnlevel,  --×ÛºÏÔ¤¾¯µÈ¼¶ used
 		chg.bond_type,  --1:²úÒµÕ® 2:³ÇÍ¶Õ®
@@ -123,6 +144,8 @@ First_Part_Data as  --ÊÊÓÃ Ô¤¾¯·Ö-¹éÒò¼ò±¨µÄÊı¾İ
 		on main.corp_id=chg.corp_id
 	join warn_level_ratio_cfg_ cfg
 		on main.synth_warnlevel=cfg.warn_lv and chg.bond_type=cfg.property_cd
+	left join warn_adj_rule_cfg  ru
+		on main.corp_id = ru.corp_id
 ),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª Ó¦ÓÃ²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 -- µÚÒ»¶ÎĞÅÏ¢ --
@@ -133,9 +156,34 @@ First_Msg as --
 		corp_nm,
 		score_dt,
 		concat(
-			'¸ÃÖ÷ÌåÔ¤²â·çÏÕË®Æ½´¦ÓÚ',corp_bond_type,'ÖĞ',percent_desc,',',
-			'Êô',warn_lv_desc
-		) as sentence_1  --µÚÒ»¾ä»°
+			case 
+				when  reason_nvl<>'' then 
+					concat('¸ÃÖ÷ÌåÒò´¥·¢',reason_nvl,'£¬','µ±Ç°´¦ÓÚ','·çÏÕÒÑ±©Â¶Ô¤¾¯µÈ¼¶','¡£')
+				else 
+					concat('¸ÃÖ÷ÌåÔ¤²â·çÏÕË®Æ½´¦ÓÚ',corp_bond_type,'ÖĞ',percent_desc,'£¬','Êô',warn_lv_desc,'¡£')
+			end
+		) as sentence_1_no_color,  --µÚÒ»¾ä»°
+		concat(
+			case 
+				when  reason_nvl<>'' then 
+					concat('¸ÃÖ÷ÌåÒò´¥·¢',reason_nvl,'£¬','µ±Ç°´¦ÓÚ','<span class="RED"><span class="WEIGHT">','·çÏÕÒÑ±©Â¶Ô¤¾¯µÈ¼¶','</span></span>','¡£')
+				else 
+					case warn_lv_desc
+						when 'ÂÌÉ«Ô¤¾¯µÈ¼¶' then
+							concat('¸ÃÖ÷ÌåÔ¤²â·çÏÕË®Æ½´¦ÓÚ',corp_bond_type,'ÖĞ',percent_desc,'£¬','Êô','<span class="GREEN"><span class="WEIGHT">',warn_lv_desc,'</span></span>','¡£')
+						when '»ÆÉ«Ô¤¾¯µÈ¼¶' then
+							concat('¸ÃÖ÷ÌåÔ¤²â·çÏÕË®Æ½´¦ÓÚ',corp_bond_type,'ÖĞ',percent_desc,'£¬','Êô','<span class="YELLO"><span class="WEIGHT">',warn_lv_desc,'</span></span>','¡£')
+						when '³ÈÉ«Ô¤¾¯µÈ¼¶' then
+							concat('¸ÃÖ÷ÌåÔ¤²â·çÏÕË®Æ½´¦ÓÚ',corp_bond_type,'ÖĞ',percent_desc,'£¬','Êô','<span class="ORANGE"><span class="WEIGHT">',warn_lv_desc,'</span></span>','¡£')
+						when 'ºìÉ«Ô¤¾¯µÈ¼¶' then
+							concat('¸ÃÖ÷ÌåÔ¤²â·çÏÕË®Æ½´¦ÓÚ',corp_bond_type,'ÖĞ',percent_desc,'£¬','Êô','<span class="RED"><span class="WEIGHT">',warn_lv_desc,'</span></span>','¡£')
+						when '·çÏÕÒÑ±©Â¶' then 
+							concat('¸ÃÖ÷ÌåÔ¤²â·çÏÕË®Æ½´¦ÓÚ',corp_bond_type,'ÖĞ',percent_desc,'£¬','Êô','<span class="RED"><span class="WEIGHT">',warn_lv_desc,'</span></span>','¡£')
+						else 
+							concat('¸ÃÖ÷ÌåÔ¤²â·çÏÕË®Æ½´¦ÓÚ',corp_bond_type,'ÖĞ',percent_desc,'£¬','Êô',warn_lv_desc,'¡£')
+					end
+			end
+		) as sentence_1  --´øÑÕÉ«µÚÒ»¾ä»°
 	from First_Part_Data
 )
 select * from First_Msg
