@@ -77,7 +77,7 @@ cm_property as
 			on cast(o.corp_code as string) = chg.source_id 
 	) A	group by corp_id
 ),
-one_ as 
+one_1 as 
 (
 	select distinct
 		a.entity_eid as cm_id,  
@@ -91,6 +91,23 @@ one_ as
 	from hds.t_ods_ckg_am_rel_shareholder a join hds.t_ods_ckg_am_rel_shareholder b  on a.eid = b.entity_eid
 	where cast(a.percent as double)<=1
 	 and a.entity_eid<>a.eid  --排除循环持有1
+),
+one_ as 
+(
+	select *
+	from 
+	(
+		select 
+			cm_id,
+			cm,
+			inv_id,
+			inv,
+			inv_p,
+			inv_type,
+			lv,
+			row_number() over(partition by cm_id,inv_id order by 1) as rm
+		from one_1
+	)A where rm=1
 ),
 two_ AS
 (
@@ -186,7 +203,7 @@ select
 	T.*
 from 
 (
-	select 
+	select distinct
 		to_date(CURRENT_TIMESTAMP()) relation_dt,
 		L.corp_id,
 		L.relation_id,

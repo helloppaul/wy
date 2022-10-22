@@ -84,7 +84,7 @@ select
 	T.*
 from 
 (
-	select 
+	select DISTINCT
 		-- md5(concat(chg_main.corp_id,L.relation_id,cast(L.relation_type_l2_code as string),L.type6)) as sid_kw,
 		to_date(CURRENT_TIMESTAMP()) relation_dt,
 		chg_main.corp_id,
