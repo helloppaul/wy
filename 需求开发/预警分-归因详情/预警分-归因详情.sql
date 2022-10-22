@@ -1051,7 +1051,7 @@ select distinct
     idx_value,   --！！！指标值最终需要转换为目标输出展示形态，和配置表的单位列有关，暂时输出原始值
     idx_unit,  
     idx_score,   
-    cast(contribution_ratio as float),
+    cast(contribution_ratio as float) as contribution_ratio,   --贡献度占比 已转换为 百分比
     contribution_cnt,  
     factor_evaluate,
     median,  --！！！ 待测试

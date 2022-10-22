@@ -1,4 +1,4 @@
--- Ô¤¾¯·Ö-Ä£ÐÍ½á¹û±í RMP_WARNING_SCORE_MODEL --
+-- Ô¤ï¿½ï¿½ï¿½ï¿½-Ä£ï¿½Í½ï¿½ï¿½ï¿½ï¿½ RMP_WARNING_SCORE_MODEL --
 create table pth_rmp.RMP_WARNING_SCORE_MODEL 
 (
 	sid_kw string,
@@ -18,6 +18,7 @@ create table pth_rmp.RMP_WARNING_SCORE_MODEL
 	update_time	TIMESTAMP,
 	version	tinyint
 )
+partitioned by (etl_date int)
 row format
 delimited fields terminated by '\16' escaped by '\\' 
 stored as textfile;

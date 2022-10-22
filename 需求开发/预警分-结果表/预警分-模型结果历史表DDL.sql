@@ -16,7 +16,8 @@ create table pth_rmp.RMP_WARNING_SCORE_MODEL_HIS
 	update_by	string,
 	update_time	TIMESTAMP,
 	version	tinyint
-)partitioned by (etl_date int)
+)
+partitioned by (etl_date int)
 row format
 delimited fields terminated by '\16' escaped by '\\'
 stored as textfile;

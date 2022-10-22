@@ -1,4 +1,4 @@
--- Ô¤¾¯·Ö-¹éÒò¼ò±¨wyÀúÊ· RMP_WARNING_SCORE_S_REPORT_HIS --
+-- Ô¤ï¿½ï¿½ï¿½ï¿½-ï¿½ï¿½ï¿½ï¿½ï¿½wyï¿½ï¿½Ê· RMP_WARNING_SCORE_S_REPORT_HIS --
 drop table if exists pth_rmp.RMP_WARNING_SCORE_S_REPORT_HIS ;
 create table pth_rmp.RMP_WARNING_SCORE_S_REPORT_HIS
 (
@@ -14,7 +14,8 @@ create table pth_rmp.RMP_WARNING_SCORE_S_REPORT_HIS
 	update_by	string,
 	update_time	TIMESTAMP,
 	version	tinyint
-)partitioned by (etl_date int) 
+)
+partitioned by (etl_date int) 
 row format
 delimited fields terminated by '\16' escaped by '\\'
 stored as textfile;
