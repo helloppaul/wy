@@ -263,6 +263,11 @@ Third_Msg as
 			a.bond_type_desc,'中',a.corp_property_desc,
 			'总体风险水平表现一致的企业还包括：',b.same_property_corp_nm_in_one_row,if(a.corp_id_cnt>5,'等',''),
 			cast(corp_id_cnt as string),'家企业。'
+		) as msg_no_color,
+		concat(
+			a.bond_type_desc,'中',a.corp_property_desc,
+			'总体风险水平表现一致的企业还包括：','<span class="WEIGHT">',b.same_property_corp_nm_in_one_row,if(a.corp_id_cnt>5,'等',''),'</span>',
+			cast(corp_id_cnt as string),'家企业。'
 		) as msg
 	from Third_Part_Data_SUMM a 
 	join Third_Msg_Corp b 
