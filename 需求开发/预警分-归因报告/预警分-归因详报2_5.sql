@@ -258,11 +258,11 @@ mid_news as
 	select distinct
 		'last6Mto12M_news_label_6008001_num' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where case_type_ii_cd='6008001' --问询关注
 	union all 
@@ -270,11 +270,11 @@ mid_news as
 	select distinct
 		'indus_rela_last6Mto12M_news_label_6002012_meanimportance' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where case_type_ii_cd='6002012'  --其他财务预警
 	union all 
@@ -282,11 +282,11 @@ mid_news as
 	select distinct
 		'indus_rela_last12M_news_label_6002012_num' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where case_type_ii_cd='6002012'  --其他财务预警
 	union all
@@ -294,11 +294,11 @@ mid_news as
 	select distinct
 		'last1W_news_count' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where 1=1
 	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-7))
@@ -308,11 +308,11 @@ mid_news as
 	select distinct
 		'indus_rela_last2W_news_count' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where 1=1
 	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-14))
@@ -322,11 +322,11 @@ mid_news as
 	select distinct
 		'indus_rela_last1M_news_label_6002001_rate' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where 1=1
 	  and case_type_ii_cd='6002001' --财务亏损
@@ -337,11 +337,11 @@ mid_news as
 	select distinct
 		'indus_rela_last3M_news_label_6002001_rate' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where 1=1
 	  and case_type_ii_cd='6002001' --财务亏损
@@ -352,11 +352,11 @@ mid_news as
 	select distinct
 		'last6M_news_label_6002001_num' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where 1=1
 	  and case_type_ii_cd='6002001' --财务亏损
@@ -367,11 +367,11 @@ mid_news as
 	select distinct
 		'indus_rela_last3M_news_label_6003007_num' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where 1=1
 	  and case_type_ii_cd='6003007' --关联企业出现问题
@@ -382,11 +382,11 @@ mid_news as
 	select distinct
 		'last12M_news_label_6002002_rate' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where 1=1
 	  and case_type_ii_cd='6002002' --流动性风险
@@ -395,11 +395,11 @@ mid_news as
 	select distinct
 		'last12M_news_label_6001002_num' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where 1=1
 	  and case_type_ii_cd='6001002' --评级下调
@@ -408,11 +408,11 @@ mid_news as
 	select distinct
 		'last12M_news_count' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where 1=1
 	union all 
@@ -420,11 +420,11 @@ mid_news as
 	select distinct
 		'last12M_news_label_6004024_num' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where 1=1
 	  and case_type_ii_cd='6004024' --其他管理预警
@@ -433,11 +433,11 @@ mid_news as
 	select distinct
 		'last12M_news_label_6007002_rate' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where 1=1
 	  and case_type_ii_cd='6007002' --担保过多
@@ -446,11 +446,11 @@ mid_news as
 	select distinct
 		'last12M_news_label_6003064_num' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where 1=1
 	  and case_type_ii_cd='6003064' --其他经营预警
@@ -459,11 +459,11 @@ mid_news as
 	select distinct
 		'last6Mto12M_news_label_6003064_num' as feature_cd,
 		corp_id,
-		corp_nm,
+		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
+		-- msg
 	from news_intf_
 	where 1=1
 	  and case_type_ii_cd='6003064' --其他经营预警
@@ -477,8 +477,7 @@ mid_cx_ as
 		corp_id,
 		notice_date,
 		tit0026_1id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from cx_intf_
 	where 1=1
 	  and it0026_013='2'
@@ -489,8 +488,7 @@ mid_cx_ as
 		corp_id,
 		notice_date,
 		tit0026_1id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from cx_intf_
 	where 1=1
 	  and tit0026_typelevel6='22000078'  --tIT0026_TypeLevel7='纳入被执行人'
@@ -501,8 +499,7 @@ mid_cx_ as
 		corp_id,
 		notice_date,
 		tit0026_1id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from cx_intf_
 	where 1=1
 	  and tit0026_typelevel6='22000078'  --tIT0026_TypeLevel7='纳入被执行人'
@@ -516,8 +513,7 @@ mid_cx as --去除诚信数据里面重复性的msg_id
 		corp_id,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
 	from 
 	(
 		select 
@@ -534,8 +530,7 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_cpws_inft_ 
 	where cr0055_030='买卖合同纠纷'
 	union all 
@@ -545,8 +540,7 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_cpws_inft_ 
 	where cr0055_030='合同纠纷'
 	union all 
@@ -556,8 +550,7 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_cpws_inft_ 
 	where cr0055_030='合同纠纷'
 	union all 
@@ -567,8 +560,7 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_cpws_inft_ 
 	where cr0055_003='执行类案件'
 	union all 
@@ -578,8 +570,7 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_cpws_inft_ 
 	where cr0081_003='8'  --被执行人
 	union all 
@@ -589,8 +580,7 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_cpws_inft_ 
 	where cr0055_030='金融借款合同纠纷'
 	union all 
@@ -600,8 +590,7 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_cpws_inft_ 
 	where cr0055_030='合同纠纷' 
 	union all 
@@ -611,8 +600,7 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_cpws_inft_ 
 	union all
 	--近12个月_法院诉讼_当事人类型_被申请人_占比(last12M_lawsuit_partyrole_4_rate)
@@ -621,8 +609,7 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_cpws_inft_ 
 	where cr0081_003='4'  --被申请人
 ),
@@ -633,8 +620,7 @@ mid_sf_cpws as --去除司法_裁判文书数据里面重复性的msg_id
 		corp_id,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
 	from 
 	(
 		select 
@@ -651,8 +637,7 @@ mid_sf_ktts_ as
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_ktts_inft_
 	where cr0169_002='5'  --上诉人
 	union all 
@@ -662,8 +647,7 @@ mid_sf_ktts_ as
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_ktts_inft_
 	where cr0169_002='10'  --当事人
 	union all
@@ -673,8 +657,7 @@ mid_sf_ktts_ as
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_ktts_inft_
 	where cr0169_002='2'  --原审被告
 	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-30))
@@ -686,8 +669,7 @@ mid_sf_ktts_ as
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_ktts_inft_
 	where cr0169_002='2'  --原审被告
 	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-90))
@@ -699,8 +681,7 @@ mid_sf_ktts_ as
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_ktts_inft_
 	where cr0169_002='2'  --原审被告
 	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-90))
@@ -712,8 +693,7 @@ mid_sf_ktts_ as
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_ktts_inft_
 	where cr0169_002='10'  --原审被告
 	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-180))
@@ -723,22 +703,19 @@ mid_sf_ktts_ as
 	select distinct
 		'last12M_courttrial_trialstatus_2_rate' as feature_cd,
 		corp_id,
-		
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_ktts_inft_
 	where cr0169_002='2'  --原审被告
 	union all
 	--近12个月_开庭庭审_诉讼地位代码_原审被告_占比(last12M_courttrial_trialstatus_2_rate)
 	select distinct
 		'last12M_courttrial_trialstatus_2_rate' as feature_cd,
-		corp_id,		
+		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_ktts_inft_
 	where cr0169_002='2'  --原审被告
 	union all 
@@ -748,8 +725,7 @@ mid_sf_ktts_ as
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_ktts_inft_
 	where cr0169_002='5'  --上诉人
 	union all 
@@ -759,8 +735,7 @@ mid_sf_ktts_ as
 		corp_id,
 		notice_date,
 		source_id as msg_id,
-		msg_title,
-		msg
+		msg_title
 	from sf_ktts_inft_
 	where cr0169_002='10'  --当事人
 ),
@@ -771,8 +746,7 @@ mid_sf_ktts as --去除司法_开庭庭审数据里面重复性的msg_id
 		corp_id,
 		notice_date,
 		msg_id,
-		msg_title,
-		msg
+		msg_title
 	from 
 	(
 		select 
@@ -780,6 +754,40 @@ mid_sf_ktts as --去除司法_开庭庭审数据里面重复性的msg_id
 			row_number() over(partition by feature_cd,corp_id,notice_date,msg_title order by msg_id desc) as rm
 		from mid_sf_ktts_
 	) A where rm=1
+),
+mid_risk_info as   --合并新闻、诚信、司法数据
+(
+	select
+		feature_cd,
+		corp_id,
+		notice_date,
+		msg_id,
+		msg_title
+	from mid_news
+	union all 
+	select
+		feature_cd,
+		corp_id,
+		notice_date,
+		msg_id,
+		msg_title
+	from mid_cx
+	union all 
+	select
+		feature_cd,
+		corp_id,
+		notice_date,
+		msg_id,
+		msg_title
+	from mid_sf_cpws
+	union all 
+	select
+		feature_cd,
+		corp_id,
+		notice_date,
+		msg_id,
+		msg_title
+	from mid_sf_ktts
 ),
 -- 第二段数据 --
 Second_Part_Data_Prepare as 
@@ -793,14 +801,15 @@ Second_Part_Data_Prepare as
 		main.dimension,    --维度编码
 		f_cfg.dimension as dimension_ch,  --维度名称
 		main.type,  	-- used
+		main.factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
 		main.idx_name,  -- used 
 		main.idx_value,  -- used
 		main.last_idx_value, -- used in 简报wy
 		main.idx_unit,  -- used 
 		main.idx_score,  -- used
+		rinfo.msg_title,    --风险信息（一个指标对应多个风险事件）
 		f_cfg.feature_name_target,  --特征名称-目标(系统)  used
 		main.contribution_ratio,
-		main.factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
 		main.dim_warn_level,
 		cfg.risk_lv_desc as dim_warn_level_desc  --维度风险等级(难点)  used
 	from RMP_WARNING_SCORE_DETAIL_Batch main
@@ -810,6 +819,8 @@ Second_Part_Data_Prepare as
 		on main.corp_id=a.corp_id and main.batch_dt=a.batch_dt
 	join warn_dim_risk_level_cfg_ cfg 
 		on main.dim_warn_level=cast(cfg.risk_lv as string)
+	left join mid_risk_info rinfo 
+		on a.corp_id=rinfo.corp_id and score_dt=notice_date and main.idx_name=rinfo.feature_cd
 ),
 Second_Part_Data as 
 (
@@ -838,6 +849,7 @@ Second_Part_Data as
 			last_idx_value,
 			idx_unit,
 			idx_score,   --指标评分 used
+			msg_title,    --风险信息（一个指标对应多个风险事件）
 			case idx_unit
 				when '%' then 
 					concat(feature_name_target,'为',cast(cast(round(idx_value,2) as decimal(10,2))as string),idx_unit)
@@ -868,6 +880,39 @@ Second_Part_Data_Dimension as -- 按维度层汇总描述用数据
 	from Second_Part_Data
 	where factor_evaluate = 0
 ),
+Second_Part_Data_Dimension_Type_idx as --按指标层汇总数据，用于汇总多个 风险事件 到一个指标上
+(
+	select 
+		batch_dt,
+		corp_id,
+		corp_nm,
+		score_dt,
+		dimension,
+		dimension_ch,
+		type,
+		idx_desc,
+		contribution_ratio,  --指标层的贡献度占比
+		-- concat_ws('、',collect_set(msg_title)) as risk_info_desc_in_one_idx   -- hive 
+		group_concat(distinct msg_title,'、') as risk_info_desc_in_one_idx    -- impala 
+	from 
+	(
+		select 
+			batch_dt,
+			corp_id,
+			corp_nm,
+			score_dt,
+			dimension,
+			dimension_ch,
+			type,
+			idx_desc,
+			msg_title,
+			contribution_ratio,
+			row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type,idx_desc order by contribution_ratio desc) as rm
+		from Second_Part_Data
+		where factor_evaluate = 0
+	)A where rm<=10  --按照贡献度排名从高到低排序后，取出前十条风险事件作为展示
+	group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type,idx_desc,contribution_ratio
+),
 Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
 (
 	select 
@@ -878,8 +923,10 @@ Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
 		dimension,
 		dimension_ch,
 		type,
-		-- concat_ws('、',collect_set(idx_desc)) as idx_desc_in_one_type   -- hive 
-		group_concat(distinct idx_desc,'、') as idx_desc_in_one_type    -- impala
+		-- concat_ws('、',collect_set(risk_info_desc_in_one_idx)) as risk_info_desc_in_one_type,   -- hive 
+		nvl(group_concat( risk_info_desc_in_one_idx,'、'),'') as  risk_info_desc_in_one_type,   --impala  再将风险事件汇总到type层
+		-- concat_ws('、',collect_set(idx_desc)) as idx_desc_in_one_type   -- hive (拼接值为NULL，返回'')
+		nvl(group_concat(distinct idx_desc,'、'),'') as idx_desc_in_one_type    -- impala  (拼接值全部为NULL，返回NULL)
 	from 
 	(
 		select
@@ -891,9 +938,10 @@ Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
 			dimension_ch,
 			type,
 			idx_desc,
-			row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type order by dim_contrib_ratio desc) as rm
-		from Second_Part_Data
-		where factor_evaluate = 0
+			risk_info_desc_in_one_idx,    --汇总到一个指标上的风险信息
+			row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type order by contribution_ratio desc) as rm
+		from Second_Part_Data_Dimension_Type_idx
+		-- where factor_evaluate = 0
 		-- group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type
 	) A where rm<=5   --取贡献度排名最高的5个异常因子
 	group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type
@@ -909,11 +957,19 @@ Second_Msg_Dimension as  -- 维度层的信息描述
 		score_dt,
 		dimension,
 		dimension_ch,
+		dim_factorEvalu_factor_cnt,
 		concat(
 			dimension_ch,'维度','（','贡献度占比',cast(cast(round(dim_contrib_ratio,0) as decimal(10,0)) as string),'%','）','，',
 			'该维度当前处于',dim_warn_level_desc,'风险等级','，',
-			dimension_ch,'维度','纳入的',cast(dim_factor_cnt as string),'个指标中','，',cast(dim_factorEvalu_factor_cnt as string),'个指标表现异常','，',
-			'异常指标对主体总体风险贡献度为',cast(cast(round(dim_factorEvalu_contrib_ratio,0) as decimal(10,0)) as string) ,'%','，'
+			case 
+				when dim_factorEvalu_factor_cnt=0 then 
+					concat('无显著异常指标及事件','。')
+				else 
+					concat(
+						dimension_ch,'维度','纳入的',cast(dim_factor_cnt as string),'个指标中','，',cast(dim_factorEvalu_factor_cnt as string),'个指标表现异常','，',
+						'异常指标对主体总体风险贡献度为',cast(cast(round(dim_factorEvalu_contrib_ratio,0) as decimal(10,0)) as string) ,'%','，'
+					)
+			end
 		) as dim_msg
 	from Second_Part_Data_Dimension
 ),
@@ -926,8 +982,8 @@ Second_Msg_Dimension_Type as
 		score_dt,
 		dimension,
 		dimension_ch,
-		-- concat(concat_ws('；',collect_set(dim_type_msg)),'。') as idx_desc_one_row   -- hive 
-		concat(group_concat(distinct dim_type_msg,'；'),'。') as idx_desc_in_one_dimension  --impala
+		-- concat(concat_ws('；',collect_set(dim_type_msg)),'。') as idx_desc_risk_info_desc_in_one_dimension   -- hive 
+		concat(group_concat(distinct dim_type_msg,'；'),'。') as idx_desc_risk_info_desc_in_one_dimension  --impala
 	from
 	(
 		select 
@@ -939,7 +995,16 @@ Second_Msg_Dimension_Type as
 			dimension_ch,
 			type,
 			concat(
-				type,'异常：',idx_desc_in_one_type
+				type,'异常：',   --例如：'新闻公告类异常：'
+				case 
+					when  risk_info_desc_in_one_type='' then 
+						idx_desc_in_one_type
+					else 
+						concat(
+							"涉及风险事件主要包括：",risk_info_desc_in_one_type,'，',
+							'主要异常指标包括：',idx_desc_in_one_type
+						)
+				end				
 			) as dim_type_msg
 		from Second_Part_Data_Dimension_Type
 	)A 
@@ -953,9 +1018,14 @@ Second_Msg_Dim as
 		a.corp_nm,
 		a.score_dt,
 		a.dimension,
-		concat(
-			a.dim_msg,b.idx_desc_in_one_dimension
-		) as msg_dim
+		case 	
+			when a.dim_factorEvalu_factor_cnt=0 then  --无异常指标时，话术直接输出维度层即可，结束语为'无显著异常指标及事件'
+				a.dim_msg
+			else
+				concat(
+					a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension
+				) 
+		end as msg_dim
 	from Second_Msg_Dimension a
 	join Second_Msg_Dimension_Type b 
 		on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id and a.dimension=b.dimension
@@ -968,7 +1038,7 @@ Second_Msg as    --！！！还未对 贡献度占比 从大到小排序
 		corp_nm,
 		score_dt,
 		-- concat_ws('\\r\\n',collect_set(msg_dim)) as msg
-		group_concat(msg_dim,'\\r\\n') as msg
+		group_concat(distinct msg_dim,'\\r\\n') as msg
 	from Second_Msg_Dim
 	group by batch_dt,corp_id,corp_nm,score_dt
 ),
