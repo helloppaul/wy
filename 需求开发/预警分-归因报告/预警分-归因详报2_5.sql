@@ -865,7 +865,7 @@ Second_Part_Data as
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 Second_Part_Data_Dimension as -- 按维度层汇总描述用数据
 (
-	select 
+	select distinct
 		batch_dt,
 		corp_id,
 		corp_nm,
@@ -957,10 +957,34 @@ Second_Msg_Dimension as  -- 维度层的信息描述
 		score_dt,
 		dimension,
 		dimension_ch,
+		row_number() over(partition by batch_dt,corp_id,score_dt order by dim_contrib_ratio desc) as dim_contrib_ratio_rank,   --从大到小排列
 		dim_factorEvalu_factor_cnt,
 		concat(
 			dimension_ch,'维度','（','贡献度占比',cast(cast(round(dim_contrib_ratio,0) as decimal(10,0)) as string),'%','）','，',
-			'该维度当前处于',dim_warn_level_desc,'风险等级','，',
+			'该维度当前处于',dim_warn_level_desc,'等级','，',
+			case 
+				when dim_factorEvalu_factor_cnt=0 then 
+					concat('无显著异常指标及事件','。')
+				else 
+					concat(
+						dimension_ch,'维度','纳入的',cast(dim_factor_cnt as string),'个指标中','，',cast(dim_factorEvalu_factor_cnt as string),'个指标表现异常','，',
+						'异常指标对主体总体风险贡献度为',cast(cast(round(dim_factorEvalu_contrib_ratio,0) as decimal(10,0)) as string) ,'%','，'
+					)
+			end
+		) as dim_msg_no_color,
+		concat(
+			'<span class="WEIGHT">',dimension_ch,'维度','（','贡献度占比',cast(cast(round(dim_contrib_ratio,0) as decimal(10,0)) as string),'%','）','</span>','，',
+		
+			'该维度当前处于',
+				case 
+					when dim_warn_level_desc ='高风险' then 
+						concat('<span class="RED"><span class="WEIGHT">',dim_warn_level_desc,'</span></span>')
+					when dim_warn_level_desc ='中风险' then 
+						concat('<span class="ORANGE"><span class="WEIGHT">',dim_warn_level_desc,'</span></span>')
+					when dim_warn_level_desc ='低风险' then 
+						concat('<span class="GREEN"><span class="WEIGHT">',dim_warn_level_desc,'</span></span>')
+				end,
+				'等级','，',
 			case 
 				when dim_factorEvalu_factor_cnt=0 then 
 					concat('无显著异常指标及事件','。')
@@ -1005,6 +1029,18 @@ Second_Msg_Dimension_Type as
 							'主要异常指标包括：',idx_desc_in_one_type
 						)
 				end				
+			) as dim_type_msg_no_color,
+			concat(
+				'<span class="WEIGHT">',type,'异常：','</span>',   --例如：'新闻公告类异常：'
+				case 
+					when  risk_info_desc_in_one_type='' then 
+						idx_desc_in_one_type
+					else 
+						concat(
+							"涉及风险事件主要包括：",risk_info_desc_in_one_type,'，',
+							'主要异常指标包括：',idx_desc_in_one_type
+						)
+				end				
 			) as dim_type_msg
 		from Second_Part_Data_Dimension_Type
 	)A 
@@ -1018,17 +1054,19 @@ Second_Msg_Dim as
 		a.corp_nm,
 		a.score_dt,
 		a.dimension,
+		lpad(cast(a.dim_contrib_ratio_rank as string),3,'0') as dim_rank,  --维度显示顺序排名，001 002 003 004 005
 		case 	
 			when a.dim_factorEvalu_factor_cnt=0 then  --无异常指标时，话术直接输出维度层即可，结束语为'无显著异常指标及事件'
 				a.dim_msg
 			else
 				concat(
-					a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension
+					lpad(cast(a.dim_contrib_ratio_rank as string),3,'0'),'_',a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension
 				) 
 		end as msg_dim
 	from Second_Msg_Dimension a
 	join Second_Msg_Dimension_Type b 
 		on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id and a.dimension=b.dimension
+	order by batch_dt,corp_id,score_dt,dim_rank
 ),
 Second_Msg as    --！！！还未对 贡献度占比 从大到小排序
 (
@@ -1037,7 +1075,7 @@ Second_Msg as    --！！！还未对 贡献度占比 从大到小排序
 		corp_id,
 		corp_nm,
 		score_dt,
-		-- concat_ws('\\r\\n',collect_set(msg_dim)) as msg
+		-- concat_ws('\\r\\n',sort_array(collect_set(msg_dim))) as msg
 		group_concat(distinct msg_dim,'\\r\\n') as msg
 	from Second_Msg_Dim
 	group by batch_dt,corp_id,corp_nm,score_dt
@@ -1058,7 +1096,8 @@ Fifth_Data as
 			corp_id,
 			corp_nm,
 			score_dt,
-			dimension_ch
+			dimension_ch as dimension_ch_no_color,
+			concat('<span class="RED"><span class="WEIGHT">',dimension_ch,'</span></span>') as dimension_ch
 		from Second_Part_Data_Prepare
 		where factor_evaluate = 0   --因子评价，因子是否异常的字段 0：异常 1：正常
 	)A 
@@ -1071,7 +1110,7 @@ Fifth_Msg as
 		corp_id,
 		corp_nm,
 		score_dt,
-		concat('建议关注公司',abnormal_dim_msg,'带来的风险。') as msg
+		concat('建议关注公司',abnormal_dim_msg,'维度','带来的风险。') as msg
 	from Fifth_Data
 )
 ------------------------------------以上部分为临时表-------------------------------------------------------------------
