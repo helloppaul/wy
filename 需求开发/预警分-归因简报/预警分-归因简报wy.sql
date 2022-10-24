@@ -1,5 +1,6 @@
 -- RMP_WARNING_SCORE_S_REPORT 归因简报 --
 --/* 2022-10-24 新增颜色逻辑 */
+--/* 2022-10-24 新增外挂规则逻辑 */
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (特殊2)
@@ -439,33 +440,45 @@ s_msg_dim_type as
 			case s_dim_desc
 				when '异常' then 
 					concat(
-						type,s_dim_desc,'：',s_report_idx_desc_in_one_type
+						'? ',type,s_dim_desc,'：',s_report_idx_desc_in_one_type
 					)
 				else 
 					s_dim_desc
 			end
-		) as s_datg_dim_type_no_color,
+		) as s_msg_in_one_type_no_color,
 		concat(
 			case s_dim_desc
 				when '异常' then 
 					concat(
-						'<span class="WEIGHT">',type,s_dim_desc,'：','</span>',s_report_idx_desc_in_one_type
+						'? ','<span class="WEIGHT">',type,s_dim_desc,'：','</span>',s_report_idx_desc_in_one_type
 					)
 				else 
 					s_dim_desc
 			end
-		) as s_datg_dim_type
+		) as s_msg_in_one_type
 	from s_datg_dim_type
 ),
 s_msg as   --最终信息展示汇总到企业层
 (
 	select 
-		batch_dt,
-		corp_id,
-		corp_nm,
-		score_dt,
-		if(corp_msg_='' or corp_msg_ is null,'该主体当前无显著风险点。',corp_msg_
-		) as corp_msg  --hive执行将会返回''，impala返回NULL或''
+		a.batch_dt,
+		a.corp_id,
+		a.corp_nm,
+		a.score_dt,
+		case 
+			when nvl(ru.reason,'') = '' then 
+				if(a.corp_msg_='' or a.corp_msg_ is null,
+					'该主体当前无显著风险点。',
+					corp_msg_
+				) 
+			else 
+				if(a.corp_msg_='' or a.corp_msg_ is null,
+					'该主体当前无显著风险点。',
+					concat('? ','该主体触发','<span class="WEIGHT">',nvl(ru.reason,''),'</span>\\r\\n',
+					a.corp_msg_
+					)
+				) 
+		end as corp_msg   -- hive执行将会返回''，impala返回NULL或''
 	from 
 	(
 		select 
@@ -473,11 +486,14 @@ s_msg as   --最终信息展示汇总到企业层
 			corp_id,
 			corp_nm,
 			score_dt,
-			-- concat_ws('\\r\\n',collect_set(s_datg_dim_type)) as corp_msg_  -- hive
-			group_concat(distinct s_datg_dim_type,'\\r\\n') as corp_msg_  -- impala
+			-- concat_ws('\\r\\n',collect_set(s_msg_in_one_type)) as corp_msg_  -- hive
+			group_concat(distinct s_msg_in_one_type,'\\r\\n') as corp_msg_  -- impala
 		from s_msg_dim_type
 		group by batch_dt,corp_id,corp_nm,score_dt
-	)A
+	)A 
+	left join warn_adj_rule_cfg  ru
+			on a.corp_id = ru.corp_id
+
 )
 ------------------------------------以上部分为临时表-------------------------------------------------------------------
 -- insert into pth_rmp.WARNING_SCORE_S_REPORT
