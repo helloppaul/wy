@@ -1,4 +1,5 @@
 -- RMP_WARNING_SCORE_S_REPORT 归因简报 --
+--/* 2022-10-24 新增颜色逻辑 */
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (特殊2)
@@ -271,6 +272,7 @@ Second_Part_Data as
 			idx_value,
 			last_idx_value,
 			idx_unit,
+			contribution_ratio,
 			idx_score,   --指标评分 used
 			concat(feature_name_target,'为',cast(idx_value as string),idx_unit) as idx_desc,
 			count(idx_name) over(partition by corp_id,batch_dt,score_dt,dimension)  as dim_factor_cnt,
@@ -304,6 +306,7 @@ RMP_WARNING_dim_warn_lv_And_idx_score_chg as --取每天最新批次的维度风险等级变动 
 		a.last_idx_value,
 		a.feature_name_target,
 		a.idx_unit,
+		a.contribution_ratio,
 		a.idx_score,   -- 今日指标打分
 		b.idx_score as idx_score_1, -- 昨日指标打分
 		case 
@@ -325,7 +328,7 @@ Warn_lv_Feat_score_Idx_value_Summ as --合并 维度风险等级，特征评分 以及 指标变动
 			when factor_evaluate=0 and dim_idx_score_chg_desc='恶化'  then 
 				'异常'
 			else
-				''
+				NULL
 		end as s_dim_desc  --简报维度层 '异常'字样输出逻辑
 	from 
 	(
@@ -343,6 +346,8 @@ Warn_lv_Feat_score_Idx_value_Summ as --合并 维度风险等级，特征评分 以及 指标变动
 			idx_value,
 			last_idx_value,
 			idx_unit,
+			contribution_ratio,
+			idx_score_chg_desc,
 			concat(
 				case 
 					when factor_evaluate=0 and idx_score_chg_desc<>'恶化' then 
@@ -367,10 +372,38 @@ Warn_lv_Feat_score_Idx_value_Summ as --合并 维度风险等级，特征评分 以及 指标变动
 						)
 					else ''
 				end
+			) as s_report_idx_desc_no_color,   --简报用到的指标层的指标描述数据
+			concat(
+				case 
+					when factor_evaluate=0 and idx_score_chg_desc<>'恶化' then 
+						concat(feature_name_target,'为',cast(idx_value as string),idx_unit)
+					when factor_evaluate=0 and idx_score_chg_desc='恶化' then 
+						concat(
+							concat(feature_name_target,'为','<span class="RED">',cast(idx_value as string),idx_unit),'</span>','，','且发生恶化','，','由',
+							case 
+								when last_idx_value<=idx_value then 
+									concat(	'<span class="RED">',
+											concat(cast(last_idx_value as string),idx_unit),
+											'升至',
+											concat(cast(idx_value as string),idx_unit),
+											'</span>'
+									)
+								else 
+									concat(
+											'<span class="RED">',
+											concat(cast(last_idx_value as string),idx_unit),
+											'降至',
+											concat(cast(idx_value as string),idx_unit),
+											'</span>'
+									)
+							end
+						)
+					else ''
+				end
 			) as s_report_idx_desc,   --简报用到的指标层的指标描述数据
-			idx_score_chg_desc
+			row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type order by contribution_ratio desc) as rm
 		from rmp_warning_dim_warn_lv_and_idx_score_chg
-	) A
+	) A where rm<=5 
 ),
 s_datg_dim_type as   --汇总到维度，类别层数据 
 (
@@ -387,12 +420,11 @@ s_datg_dim_type as   --汇总到维度，类别层数据
 		-- idx_desc_in_one_type,
 		-- idx_desc,
 		-- factor_evaluate,
-		-- concat_ws('；'collect_set(s_report_idx_desc)) as s_report_idx_desc_in_one_type  -- hive
+		-- concat_ws('；',collect_set(s_report_idx_desc)) as s_report_idx_desc_in_one_type  -- hive
 		group_concat(distinct s_report_idx_desc,'；') as s_report_idx_desc_in_one_type  -- impala 
 		  --简报维度层 '异常'字样输出逻辑
 	from Warn_lv_Feat_score_Idx_value_Summ 
 	group by batch_dt,corp_id,corp_nm,score_dt,dimension,s_dim_desc,dim_idx_score_chg_desc,type
-
 ),
 -- 简报信息wy --
 s_msg_dim_type as 
@@ -412,6 +444,16 @@ s_msg_dim_type as
 				else 
 					s_dim_desc
 			end
+		) as s_datg_dim_type_no_color,
+		concat(
+			case s_dim_desc
+				when '异常' then 
+					concat(
+						'<span class="WEIGHT">',type,s_dim_desc,'：','</span>',s_report_idx_desc_in_one_type
+					)
+				else 
+					s_dim_desc
+			end
 		) as s_datg_dim_type
 	from s_datg_dim_type
 ),
@@ -422,7 +464,8 @@ s_msg as   --最终信息展示汇总到企业层
 		corp_id,
 		corp_nm,
 		score_dt,
-		if(corp_msg_='','该主体当前无显著风险点。',corp_msg_) as corp_msg
+		if(corp_msg_='' or corp_msg_ is null,'该主体当前无显著风险点。',corp_msg_
+		) as corp_msg  --hive执行将会返回''，impala返回NULL或''
 	from 
 	(
 		select 
@@ -430,7 +473,7 @@ s_msg as   --最终信息展示汇总到企业层
 			corp_id,
 			corp_nm,
 			score_dt,
-			-- concat_ws('\\r\\n',collect_set(s_datg_dim_type)) as corp_msg  -- hive
+			-- concat_ws('\\r\\n',collect_set(s_datg_dim_type)) as corp_msg_  -- hive
 			group_concat(distinct s_datg_dim_type,'\\r\\n') as corp_msg_  -- impala
 		from s_msg_dim_type
 		group by batch_dt,corp_id,corp_nm,score_dt
