@@ -1,6 +1,7 @@
 -- RMP_WARNING_SCORE_REPORT µÚËÄ¶Î-¹éÒò±ä¶¯ --
 -- drop table if exists app_ehzh.rmp_warning_score_report4;  
 -- create table app_ehzh.rmp_warning_score_report4 as  --@pth_rmp.rmp_warning_score_report4
+--×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯²ã£º×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯±í   Òò×Ó±ä¶¯²ãÊı¾İ£º¹éÒòÏêÇéµ±ÈÕ(Ö÷±í)+¹éÒòÏêÇéÀúÊ·±í+Ô¤¾¯·ÖÄ£ĞÍ½á¹û±íµ±ÈÕ(×ÛºÏÔ¤¾¯µÈ¼¶×Ö¶ÎÀ´Ô´)
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª »ù±¾ĞÅÏ¢ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 with
 corp_chg as  --´øÓĞ ³ÇÍ¶/²úÒµÅĞ¶ÏºÍ¹ú±êÒ»¼¶ĞĞÒµ/Ö¤¼à»áÒ»¼¶ĞĞÒµ µÄÌØÊâcorp_chg  (ÌØÊâ2)
@@ -106,13 +107,13 @@ RMP_WARNING_SCORE_DETAIL_HIS_ as  --Ô¤¾¯·Ö--¹éÒòÏêÇéÀúÊ· Ô­Ê¼½Ó¿Ú
 RMP_WARNING_SCORE_CHG_ as 
 (
 	-- Ê±¼äÏŞÖÆ²¿·Ö --
-	select * ,score_date as score_dt
+	select  batch_dt,corp_id,corp_nm,credit_cd,score_date,synth_warnlevel,chg_direction,synth_warnlevel_l,model_version,score_date as score_dt
 	from app_ehzh.RMP_WARNING_SCORE_CHG  --@pth_rmp.RMP_WARNING_SCORE_CHG
 	where 1 in (select max(flag) from timeLimit_switch)  and delete_flag=0
       and to_date(score_date) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 	union all 
 	-- ·ÇÊ±¼äÏŞÖÆ²¿·Ö --
-    select * ,score_date as score_dt
+    select batch_dt,corp_id,corp_nm,credit_cd,score_date,synth_warnlevel,chg_direction,synth_warnlevel_l,model_version,score_date as score_dt
     from app_ehzh.RMP_WARNING_SCORE_CHG  --@pth_rmp.RMP_WARNING_SCORE_CHG
     where 1 in (select not max(flag) from timeLimit_switch)  and delete_flag=0
 ),
@@ -388,6 +389,7 @@ Fourth_Part_Data_dim_warn_level_And_idx_score as    --Òò×Ó²ã£¬£¨1£©¼ÆËãÄ³¸öÎ¬¶ÈÊ
 		-- row_number() over(partition by batch_dt,corp_id,score_dt order by dim_contrib_ratio desc) as dim_contrib_ratio_rank
 	from RMP_WARNING_dim_warn_lv_And_idx_score_chg
 ),
+-- ´ó¿í±í ¹ØÁª ×ÛºÏÔ¤¾¯µÈ¼¶Êı¾İ & Î¬¶È±ä¶¯ºÍÒò×Ó±ä¶¯ÀàÊı¾İ --
 Fourth_Part_Data_idx_name as   --¹ØÁª ×ÛºÏÔ¤¾¯µÈ¼¶Êı¾İ & Î¬¶È±ä¶¯ºÍÒò×Ó±ä¶¯ÀàÊı¾İ  £¨´ó¿í±í£©
 (
 	select distinct
@@ -639,10 +641,12 @@ Fourth_Msg_Corp as  --»ã×Üµ½ÆóÒµ²ã£¨Ô¤¾¯µÈ¼¶±ä¶¯+Î¬¶È·çÏÕ±ä¶¯+Ö¸±ê¶ñ»¯ Êı¾İ£©
 		concat( 
 			'Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ',synth_warnlevel_l_desc,chg_direction_desc,'ÖÁ',synth_warnlevel_desc,'£¬',
 			msg_corp_
+		) as msg_no_color,
+		concat( 
+			'Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ','<span class="RED"><span class="WEIGHT">',synth_warnlevel_l_desc,chg_direction_desc,'ÖÁ',synth_warnlevel_desc,'</span></span>','£¬',
+			msg_corp_
 		) as msg
 	from Fourth_Msg_corp_
 )
 select * from Fourth_Msg_Corp
 ;
-
-

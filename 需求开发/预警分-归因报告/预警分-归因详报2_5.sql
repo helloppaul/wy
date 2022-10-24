@@ -820,7 +820,7 @@ Second_Part_Data_Prepare as
 	join warn_dim_risk_level_cfg_ cfg 
 		on main.dim_warn_level=cast(cfg.risk_lv as string)
 	left join mid_risk_info rinfo 
-		on a.corp_id=rinfo.corp_id and score_dt=notice_date and main.idx_name=rinfo.feature_cd
+		on main.corp_id=rinfo.corp_id and main.score_dt=rinfo.notice_date and main.idx_name=rinfo.feature_cd
 ),
 Second_Part_Data as 
 (
