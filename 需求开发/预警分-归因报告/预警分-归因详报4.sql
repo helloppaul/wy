@@ -1,6 +1,7 @@
 -- RMP_WARNING_SCORE_REPORT 第四段-归因变动 --
 -- drop table if exists app_ehzh.rmp_warning_score_report4;  
 -- create table app_ehzh.rmp_warning_score_report4 as  --@pth_rmp.rmp_warning_score_report4
+--还差 预警等级变动的数据接入进一步验证
 --综合预警等级变动层：综合预警等级变动表   因子变动层数据：归因详情当日(主表)+归因详情历史表+预警分模型结果表当日(综合预警等级字段来源)
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with

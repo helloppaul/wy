@@ -1,3 +1,4 @@
+drop table if exists pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_;
 CREATE TABLE pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_
 (
 	sid_kw int,
@@ -20,11 +21,13 @@ with serdeproperties
 	"escapeChar"="\\"
 )stored as textfile;
 
-GRANT ALL ON URI "hdfs://htsecnew/user/pth_rmp/" TO ROLE pth_rmp;  --如果用户有all权限，导入数据还需要URI的权限
+-- GRANT ALL ON URI "hdfs://htsecnew/user/pth_rmp/" TO ROLE pth_rmp;  --如果用户有all权限，导入数据还需要URI的权限
 load data inpath '/user/pth_rmp/importfile/WARNING_SCORE_FEATURE_CFG.csv' 
 into table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_;  
 
-CREATE table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG as select * from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_;
+drop table if exists pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_BAC;   --删除备份表
+create table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_BAC as select * from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_;  --数据备份
+CREATE table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG as select * from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_;  --建立新数据
 ------------------------------ ------------------------------------------------------------------------------------
 
 -- show grant role pth_rmp;  --查看用户pth_rmp的权限
