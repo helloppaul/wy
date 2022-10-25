@@ -440,7 +440,7 @@ s_msg_dim_type as
 			case s_dim_desc
 				when '异常' then 
 					concat(
-						'? ',type,s_dim_desc,'：',s_report_idx_desc_in_one_type
+						type,s_dim_desc,'：',s_report_idx_desc_in_one_type
 					)
 				else 
 					s_dim_desc
@@ -450,7 +450,7 @@ s_msg_dim_type as
 			case s_dim_desc
 				when '异常' then 
 					concat(
-						'? ','<span class="WEIGHT">',type,s_dim_desc,'：','</span>',s_report_idx_desc_in_one_type
+						'<span class="WEIGHT">',type,s_dim_desc,'：','</span>',s_report_idx_desc_in_one_type
 					)
 				else 
 					s_dim_desc
@@ -474,7 +474,7 @@ s_msg as   --最终信息展示汇总到企业层
 			else 
 				if(a.corp_msg_='' or a.corp_msg_ is null,
 					'该主体当前无显著风险点。',
-					concat('? ','该主体触发','<span class="WEIGHT">',nvl(ru.reason,''),'</span>\\r\\n',
+					concat('该主体触发','<span class="WEIGHT">',nvl(ru.reason,''),'</span>\\r\\n',
 					a.corp_msg_
 					)
 				) 
