@@ -42,7 +42,9 @@ A as
 	group by ITCODE2,CR0164_009,CR0164_006   --根据 公司,时间,案号 分组	
 )
 insert overwrite table pth_rmp.rmp_opinion_risk_info partition(etl_date=${ETL_DATE},type_='sf_xzgxf')
-select msg_id as sid_kw,* 
+select 
+	concat(corp_id,'_',md5(concat(cast(notice_dt as string),msg_title,case_type_ii,msg))) as sid_kw,
+	* 
 from 
 (
 	select distinct
@@ -50,7 +52,8 @@ from
 		Final.corp_nm,
 		Final.notice_dt,
 		-- Final.msg_id,  --impala
-		concat(Final.corp_id,'_',md5(concat(cast(Final.notice_dt as string),Final.msg_title,Final.case_type_ii,Final.msg))) as msg_id,   -- hive版本支持：MD5(corp_id,notice_dt,case_type_ii,RISK_DESC)*/
+		concat(md5(concat(cast(Final.notice_dt as string),Final.msg))) as msg_id,  
+		-- concat(Final.corp_id,'_',md5(concat(cast(Final.notice_dt as string),Final.msg_title,Final.case_type_ii,Final.msg))) as msg_id,   -- hive版本支持：MD5(corp_id,notice_dt,case_type_ii,RISK_DESC)*/
 		Final.msg_title,
 		Final.case_type_cd,
 		Final.case_type,

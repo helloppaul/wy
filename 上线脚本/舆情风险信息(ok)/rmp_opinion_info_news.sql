@@ -29,7 +29,9 @@ corp_chg as
 	) A where rm=1 
 )
 insert overwrite table pth_rmp.rmp_opinion_risk_info partition(etl_date=${ETL_DATE},type_='news')
-select msg_id as sid_kw,*
+select 
+	concat(corp_id,'_',msg_id,'_',cast(case_type_ii_cd as string)) as sid_kw,
+	*
 from 
 (
 	select distinct
@@ -66,7 +68,7 @@ from
 			corp_id,corp_nm,
 			notice_dt,
 			-- '' as msg_id,  -- impala
-			concat(corp_id,'_',msg_id_,'_',cast(case_type_ii_cd as string)) as msg_id, 
+			msg_id_ as msg_id, 
 			-- concat(corp_id,'_',MD5(concat(corp_id,msg_id_,case_type_cd,case_type_ii_cd))) AS msg_id,  -- hive
 			msg_title,
 			case_type_cd,case_type,
