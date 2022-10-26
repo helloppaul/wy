@@ -304,7 +304,21 @@ RMP_WARNING_dim_warn_lv_And_idx_score_chg as --取每天最新批次的维度风险等级变动 
 		a.factor_evaluate,
 		a.idx_name, 
 		a.idx_value,
+		case 
+			when a.idx_unit = '%' then 
+				cast(cast(round(a.idx_value,2) as decimal(10,2)) as string)
+			-- when a.idx_unit <>'%' or a.idx_unit<>'' then 
+			else
+				cast(cast(round(a.idx_value,0) as decimal(10,0)) as string)
+		end as idx_value_str,   --对指标值根据不同的单位做四舍五入
 		a.last_idx_value,
+		case 
+			when a.idx_unit = '%' then 
+				cast(cast(round(a.last_idx_value,2) as decimal(10,2)) as string)
+			-- when a.idx_unit <>'%' or a.idx_unit<>'' then 
+			else
+				cast(cast(round(a.last_idx_value,0) as decimal(10,0)) as string)
+		end as last_idx_value_str,   --对昨日指标值根据不同的单位做四舍五入
 		a.feature_name_target,
 		a.idx_unit,
 		a.contribution_ratio,
@@ -352,22 +366,22 @@ Warn_lv_Feat_score_Idx_value_Summ as --合并 维度风险等级，特征评分 以及 指标变动
 			concat(
 				case 
 					when factor_evaluate=0 and idx_score_chg_desc<>'恶化' then 
-						concat(feature_name_target,'为',cast(idx_value as string),idx_unit)
+						concat(feature_name_target,'为',idx_value_str,idx_unit)
 					when factor_evaluate=0 and idx_score_chg_desc='恶化' then 
 						concat(
-							concat(feature_name_target,'为',cast(idx_value as string),idx_unit),'，','且发生恶化','，','由',
+							concat(feature_name_target,'为',idx_value_str,idx_unit),'，','且发生恶化','，','由',
 							case 
 								when last_idx_value<=idx_value then 
 									concat(
-											concat(cast(last_idx_value as string),idx_unit),
+											concat(last_idx_value_str,idx_unit),
 											'升至',
-											concat(cast(idx_value as string),idx_unit)
+											concat(idx_value_str,idx_unit)
 									)
 								else 
 									concat(
-											concat(cast(last_idx_value as string),idx_unit),
+											concat(last_idx_value_str,idx_unit),
 											'降至',
-											concat(cast(idx_value as string),idx_unit)
+											concat(idx_value_str,idx_unit)
 									)
 							end
 						)
@@ -377,24 +391,24 @@ Warn_lv_Feat_score_Idx_value_Summ as --合并 维度风险等级，特征评分 以及 指标变动
 			concat(
 				case 
 					when factor_evaluate=0 and idx_score_chg_desc<>'恶化' then 
-						concat(feature_name_target,'为',cast(idx_value as string),idx_unit)
+						concat(feature_name_target,'为','<span class="RED">',idx_value_str,idx_unit,'</span>')
 					when factor_evaluate=0 and idx_score_chg_desc='恶化' then 
 						concat(
-							concat(feature_name_target,'为','<span class="RED">',cast(idx_value as string),idx_unit),'</span>','，','且发生恶化','，','由',
+							concat(feature_name_target,'为','<span class="RED">',idx_value_str,idx_unit),'</span>','，','且发生恶化','，','由',
 							case 
 								when last_idx_value<=idx_value then 
 									concat(	'<span class="RED">',
-											concat(cast(last_idx_value as string),idx_unit),
+											concat(last_idx_value_str,idx_unit),
 											'升至',
-											concat(cast(idx_value as string),idx_unit),
+											concat(idx_value_str,idx_unit),
 											'</span>'
 									)
 								else 
 									concat(
 											'<span class="RED">',
-											concat(cast(last_idx_value as string),idx_unit),
+											concat(last_idx_value_str,idx_unit),
 											'降至',
-											concat(cast(idx_value as string),idx_unit),
+											concat(idx_value_str,idx_unit),
 											'</span>'
 									)
 							end
