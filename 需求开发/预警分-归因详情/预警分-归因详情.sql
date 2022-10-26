@@ -989,7 +989,7 @@ res3 as   --预警分+特征原始值+综合贡献度+指标评分卡+特征配置表
         f_cfg.unit_target,
         f_cfg.contribution_cnt  --归因个数
     from res2 main
-    join join warn_feat_CFG f_cfg
+    join warn_feat_CFG f_cfg
     -- left join warn_feat_CFG f_cfg
         on main.idx_name=f_cfg.feature_cd and main.model_freq_type=f_cfg.sub_model_type --and  main.model_freq_type=substr(f_cfg.sub_model_type,1,6)
     left join warn_lastday_idx_value lst  --昨日预警分-归因详情数据。若为空，则表示当日为首次数据衍生
