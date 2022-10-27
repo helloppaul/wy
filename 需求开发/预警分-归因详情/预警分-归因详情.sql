@@ -295,7 +295,7 @@ warn_feat_CFG as
         feature_explain,
         unit_origin,
         unit_target,
-        count(feature_cd) over(partition by dimension) as contribution_cnt
+        count(feature_cd) over(partition by dimension,type) as contribution_cnt
     from feat_CFG
 ),
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 嶄寂蚊 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
