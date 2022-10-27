@@ -1,4 +1,6 @@
 -- RMP_WARNING_SCORE_DETAIL (同步方式：一天对批次插入) --
+-- /* 2022-10-27 修复 中位数计算逻辑 来自于证监会一级行业而非国标一级分类 */
+-- /* 2022-10-27 修复 归因个数计算，是基于该时点的企业下type层的归因个数统计而非脱离企业层的统计 */
 -- 依赖 模型 综合预警分，特征原始值高中低，特征贡献度高中低无监督以及综合，评分卡高中低，归因详情及其历史 PS:不依赖pth_rmp.模型结果表
 --q1：维度风险等级的计算依靠贡献度占比，贡献度占比特征会少于特征原始值，此时最后关联将会产生某些维度关联补上维度风险等级，导致为NULL(暂时决定踢掉)
 --q2：特征值以高中低频合并的特征贡献度表为基准，主表有特征原始值切换为高中低频合并的特征贡献度表
@@ -7,7 +9,7 @@ with
 corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg
 (
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
-    ,b.bond_type,b.industryphy_name
+    ,b.bond_type,b.zjh_industry_l1 as industryphy_name  --证监会行业
 	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
 		  where cid1.etl_date in (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
 			-- on cid1.etl_date=cid2.etl_date
@@ -294,8 +296,8 @@ warn_feat_CFG as
         cal_explain,
         feature_explain,
         unit_origin,
-        unit_target,
-        count(feature_cd) over(partition by dimension,type) as contribution_cnt
+        unit_target
+        -- count(feature_cd) over(partition by dimension,type) as contribution_cnt
     from feat_CFG
 ),
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
@@ -543,7 +545,7 @@ warn_feature_value_with_median as --原始特征值_合并高中低频+中位数计算
         a.idx_unit,
         a.model_freq_type,
         a.sub_model_name,
-        nvl(b.industryphy_name,'') as gb,
+        nvl(b.industryphy_name,'') as zjh,
         nvl(b.bond_type,0) as bond_type  --0：非产业和城投 1：产业债 2：城投债
     from warn_feature_value a 
     left join (select corp_id,corp_name,bond_type,industryphy_name from corp_chg where source_code='ZXZX') b 
@@ -573,8 +575,8 @@ warn_feature_value_with_median_cal as
         idx_name,
         appx_median(idx_value) as median
     from warn_feature_value_with_median
-    where bond_type<>2 and gb <> ''
-    group by  bond_type,gb,corp_id,batch_dt,score_dt,sub_model_name,idx_name
+    where bond_type<>2 and zjh <> ''
+    group by  bond_type,zjh,corp_id,batch_dt,score_dt,sub_model_name,idx_name
 ),
 warn_feature_value_with_median_res as 
 (
@@ -987,7 +989,8 @@ res3 as   --预警分+特征原始值+综合贡献度+指标评分卡+特征配置表
         nvl(lst.idx_value,0) as last_idx_value,
         f_cfg.unit_origin,
         f_cfg.unit_target,
-        f_cfg.contribution_cnt  --归因个数
+        count() over(partition by main.batch_dt,main.corp_id,main.score_dt,f_cfg.dimension) as  contribution_cnt  --归因个数计算，基于该时点企业对应type层的指标个数统计
+        -- f_cfg.contribution_cnt  --归因个数
     from res2 main
     join warn_feat_CFG f_cfg
     -- left join warn_feat_CFG f_cfg
