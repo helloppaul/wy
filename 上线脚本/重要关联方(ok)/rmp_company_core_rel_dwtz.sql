@@ -201,7 +201,7 @@ three_cum_ as
 insert into pth_rmp.rmp_COMPANY_CORE_REL partition(etl_date=${ETL_DATE},type_='dwtz')
 ------------------------------ 以上部分为临时表 ---------------------------------------------------------
 select 
-	md5(concat(corp_id,relation_id,cast(relation_type_l2_code as string),type6)) as sid_kw,
+	md5(concat(corp_id,relation_id,cast(relation_type_l2_code as string),type6,cast(relation_dt as string))) as sid_kw,
 	T.*
 from 
 (
