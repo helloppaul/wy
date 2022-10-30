@@ -1,5 +1,6 @@
 -- 舆情统计日表 RMP_OPINION_STATISTIC_DAY (同步方式：一天多批次覆盖)  --
 --入参：${ETL_DATE}(20220818 int)，用于筛选score_dt
+--PS:不依赖 舆情风险信息整合表，直接依赖上游hds表为主
 -- /*2022-9-19 不剔除快讯和政府预警，将 快讯和政府预警 纳入统计范围*/
 with 
 corp_chg as 
@@ -154,7 +155,7 @@ region_class_yq as
 ------------------------------ temp_table above ---------------------------------------------------------
 insert overwrite table pth_rmp.RMP_OPINION_STATISTIC_DAY partition(etl_date=${ETL_DATE})
 select 
-	concat(batch_dt,statistic_dim,cast(industry_class as string),level_type_list,level_type_ii,'0') as sid_kw,
+	concat(cast(score_dt as string),statistic_dim,cast(industry_class as string),level_type_list,level_type_ii,'0') as sid_kw,
 	*
 from 
 (

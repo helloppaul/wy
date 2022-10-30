@@ -1,4 +1,4 @@
--- 相同实控人 (同步方式：一天单批次插入) --
+-- 相同实控人 (同步方式：一天单批次插入) PS:处于废弃状态 --
 -- 入参：${ETL_DATE}(20220818 int) 
 -- set hive.execution.engine=spark;  --编排很好mr
 -- set hive.exec.dynamic.partition=true;  --开启动态分区功能
@@ -142,7 +142,7 @@ from
 			from (	select * 
 					from (	select * , max (announcement_date) over (partition by corp_code) newest_date 
 							from hds.t_ods_fic_hb_corp_actual_controller
-							where etl_date=${ETL_DATE}
+							where etl_date=${ETL_DATE} and 1=0
 							-- and controller_type='个人'
 							and controller_type not in ('国资委','地方国资委')
 							and isvalid=1
@@ -153,7 +153,7 @@ from
 									from hds.t_ods_fic_hb_corp_actual_controller
 									where etl_date=${ETL_DATE}
 									and controller_type='个人'and isvalid=1
-								) k1 where newest_date= announcement_date
+								) k1 where newest_date= announcement_date and 1=0
 						) b on a.actual_controller_id=b.actual_controller_id --and a.announcement_date=最新发布日and b.annc
 		)c where main_B<>main_A 
 	) L join compy_range cr on cr.corp_id=L.corp_id

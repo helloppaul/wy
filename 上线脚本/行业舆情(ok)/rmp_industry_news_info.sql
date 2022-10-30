@@ -1,5 +1,6 @@
 -- RMP_INDUSTRY_NEWS_INFO (?同步方式：一天多批次插入) --
 -- 入参：${ETL_DATE}(20220818 int)  -> to_date(notice_dt)
+--PS:不依赖 舆情风险信息整合表，直接依赖上游hds表为主
 with gb AS  --国标分类数据
 (
 	select * 
