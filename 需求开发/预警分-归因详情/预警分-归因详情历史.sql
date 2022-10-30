@@ -1,4 +1,4 @@
--- RMP_WARNING_SCORE_DETAIL_HIS (同步方式：一天单批次插入) --
+-- rmp_warning_score_detail_his (同步方式：一天单批次插入) --
 ------------------------------------以上部分为临时表-------------------------------------------------------------------
 insert into pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS partition(etl_date=${ETL_DATE})
 select distinct
