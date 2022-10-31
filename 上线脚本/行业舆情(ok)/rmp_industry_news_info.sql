@@ -1,12 +1,44 @@
 -- RMP_INDUSTRY_NEWS_INFO (?同步方式：一天多批次插入) --
 -- 入参：${ETL_DATE}(20220818 int)  -> to_date(notice_dt)
+--/*2022-10-31 效率优化 （1）接口层增加时间限制 （2）增加调优参数 */
 --PS:不依赖 舆情风险信息整合表，直接依赖上游hds表为主
+
+set hive.exec.parallel=true;
+set hive.auto.convert.join=ture;
+
+--—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 with gb AS  --国标分类数据
 (
-	select * 
+	select hindustryid,industryid,industryname,industrylevel
 	from hds.tr_ods_rmp_fi_tq_oa_industryclass
 	where isvalid='1' and indclasscode='2219'
+	group by hindustryid,industryid,industryname,industrylevel  --去重
 ),
+tr_ods_rmp_fi_x_news_tcrnw0001_ as 
+(
+	select crnw0001_002,newscode,crnw0001_003,CRNW0001_007,CRNW0001_010,flag
+	from hds.tr_ods_rmp_fi_x_news_tcrnw0001
+	where flag<>'1'
+	  and etl_date=${ETL_DATE}
+	group by crnw0001_002,newscode,crnw0001_003,CRNW0001_007,CRNW0001_010,flag  --去重
+),
+tr_ods_rmp_fi_x_news_tcrnw0002_ as 
+(
+	select NEWSCODE,CRNW0002_001,flag
+	from hds.tr_ods_rmp_fi_x_news_tcrnw0002
+	where flag<>'1'
+	  and etl_date=${ETL_DATE}
+	group by NEWSCODE,CRNW0002_001,flag  --去重
+),
+tr_ods_rmp_fi_x_news_tcrnw0006_ as 
+(
+	select NEWSCODE,CRNW0006_001,flag
+	from hds.tr_ods_rmp_fi_x_news_tcrnw0006 
+	where flag<>'1'
+	  and etl_date=${ETL_DATE}
+	group by NEWSCODE,CRNW0006_001,flag   --去重
+),
+--—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 gb_drill_up_4 as --国标分类数据上钻
 (
 	select distinct
@@ -48,7 +80,6 @@ gb_drill_up_2 as --国标分类数据上钻
 ),
 gb_summ as --国标分类数据汇总
 (
-
 	select distinct
 		industryid as gb_industry_tag_cd,
 		industryname as gb_industry_tag,
@@ -84,6 +115,36 @@ gb_summ as --国标分类数据汇总
 		industryid,   ----第4层的id
 		industryname
 	FROM gb_drill_up_4
+),
+hy as 
+(
+	select 
+		newscode,
+		max(crnw0006_001) as crnw0006_001        --max()保证数据唯一性，过滤脏数据
+	from tr_ods_rmp_fi_x_news_tcrnw0006_ a 
+	where a.flag in (select max(flag) from tr_ods_rmp_fi_x_news_tcrnw0006_)  --筛选除了flag='1'之外最大的flag的数据
+	group by a.newscode
+),
+news_info as 
+(
+	select 
+		max(crnw0001_002) as crnw0001_002,
+		newscode,
+		max(crnw0001_003) as crnw0001_003,
+		max(CRNW0001_007) as CRNW0001_007,
+		max(CRNW0001_010) as CRNW0001_010
+	from tr_ods_rmp_fi_x_news_tcrnw0001_ a
+	where a.flag in (select max(flag) from tr_ods_rmp_fi_x_news_tcrnw0001_)
+	group by a.newscode
+),
+news_detail as 
+(
+	select 
+		a.NEWSCODE,
+		max(a.CRNW0002_001) as CRNW0002_001
+	from tr_ods_rmp_fi_x_news_tcrnw0002_ a
+	where a.flag in (select max(flag) from tr_ods_rmp_fi_x_news_tcrnw0002_)
+	group by a.NEWSCODE
 )
 insert  overwrite table pth_rmp.RMP_INDUSTRY_NEWS_INFO partition(etl_date=${ETL_DATE})
 ------------------------------ 以上为临时表 ---------------------------------------------------------
@@ -94,15 +155,15 @@ from
 (
 	select distinct 
 		-- concat(cast(news.newscode as string),gb_summ.gb_industry_tag_ii_cd) as sid_kw,
-		news.crnw0001_002 as notice_dt,
-		news.newscode as news_id,   --新闻编码已经包含时间
-		news.crnw0001_003 as news_title,
+		news_info.crnw0001_002 as notice_dt,
+		news_info.newscode as news_id,   --新闻编码已经包含时间
+		news_info.crnw0001_003 as news_title,
 		gb_summ.gb_industry_tag_cd,
 		gb_summ.gb_industry_tag,
 		gb_summ.gb_industry_tag_ii_cd,
 		gb_summ.gb_industry_tag_ii,
-		news.CRNW0001_007 as news_from,
-		news.CRNW0001_010 as news_url,
+		news_info.CRNW0001_007 as news_from,
+		news_info.CRNW0001_010 as news_url,
 		news_detail.CRNW0002_001 as news,
 		0 as delete_flag,
 		'' as create_by,
@@ -110,13 +171,13 @@ from
 		'' as update_by,
 		current_timestamp() update_time,
 		0 as version
-	from (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0006 where flag<>'1') hy
-	join (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0001 where flag<>'1')news
-		on hy.NEWSCODE = news.NEWSCODE 
+	from hy
+	join news_info
+		on hy.NEWSCODE = news_info.NEWSCODE 
 	left join gb_summ
 		on cast(hy.CRNW0006_001 as string) = gb_summ.industryid
-	left join (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') news_detail
-		on news.NEWSCODE = news_detail.NEWSCODE
+	left join news_detail
+		on news_info.NEWSCODE = news_detail.NEWSCODE
 )A
-where to_date(notice_dt)=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),1)) 
+where to_date(notice_dt)=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)) 
 ;
