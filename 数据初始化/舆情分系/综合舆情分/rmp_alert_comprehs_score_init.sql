@@ -1,5 +1,5 @@
 
--- DDL hive执行-- 
+-- DDL 综合舆情分temp hive执行-- 
 drop table if exists pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP_INIT;
 create table pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP_INIT
 (	
@@ -74,7 +74,7 @@ RMP_ALERT_SCORE_SUMM_ as --取距离当前ETL_date最近的14天单主体舆情�
 	UNION ALL 
 	select 
 		1 as his_flag,
-		'' as batch_dt,
+		score_dt as batch_dt,
 		corp_id,corp_nm,credit_code,score_dt,score,yq_num,score_hit_ci,score_hit_yq,score_hit,label_hit,alert,fluctuated,model_version,delete_flag,update_time
 	from 
 	(   --取除去距离当前ETL_DATE最近一天日期的近13的数据
@@ -99,10 +99,10 @@ rmp_opinion_risk_info_ as
 RMP_COMPANY_CORE_REL_ as 
 (
 	select distinct a.* 
-	from pth_rmp.RMP_COMPANY_CORE_REL a 
+	from pth_rmp.RMP_COMPANY_CORE_REL_INIT a 
 	where 1 = 1
 	  -- 时间限制(自动取最大日期)
-	  and a.relation_dt in (select max(relation_dt) max_relation_dt from pth_rmp.RMP_COMPANY_CORE_REL)
+	  and a.relation_dt in (select max(relation_dt) max_relation_dt from pth_rmp.RMP_COMPANY_CORE_REL_INIT)
 		-- on a.relation_dt=b.max_relation_dt
 ),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
@@ -568,5 +568,6 @@ from
 )G join label_hit_tab lb on G.corp_id=lb.corp_id and G.score_dt = lb.score_dt
    join corp_chg chg on g.corp_id=chg.corp_id and chg.source_code='FI'
 where G.batch_dt is not null
-  and G.score_dt >= to_date('2022-09-09')
+  and G.score_dt >= to_date('2022-09-09') 
+  and G.score_dt <= to_date('2022-10-14') 
 ;

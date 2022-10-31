@@ -137,7 +137,7 @@ label_hit_tab AS
 )
 select distinct
 	-- MD5(concat(E.batch_dt,E.corp_id,'0')) as sid_kw,
-	-- E.batch_dt,     --batch_dt来自于模型 单主体舆情分-调整后的模型结果
+	E.batch_dt,     --batch_dt来自于模型 单主体舆情分-调整后的模型结果
 	E.corp_id,
 	E.corp_nm,
 	E.credit_code,
@@ -237,10 +237,10 @@ where E.score_dt >= '2021-01-01'
 ; 
 
 
--- 初始化sql(pth_rmp.rmp_alert_score_summ_init) hive执行插入-- 
+-- 初始化sql(pth_rmp.rmp_alert_score_summ_init) hive执行插入 -- 
 insert into pth_rmp.rmp_alert_score_summ_init partition(etl_date=19900101)
 select 
-	MD5(concat(score_dt,corp_id,'0')) as sid_kw,
+	MD5(concat(batch_dt,score_dt,corp_id,'0')) as sid_kw,
 	*
 from (select distinct * from pth_rmp.rmp_alert_score_summ_init_impala) a
 ;

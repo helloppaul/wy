@@ -84,8 +84,16 @@ select
 	update_by ,
 	update_time ,
 	version int
-from (select to_date('2022-10-14') as relation_date, * from pth_rmp.rmp_COMPANY_CORE_REL where relation_dt='2022-10-25') a
-where relation_type_l1<>'相同实控人'
+from 
+(	
+	select 	
+		*,
+		to_date('2022-10-14') as relation_date,
+		row_number() over(partition by sid_kw order by 1) as rm
+	from pth_rmp.rmp_COMPANY_CORE_REL
+	where relation_dt='2022-10-25'
+) a 
+where rm=1 and relation_type_l1<>'相同实控人'
 ;
 
 
@@ -112,7 +120,7 @@ select
 	update_by ,
 	update_time ,
 	version int
-from (select  to_date('2022-01-31') as relation_date, * from pth_rmp.rmp_COMPANY_CORE_REL where relation_dt='2022-10-25') a
+from (select  to_date('2022-01-31') as relation_date, * from pth_rmp.RMP_COMPANY_CORE_REL_INIT where relation_dt='2022-10-14') a
 where relation_type_l1<>'相同实控人'
 union all 
 select 
@@ -136,7 +144,7 @@ select
 	update_by ,
 	update_time ,
 	version int
-from (select  to_date('2022-02-28') as relation_date, * from pth_rmp.rmp_COMPANY_CORE_REL where relation_dt='2022-10-25') a
+from (select  to_date('2022-02-28') as relation_date, * from pth_rmp.RMP_COMPANY_CORE_REL_INIT where relation_dt='2022-10-14') a
 where relation_type_l1<>'相同实控人'
 union all 
 select 
@@ -160,7 +168,7 @@ select
 	update_by ,
 	update_time ,
 	version int
-from (select  to_date('2022-03-31') as relation_date, * from pth_rmp.rmp_COMPANY_CORE_REL where relation_dt='2022-10-25') a
+from (select  to_date('2022-03-31') as relation_date, * from pth_rmp.RMP_COMPANY_CORE_REL_INIT where relation_dt='2022-10-14') a
 where relation_type_l1<>'相同实控人'
 union all 
 select 
@@ -184,7 +192,7 @@ select
 	update_by ,
 	update_time ,
 	version int
-from (select  to_date('2022-04-30') as relation_date, * from pth_rmp.rmp_COMPANY_CORE_REL where relation_dt='2022-10-25') a
+from (select  to_date('2022-04-30') as relation_date, * from pth_rmp.RMP_COMPANY_CORE_REL_INIT where relation_dt='2022-10-14') a
 where relation_type_l1<>'相同实控人'
 union all 
 select 
@@ -208,7 +216,7 @@ select
 	update_by ,
 	update_time ,
 	version int
-from (select  to_date('2022-05-31') as relation_date, * from pth_rmp.rmp_COMPANY_CORE_REL where relation_dt='2022-10-25') a
+from (select  to_date('2022-05-31') as relation_date, * from pth_rmp.RMP_COMPANY_CORE_REL_INIT where relation_dt='2022-10-14') a
 where relation_type_l1<>'相同实控人'
 union all 
 select 
@@ -232,7 +240,7 @@ select
 	update_by ,
 	update_time ,
 	version int
-from (select  to_date('2022-06-30') as relation_date, * from pth_rmp.rmp_COMPANY_CORE_REL where relation_dt='2022-10-25') a
+from (select  to_date('2022-06-30') as relation_date, * from pth_rmp.RMP_COMPANY_CORE_REL_INIT where relation_dt='2022-10-14') a
 where relation_type_l1<>'相同实控人'
 union all 
 select 
@@ -256,7 +264,7 @@ select
 	update_by ,
 	update_time ,
 	version int
-from (select  to_date('2022-07-31') as relation_date, * from pth_rmp.rmp_COMPANY_CORE_REL where relation_dt='2022-10-25') a
+from (select  to_date('2022-07-31') as relation_date, * from pth_rmp.RMP_COMPANY_CORE_REL_INIT where relation_dt='2022-10-14') a
 where relation_type_l1<>'相同实控人'
 union all 
 select 
@@ -280,7 +288,7 @@ select
 	update_by ,
 	update_time ,
 	version int
-from (select  to_date('2022-08-31') as relation_date, * from pth_rmp.rmp_COMPANY_CORE_REL where relation_dt='2022-10-25') a
+from (select  to_date('2022-08-31') as relation_date, * from pth_rmp.RMP_COMPANY_CORE_REL_INIT where relation_dt='2022-10-14') a
 where relation_type_l1<>'相同实控人'
 union all 
 select 
@@ -304,7 +312,7 @@ select
 	update_by ,
 	update_time ,
 	version int
-from (select  to_date('2022-09-30') as relation_date, * from pth_rmp.rmp_COMPANY_CORE_REL where relation_dt='2022-10-25') a
+from (select  to_date('2022-09-30') as relation_date, * from pth_rmp.RMP_COMPANY_CORE_REL_INIT where relation_dt='2022-10-14') a
 where relation_type_l1<>'相同实控人'
 union all 
 select 
@@ -328,7 +336,7 @@ select
 	update_by ,
 	update_time ,
 	version int
-from (select  to_date('2022-10-31') as relation_date, * from pth_rmp.rmp_COMPANY_CORE_REL where relation_dt='2022-10-25') a
+from (select  to_date('2022-10-31') as relation_date, * from pth_rmp.RMP_COMPANY_CORE_REL_INIT where relation_dt='2022-10-14') a
 where relation_type_l1<>'相同实控人'
 union all 
 select 
@@ -352,7 +360,7 @@ select
 	update_by ,
 	update_time ,
 	version int
-from (select  to_date('2022-11-30') as relation_date, * from pth_rmp.rmp_COMPANY_CORE_REL where relation_dt='2022-10-25') a
+from (select  to_date('2022-11-30') as relation_date, * from pth_rmp.RMP_COMPANY_CORE_REL_INIT where relation_dt='2022-10-14') a
 where relation_type_l1<>'相同实控人'
 union all 
 select 
@@ -376,7 +384,7 @@ select
 	update_by ,
 	update_time ,
 	version int
-from (select  to_date('2022-12-31') as relation_date, * from pth_rmp.rmp_COMPANY_CORE_REL where relation_dt='2022-10-25') a
+from (select  to_date('2022-12-31') as relation_date, * from pth_rmp.RMP_COMPANY_CORE_REL_INIT where relation_dt='2022-10-14') a
 where relation_type_l1<>'相同实控人'
 ;
 

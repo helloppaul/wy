@@ -1,6 +1,31 @@
--- 舆情统计日表 RMP_OPINION_STATISTIC_DAY (同步方式：一天多批次覆盖)  --
---入参：${ETL_DATE}(20220818 int)，用于筛选score_dt
--- /*2022-9-19 不剔除快讯和政府预警，将 快讯和政府预警 纳入统计范围*/
+--（1） DDL RMP_OPINION_STATISTIC_DAY_init --
+drop table  if exists pth_rmp.rmp_opinion_statistic_day_init ;
+create table pth_rmp.rmp_opinion_statistic_day_init 
+(	
+	sid_kw string,
+	score_dt timestamp,   
+	statistic_dim int,  
+	industry_class int,  
+	importance int,
+	level_type_list string,
+	level_type_ii string,
+	opinion_cnt bigint,
+	delete_flag	tinyint,
+	create_by	string,
+	create_time	TIMESTAMP,
+	update_by	string,
+	update_time	TIMESTAMP,
+	version	tinyint
+)partitioned by (etl_date int)
+row format
+delimited fields terminated by '\16' escaped by '\\'
+stored as textfile
+;
+
+
+
+--（2） impala执行 --
+create table pth_rmp.rmp_opinion_statistic_day_init_impala as 
 with 
 corp_chg as 
 (
@@ -152,14 +177,11 @@ region_class_yq as
 	group by to_date(main.news_dt),main.importance,b.statistic_dim,b.level_type_list,b.level_type_ii
 )
 ------------------------------ temp_table above ---------------------------------------------------------
-insert overwrite table pth_rmp.RMP_OPINION_STATISTIC_DAY partition(etl_date=${ETL_DATE})
 select 
-	concat(batch_dt,statistic_dim,cast(industry_class as string),level_type_list,level_type_ii,'0') as sid_kw,
 	*
 from 
 (
 	select distinct
-		from_unixtime(unix_timestamp(cast(current_timestamp() as string),'yyyy-MM-dd HH:mm:ss')) as batch_dt,
 		score_dt,   
 		statistic_dim,  
 		industry_class,  
@@ -180,6 +202,29 @@ from
 		select * from region_class_yq
 	)A 
 )Fi
-where score_dt= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)) 
+where score_dt >= to_date('2021-01-01')
+  and score_dt <= to_date('2022-10-30') 
 ;
 
+
+
+
+--（3） hive执行 --
+insert into pth_rmp.RMP_OPINION_STATISTIC_DAY_init partition(etl_date=19900101)
+select 
+	concat(cast(score_dt as string),statistic_dim,cast(industry_class as string),level_type_list,level_type_ii,'0') as sid_kw,
+	score_dt ,  
+	statistic_dim ,  
+	industry_class ,  
+	importance ,
+	level_type_list ,
+	level_type_ii ,
+	opinion_cnt ,
+	delete_flag	,
+	create_by	,
+	create_time	,
+	update_by	,
+	update_time	,
+	version	
+from pth_rmp.rmp_opinion_statistic_day_init_impala
+;
