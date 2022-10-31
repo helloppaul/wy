@@ -1,6 +1,6 @@
 -- RMP_INDUSTRY_NEWS_INFO (?同步方式：一天多批次插入) --
 -- 入参：${ETL_DATE}(20220818 int)  -> to_date(notice_dt)
---/*2022-10-31 效率优化 （1）接口层增加时间限制 （2）增加调优参数 */
+--/*2022-10-31 效率优化 （1）接口层增加时间限制 （2）增加调优参数 跑一天大约 6-10min */
 --PS:不依赖 舆情风险信息整合表，直接依赖上游hds表为主
 
 set hive.exec.parallel=true;
@@ -16,27 +16,45 @@ with gb AS  --国标分类数据
 ),
 tr_ods_rmp_fi_x_news_tcrnw0001_ as 
 (
-	select crnw0001_002,newscode,crnw0001_003,CRNW0001_007,CRNW0001_010,flag
-	from hds.tr_ods_rmp_fi_x_news_tcrnw0001
-	where flag<>'1'
-	  and etl_date=${ETL_DATE}
-	group by crnw0001_002,newscode,crnw0001_003,CRNW0001_007,CRNW0001_010,flag  --去重
+	select 
+		crnw0001_002,newscode,crnw0001_003,CRNW0001_007,CRNW0001_010,flag
+	from 
+	(
+		select 
+			crnw0001_002,newscode,crnw0001_003,CRNW0001_007,CRNW0001_010,flag,
+			row_number() over(partition by newscode order by flag desc) as rm
+		from hds.tr_ods_rmp_fi_x_news_tcrnw0001
+		where flag<>'1'
+		and etl_date = ${ETL_DATE}
+	) A where rm=1
 ),
 tr_ods_rmp_fi_x_news_tcrnw0002_ as 
 (
-	select NEWSCODE,CRNW0002_001,flag
-	from hds.tr_ods_rmp_fi_x_news_tcrnw0002
-	where flag<>'1'
-	  and etl_date=${ETL_DATE}
-	group by NEWSCODE,CRNW0002_001,flag  --去重
+	select 
+		NEWSCODE,CRNW0002_001,flag
+	from 
+	(
+		select 
+			NEWSCODE,CRNW0002_001,flag,
+			row_number() over(partition by newscode order by flag desc) as rm
+		from hds.tr_ods_rmp_fi_x_news_tcrnw0002
+		where flag<>'1'
+		and etl_date = ${ETL_DATE} 
+	)A where rm=1
 ),
 tr_ods_rmp_fi_x_news_tcrnw0006_ as 
 (
-	select NEWSCODE,CRNW0006_001,flag
-	from hds.tr_ods_rmp_fi_x_news_tcrnw0006 
-	where flag<>'1'
-	  and etl_date=${ETL_DATE}
-	group by NEWSCODE,CRNW0006_001,flag   --去重
+	select 
+		NEWSCODE,CRNW0006_001,flag
+	from 
+	(
+		select 
+			NEWSCODE,CRNW0006_001,flag,
+			row_number() over(partition by NEWSCODE,CRNW0006_001 order by flag desc) as rm
+		from hds.tr_ods_rmp_fi_x_news_tcrnw0006 
+		where flag<>'1'
+		and etl_date = ${ETL_DATE}
+	) A where rm=1
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 gb_drill_up_4 as --国标分类数据上钻
@@ -120,10 +138,8 @@ hy as
 (
 	select 
 		newscode,
-		max(crnw0006_001) as crnw0006_001        --max()保证数据唯一性，过滤脏数据
+		crnw0006_001        
 	from tr_ods_rmp_fi_x_news_tcrnw0006_ a 
-	where a.flag in (select max(flag) from tr_ods_rmp_fi_x_news_tcrnw0006_)  --筛选除了flag='1'之外最大的flag的数据
-	group by a.newscode
 ),
 news_info as 
 (
@@ -134,7 +150,6 @@ news_info as
 		max(CRNW0001_007) as CRNW0001_007,
 		max(CRNW0001_010) as CRNW0001_010
 	from tr_ods_rmp_fi_x_news_tcrnw0001_ a
-	where a.flag in (select max(flag) from tr_ods_rmp_fi_x_news_tcrnw0001_)
 	group by a.newscode
 ),
 news_detail as 
@@ -143,13 +158,12 @@ news_detail as
 		a.NEWSCODE,
 		max(a.CRNW0002_001) as CRNW0002_001
 	from tr_ods_rmp_fi_x_news_tcrnw0002_ a
-	where a.flag in (select max(flag) from tr_ods_rmp_fi_x_news_tcrnw0002_)
 	group by a.NEWSCODE
 )
 insert  overwrite table pth_rmp.RMP_INDUSTRY_NEWS_INFO partition(etl_date=${ETL_DATE})
 ------------------------------ 以上为临时表 ---------------------------------------------------------
 select 
-	concat(cast(news_id as string),gb_industry_tag_ii_cd) as sid_kw,
+	concat(cast(news_id as string),gb_industry_tag_cd,gb_industry_tag_ii_cd) as sid_kw,
 	A.*
 from 
 (
