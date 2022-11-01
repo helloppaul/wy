@@ -4,9 +4,15 @@
 -- and score_dt='2022-08-02'  and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
 -- /* 2022-9-3 命中重大风险事件调整为使用label_hit=1的标签进行判断 */
 -- /* 2022-9-3 主体段落新增特殊情形 */  
+-- /*2022-10-31 效率优化 （1）接口层做时间限制 （2）增加调优参数 */
 --依赖 pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP,hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf
+
+set hive.exec.parallel=true;
+set hive.auto.convert.join=ture;
+
 drop table if exists pth_rmp.RMP_ATTRIBUTION_SUMM_MAIN_TEMP;
 create table if not exists pth_rmp.RMP_ATTRIBUTION_SUMM_MAIN_TEMP AS 
+--—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 with 
 RMP_ALERT_COMPREHS_SCORE_TEMP_Batch as  --最新批次的综合舆情分数据,仅主体信息
 (
@@ -16,7 +22,8 @@ RMP_ALERT_COMPREHS_SCORE_TEMP_Batch as  --最新批次的综合舆情分数据,�
 	from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
 	join (select max(batch_dt) as new_batch_dt,score_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP group by score_dt)b  
 		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'') and a.score_dt=b.score_dt
-	where a.alert=1 --and to_date(a.score_dt)='2022-08-03' 
+	where a.alert=1 
+	  and a.score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 	  --and a.corp_id='pz00e1c32133191ee1a9cc3556af92f8ea' and to_date(a.score_dt)='2022-08-02'  --and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
 ),
 corp_chg as 
@@ -32,6 +39,32 @@ corp_chg as
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
+),
+rmp_opinion_risk_info_ as 
+(
+	select *
+	from pth_rmp.rmp_opinion_risk_info 
+	where notice_date = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+),
+tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf_ as --舆情分-贡献度占比
+(
+	select *,to_date(end_dt) as score_dt
+	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf
+	where to_date(end_dt) =  to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+),
+--—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
+rmp_opinion_featpct_desc_cfg_ as 
+(
+	select *
+	from pth_rmp.rmp_opinion_featpct_desc_cfg
+),
+--—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
+tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf_batch as 
+(
+	select a.*
+	from tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf_ a
+	join (select score_dt, max(end_dt) as max_end_dt from tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf_ group by score_dt) b 
+		on a.score_dt=b.score_dt and a.end_dt=b.max_end_dt
 ),
 Second_one as  --放主体归因
 (
@@ -82,9 +115,10 @@ sentiself_feapct_intf_newest as --模型_单主体舆情分_特征贡献度(最�
 			a.feature_pct,  --特征贡献度
 			a.feature_risk_interval,  --是否高特征贡献度（0/1,1代表高）
 			count(a.feature_name) over(partition by a.corp_code,a.end_dt) as feat_cnt  --特征名称总数
-		from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf a--app_ehzh.rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf a   --app_ehzh_train.featpct_senti_self
-		join (select max(end_dt) as max_end_dt from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf)b--app_ehzh.rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf) b
-			on a.end_dt=b.max_end_dt
+		from tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf_batch a
+		-- tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf_ a--app_ehzh.rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf a   --app_ehzh_train.featpct_senti_self
+		-- join (select max(end_dt) as max_end_dt from tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf_)b--app_ehzh.rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf) b
+		-- 	on a.end_dt=b.max_end_dt
 		join (select * from corp_chg where source_code='FI') chg
 			on cast(a.corp_code as string) = chg.source_id
 		join hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf c --app_ehzh.rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf c   --app_ehzh_train.featvalue_senti_self
@@ -100,7 +134,7 @@ sentiself_feapct_intf_newest_with_desc_cfg as
 		B.index_desc,
 		B.index_unit
 	from sentiself_feapct_intf_newest A
-	left join pth_rmp.rmp_opinion_featpct_desc_cfg B
+	left join rmp_opinion_featpct_desc_cfg_ B
 		on A.feature_name = B.feature_name 
 	where B.index_min_val=-1
 	  and A.feature_name<>'importance_avg_abs'
@@ -112,7 +146,7 @@ sentiself_feapct_intf_newest_with_desc_cfg as
 		B.index_desc,
 		B.index_unit
 	from sentiself_feapct_intf_newest A
-	left join pth_rmp.rmp_opinion_featpct_desc_cfg B
+	left join rmp_opinion_featpct_desc_cfg_ B
 		on A.feature_name = B.feature_name 
 	where B.index_min_val<>-1 
 	  and A.feature_name<>'importance_avg_abs' 
@@ -125,7 +159,7 @@ sentiself_feapct_intf_newest_with_desc_cfg as
 		B.index_desc,
 		B.index_unit
 	from sentiself_feapct_intf_newest A
-	left join pth_rmp.rmp_opinion_featpct_desc_cfg B
+	left join rmp_opinion_featpct_desc_cfg_ B
 		on A.feature_name = B.feature_name 
 	where B.index_min_val<>-1
 	  and A.feature_name='importance_avg_abs' 
@@ -264,7 +298,7 @@ com_score_with_risk_info AS
 		rsk.case_type_ii,
 		min(rsk.importance) as importance   --新闻原始脏数据清理
 	from RMP_ALERT_COMPREHS_SCORE_TEMP_Batch com
-	join pth_rmp.rmp_opinion_risk_info rsk
+	join rmp_opinion_risk_info_ rsk
 		on com.corp_id=rsk.corp_id and to_date(com.score_dt)=to_date(rsk.notice_dt)
 	group by com.corp_id,com.corp_nm,com.score_dt,com.score_hit,com.label_hit,rsk.msg_id,rsk.case_type,rsk.case_type_ii,rsk.signal_type
 ),

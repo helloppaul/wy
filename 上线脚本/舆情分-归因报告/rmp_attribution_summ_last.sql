@@ -3,8 +3,15 @@
 -- where corp_id='pz00e1c32133191ee1a9cc3556af92f8ea' and corp_nm='深圳比亚迪光电子有限公司'  
 -- and score_dt='2022-08-02'  and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
 --依赖 pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP，pth_rmp.rmp_opinion_risk_info
+
+
+set hive.exec.parallel=true;
+set hive.auto.convert.join=ture;
+
+
 drop table if exists pth_rmp.RMP_ATTRIBUTION_SUMM_LAST_TEMP;
 create table if not exists pth_rmp.RMP_ATTRIBUTION_SUMM_LAST_TEMP as 
+--—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 with 
 RMP_ALERT_COMPREHS_SCORE_TEMP_Batch_Main as  --最新批次的综合舆情分数据,仅主体信息
 (
@@ -14,22 +21,36 @@ RMP_ALERT_COMPREHS_SCORE_TEMP_Batch_Main as  --最新批次的综合舆情分数
 	from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
 	join (select max(batch_dt) as new_batch_dt,score_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP group by score_dt)b  
 		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'') and a.score_dt=b.score_dt
-	where a.alert=1 --and to_date(a.score_dt)='2022-08-03' 
-	  --and a.corp_id='pz00e1c32133191ee1a9cc3556af92f8ea' and to_date(a.score_dt)='2022-08-02'  --and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
+	where a.alert=1 
+	  and a.score_dt= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)) 
 ),
 RMP_ALERT_COMPREHS_SCORE_TEMP_Batch_Rel as  --最新批次的综合舆情分数据,且有关联方
 (
-	select 
-		batch_dt,corp_id,corp_nm,score_dt,cast(score as float) as score,
-		relation_id,relation_nm,
-		second_score,third_score,origin_comprehensive_score,comprehensive_score,
-		score_hit,label_hit,alert
+	select distinct
+		a.batch_dt,a.corp_id,a.corp_nm,a.score_dt,cast(a.score as float) as score,
+		a.relation_id,a.relation_nm,
+		a.second_score,a.third_score,a.origin_comprehensive_score,a.comprehensive_score,
+		a.score_hit,a.label_hit,a.alert
 	from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
 	join (select max(batch_dt) as new_batch_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP )b  
 		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'')
 	where a.alert=1 
-	  --and a.corp_id='pz00e1c32133191ee1a9cc3556af92f8ea' and to_date(a.score_dt)='2022-08-02'  --and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
+	  and a.score_dt= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)) 
 ),
+rmp_opinion_risk_info_ as 
+(
+	select *
+	from pth_rmp.rmp_opinion_risk_info 
+	where notice_date = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+),
+--—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
+rmp_opinion_risk_info_tag_ as 
+(
+	select *
+	from pth_rmp.rmp_opinion_risk_info_tag
+	where importance=-3
+),
+--—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 com_score_with_risk_info_main AS   --主体段落的带风险事件的综合舆情分数据
 (
 	select 
@@ -42,7 +63,7 @@ com_score_with_risk_info_main AS   --主体段落的带风险事件的综合舆�
 		rsk.case_type_ii,
 		min(rsk.importance) as importance   --新闻原始脏数据清理
 	from RMP_ALERT_COMPREHS_SCORE_TEMP_Batch_Main com
-	join pth_rmp.rmp_opinion_risk_info rsk
+	join rmp_opinion_risk_info_ rsk
 		on com.corp_id=rsk.corp_id and to_date(com.score_dt)=to_date(rsk.notice_dt)
 	group by com.corp_id,com.corp_nm,com.score_dt,rsk.msg_id,rsk.case_type,rsk.case_type_ii,rsk.signal_type
 ),
@@ -60,7 +81,7 @@ com_score_with_risk_info_rel AS  --关联方段落的带风险事件的综合舆
 		rsk.case_type_ii,
 		min(rsk.importance) as importance   --新闻原始脏数据清理
 	from RMP_ALERT_COMPREHS_SCORE_TEMP_Batch_Rel com
-	join pth_rmp.rmp_opinion_risk_info rsk
+	join rmp_opinion_risk_info_ rsk
 		on com.relation_id=rsk.corp_id and to_date(com.score_dt)=to_date(rsk.notice_dt)
 	group by com.corp_id,com.corp_nm,com.score_dt,com.relation_id,com.relation_nm, rsk.msg_id,rsk.case_type,rsk.case_type_ii,rsk.signal_type
 ),
@@ -89,7 +110,7 @@ main_rsk_info as
 				com_rsk.case_type,
 				com_rsk.case_type_ii
 			from com_score_with_risk_info_main com_rsk 
-			join (select * from pth_rmp.rmp_opinion_risk_info_tag where importance=-3) tag
+			join rmp_opinion_risk_info_tag_ tag
 				on com_rsk.case_type_ii = tag.tag_ii
 			where com_rsk.signal_type in (1,2)
 		)A  
@@ -114,13 +135,14 @@ rel as  --关联方列举
 		select *,row_number() over(partition by corp_id,score_dt order by 1) as rm
 		FROM
 		(
-			select distinct
+			select 
 				corp_id,
 				corp_nm,
 				score_dt,
 				relation_id,
-				relation_nm
+				max(relation_nm) as relation_nm
 			from com_score_with_risk_info_rel
+			group by corp_id,corp_nm,score_dt,relation_id  --去重重复的relation_nm
 		)A 
 	)B where rm<=3  --限制关联方数量最多显示3个
 ),
@@ -131,7 +153,7 @@ last_for_rel_msg as
 		corp_nm,
 		score_dt,
 		case 
-			when rm>3 then concat(rel_msg,'等')
+			when rel_cnt>3 then concat(rel_msg,'等')
 			else rel_msg
 		end as last_sentence_rel
 	from 
@@ -142,9 +164,9 @@ last_for_rel_msg as
 			score_dt,
 			concat_ws('、',collect_set(relation_nm)) as rel_msg,
 			-- group_concat(distinct relation_nm,'、') as rel_msg,
-			rm
+			count(relation_nm) as rel_cnt
 		from rel
-		group by corp_id,corp_nm,score_dt,rm
+		group by corp_id,corp_nm,score_dt
 	)A  
 ),
 rel_rsk_info as   --关联方风险事件(新闻+司法诚信)
@@ -175,7 +197,7 @@ rel_rsk_info as   --关联方风险事件(新闻+司法诚信)
 				com_rsk.case_type,
 				com_rsk.case_type_ii
 			from com_score_with_risk_info_rel com_rsk 
-			join (select * from pth_rmp.rmp_opinion_risk_info_tag where importance=-3) tag
+			join rmp_opinion_risk_info_tag_ tag
 				on com_rsk.case_type_ii = tag.tag_ii
 			where com_rsk.signal_type in (1,2)
 		)A

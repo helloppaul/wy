@@ -1,5 +1,9 @@
 -- 归因报告 RMP_ATTRIBUTION_SUMM --
 -- 依赖 first,main,rel,last 四部分
+
+set hive.exec.parallel=true;
+set hive.auto.convert.join=ture;
+
 with 
 corp_chg as 
 (

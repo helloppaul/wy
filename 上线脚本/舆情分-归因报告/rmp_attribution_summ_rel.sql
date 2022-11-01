@@ -7,16 +7,41 @@
 --2.主体label_hit=1，则显示命中重大风险事件 ；关联方 label_hit=2，则显示命中重大风险事件 
 --3.排序问题，hive可使用sort_array()进行升序排序，解决impala无法排序拼接的问题
 --依赖 pth_rmp.RMP_COMPY_CONTRIB_DEGREE pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP  pth_rmp.rmp_opinion_risk_info
+
+set hive.exec.parallel=true;
+set hive.auto.convert.join=ture;
+
 drop table if exists pth_rmp.RMP_ATTRIBUTION_SUMM_REL_TEMP;
 create table if not exists pth_rmp.RMP_ATTRIBUTION_SUMM_REL_TEMP AS 
 with 
+--—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 RMP_ALERT_COMPREHS_SCORE_TEMP_Batch as  --最新批次的综合舆情分数据,且有关联方
 (
 	select a.* from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
 	join (select max(batch_dt) as new_batch_dt,score_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP group by score_dt )b  
 		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'') and a.score_dt=b.score_dt
 	where a.alert=1 
-	  --and a.corp_id='pz00e1c32133191ee1a9cc3556af92f8ea' and to_date(a.score_dt)='2022-08-02'  --and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
+	  and a.score_dt= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)) 
+),
+RMP_COMPY_CONTRIB_DEGREE_ as 
+(
+	select *
+	from pth_rmp.RMP_COMPY_CONTRIB_DEGREE
+	where score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)) 
+),
+rmp_opinion_risk_info_ as 
+(
+	select *
+	from pth_rmp.rmp_opinion_risk_info 
+	where notice_date = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+),
+--—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
+RMP_COMPY_CONTRIB_DEGREE_BATCH as 
+(
+	select a.*
+	from RMP_COMPY_CONTRIB_DEGREE_ a
+	join (select score_dt, max(batch_dt) as max_batch_dt from RMP_COMPY_CONTRIB_DEGREE_ group by score_dt) b 
+		on a.score_dt=b.score_dt and a.batch_dt=b.max_batch_dt
 ),
 com_score_with_contrib_degree as 
 (
@@ -42,7 +67,7 @@ com_score_with_contrib_degree as
 		com.score_hit,
 		com.label_hit
 	from RMP_ALERT_COMPREHS_SCORE_TEMP_Batch com 
-	join pth_rmp.RMP_COMPY_CONTRIB_DEGREE contrb
+	join RMP_COMPY_CONTRIB_DEGREE_BATCH contrb
 		on com.corp_id=contrb.corp_id and to_date(com.score_dt)=to_date(contrb.score_dt) and com.relation_id=contrb.relation_id
 ),
 Third_one as  --放关联方归因
@@ -136,7 +161,7 @@ com_score_with_risk_info AS
 		rsk.case_type_ii,
 		min(rsk.importance) as importance   --新闻原始脏数据清理
 	from RMP_ALERT_COMPREHS_SCORE_TEMP_Batch com
-	join pth_rmp.rmp_opinion_risk_info rsk
+	join rmp_opinion_risk_info_ rsk
 		on com.relation_id=rsk.corp_id and to_date(com.score_dt)=to_date(rsk.notice_dt)
 	group by com.corp_id,com.corp_nm,com.score_dt,com.label_hit,com.relation_id,com.relation_nm, rsk.msg_id,rsk.case_type,rsk.case_type_ii,rsk.signal_type
 ),

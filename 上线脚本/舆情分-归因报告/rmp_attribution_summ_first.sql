@@ -3,9 +3,15 @@
 -- where corp_id='pz00e1c32133191ee1a9cc3556af92f8ea' and corp_nm='深圳比亚迪光电子有限公司'  
 -- and score_dt='2022-08-02'  and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
 -- /* 2022-9-3 首段新增特殊情形 */
+-- /*2022-10-31 效率优化 （1）接口层做时间限制 （2）增加调优参数 */
 --依赖 RMP_ALERT_COMPREHS_SCORE_TEMP
+
+set hive.exec.parallel=true;
+set hive.auto.convert.join=ture;
+
 drop table if exists pth_rmp.RMP_ATTRIBUTION_SUMM_FIRST_TEMP;
 create table if not exists pth_rmp.RMP_ATTRIBUTION_SUMM_FIRST_TEMP AS 
+--—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 with 
 RMP_ALERT_COMPREHS_SCORE_TEMP_Batch as  --最新批次的综合舆情分数据,且有关联方
 (
@@ -13,8 +19,9 @@ RMP_ALERT_COMPREHS_SCORE_TEMP_Batch as  --最新批次的综合舆情分数据,�
 	join (select max(batch_dt) as new_batch_dt,score_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP group by score_dt)b  
 		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'') and a.score_dt=b.score_dt
 	where a.alert=1 
-	  --and a.corp_id='pz00e1c32133191ee1a9cc3556af92f8ea' and to_date(a.score_dt)='2022-08-02'  --and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
+	  and a.score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 ),
+--—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 First_ as   --主体名称
 (
 	select distinct
