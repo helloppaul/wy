@@ -1,5 +1,5 @@
 
--- DDL 综合舆情分temp hive执行-- 
+--（1） DDL 综合舆情分temp hive执行-- 
 drop table if exists pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP_INIT;
 create table pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP_INIT
 (	
@@ -40,7 +40,7 @@ stored as textfile
 ;
 
 
--- 初始化sql (pth_rmp.rmp_alert_comprehs_score_temp_init) hive执行 PS:约30min/天 -- 
+--（2） 初始化sql (pth_rmp.rmp_alert_comprehs_score_temp_init) hive执行 PS:约30min/天 -- 
 -- PS:上游单主体舆情分日期最早在2022-09-09 --
 set hive.exec.parallel=true;
 set hive.auto.convert.join=ture;
@@ -570,4 +570,59 @@ from
 where G.batch_dt is not null
   and G.score_dt >= to_date('2022-09-09') 
   and G.score_dt <= to_date('2022-10-14') 
+;
+
+
+
+--（3） DDL 综合舆情分 hive执行-- 
+drop table if exists pth_rmp.RMP_ALERT_COMPREHS_SCORE_INIT;
+create table pth_rmp.RMP_ALERT_COMPREHS_SCORE_INIT
+(	
+	sid_kw string,
+	corp_id	string,
+	corp_nm	string,
+	credit_code	string,
+	score_dt	timestamp,
+	comprehensive_score double,
+	score_hit	tinyint,
+	label_hit	tinyint,
+	alert	tinyint,
+	fluctuated	double,
+	model_version	string,
+	adjust_warnlevel  string,
+	delete_flag	tinyint,
+	create_by	string,
+	create_time	timestamp,
+	update_by	string,
+	update_time	timestamp,
+	version	tinyint
+)
+partitioned by (etl_date int)
+row format
+delimited fields terminated by '\16' escaped by '\\'
+stored as textfile
+;
+--（4） 初始化sql (pth_rmp.rmp_alert_comprehs_score_init) hive执行 -- 
+insert into pth_rmp.rmp_alert_comprehs_score_init partition(etl_date=19900101)
+select distinct
+	a.sid_kw,
+	-- a.batch_dt,
+	a.corp_id,
+	a.corp_nm,
+	a.credit_code,
+	a.score_dt,
+	a.comprehensive_score,
+	a.score_hit,
+	a.label_hit,
+	a.alert,
+	a.fluctuated,
+	a.model_version,
+	a.adjust_warnlevel,
+	0 as delete_flag,
+	'' as create_by,
+	current_timestamp() as create_time,
+	'' as update_by,
+	current_timestamp() update_time,
+	0 as version
+from pth_rmp.rmp_alert_comprehs_score_temp_init a
 ;
