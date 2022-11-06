@@ -155,7 +155,7 @@ region_class_yq as
 ------------------------------ temp_table above ---------------------------------------------------------
 insert overwrite table pth_rmp.RMP_OPINION_STATISTIC_DAY partition(etl_date=${ETL_DATE})
 select 
-	concat(cast(score_dt as string),statistic_dim,cast(industry_class as string),level_type_list,level_type_ii,'0') as sid_kw,
+	md5(concat(cast(score_dt as string),statistic_dim,cast(industry_class as string),level_type_list,level_type_ii,'0')) as sid_kw,
 	*
 from 
 (
