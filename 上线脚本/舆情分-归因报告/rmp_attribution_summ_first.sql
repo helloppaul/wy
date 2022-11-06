@@ -7,7 +7,8 @@
 --依赖 RMP_ALERT_COMPREHS_SCORE_TEMP
 
 set hive.exec.parallel=true;
-set hive.auto.convert.join=ture;
+set hive.auto.convert.join = false;
+set hive.ignore.mapjoin.hint = false; 
 
 drop table if exists pth_rmp.RMP_ATTRIBUTION_SUMM_FIRST_TEMP;
 create table if not exists pth_rmp.RMP_ATTRIBUTION_SUMM_FIRST_TEMP AS 

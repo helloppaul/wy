@@ -4,12 +4,14 @@
 -- and score_dt='2022-08-02'  and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
 -- /* 2022-9-3 命中重大风险事件调整为使用label_hit=2的标签进行判断 */
 -- /* 2022-9-3 关联方段落新增特殊情形 */
+-- /*2022-11-04 解决效率层面优化的带来的mapjoin过大导致的报错问题  */
 --2.主体label_hit=1，则显示命中重大风险事件 ；关联方 label_hit=2，则显示命中重大风险事件 
 --3.排序问题，hive可使用sort_array()进行升序排序，解决impala无法排序拼接的问题
 --依赖 pth_rmp.RMP_COMPY_CONTRIB_DEGREE pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP  pth_rmp.rmp_opinion_risk_info
 
 set hive.exec.parallel=true;
-set hive.auto.convert.join=ture;
+set hive.auto.convert.join = false;
+set hive.ignore.mapjoin.hint = false;  
 
 drop table if exists pth_rmp.RMP_ATTRIBUTION_SUMM_REL_TEMP;
 create table if not exists pth_rmp.RMP_ATTRIBUTION_SUMM_REL_TEMP AS 

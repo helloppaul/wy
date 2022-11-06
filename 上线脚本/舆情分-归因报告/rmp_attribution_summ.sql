@@ -2,7 +2,9 @@
 -- 依赖 first,main,rel,last 四部分
 
 set hive.exec.parallel=true;
-set hive.auto.convert.join=ture;
+set hive.auto.convert.join = false;
+set hive.ignore.mapjoin.hint = false;  
+
 
 with 
 corp_chg as 

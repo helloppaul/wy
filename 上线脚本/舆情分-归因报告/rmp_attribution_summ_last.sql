@@ -1,12 +1,14 @@
 -- 归因报告 RMP_ATTRIBUTION_SUMM_LAST_TEMP --
 -- 入参：${ETL_DATE} -> to_date(score_dt)。入参给NULL，初始化全部数据 --
+-- /*2022-11-04 解决效率层面优化的带来的mapjoin过大导致的报错问题  */
 -- where corp_id='pz00e1c32133191ee1a9cc3556af92f8ea' and corp_nm='深圳比亚迪光电子有限公司'  
 -- and score_dt='2022-08-02'  and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
 --依赖 pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP，pth_rmp.rmp_opinion_risk_info
 
 
 set hive.exec.parallel=true;
-set hive.auto.convert.join=ture;
+set hive.auto.convert.join = false;
+set hive.ignore.mapjoin.hint = false; 
 
 
 drop table if exists pth_rmp.RMP_ATTRIBUTION_SUMM_LAST_TEMP;

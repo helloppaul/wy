@@ -5,10 +5,13 @@
 -- /* 2022-9-3 命中重大风险事件调整为使用label_hit=1的标签进行判断 */
 -- /* 2022-9-3 主体段落新增特殊情形 */  
 -- /*2022-10-31 效率优化 （1）接口层做时间限制 （2）增加调优参数 */
+-- /*2022-11-04 解决效率层面优化的带来的mapjoin过大导致的报错问题  */
 --依赖 pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP,hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf
 
 set hive.exec.parallel=true;
-set hive.auto.convert.join=ture;
+set hive.auto.convert.join = false;
+set hive.ignore.mapjoin.hint = false;  
+-- set hive.auto.convert.join=ture;
 
 drop table if exists pth_rmp.RMP_ATTRIBUTION_SUMM_MAIN_TEMP;
 create table if not exists pth_rmp.RMP_ATTRIBUTION_SUMM_MAIN_TEMP AS 
