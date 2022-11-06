@@ -142,7 +142,7 @@ from
 			from (	select * 
 					from (	select * , max (announcement_date) over (partition by corp_code) newest_date 
 							from hds.t_ods_fic_hb_corp_actual_controller
-							where etl_date=${ETL_DATE} and 1=0
+							where etl_date=${ETL_DATE} 
 							-- and controller_type='个人'
 							and controller_type not in ('国资委','地方国资委')
 							and isvalid=1
@@ -153,7 +153,7 @@ from
 									from hds.t_ods_fic_hb_corp_actual_controller
 									where etl_date=${ETL_DATE}
 									and controller_type='个人'and isvalid=1
-								) k1 where newest_date= announcement_date and 1=0
+								) k1 where newest_date= announcement_date
 						) b on a.actual_controller_id=b.actual_controller_id --and a.announcement_date=最新发布日and b.annc
 		)c where main_B<>main_A 
 	) L join compy_range cr on cr.corp_id=L.corp_id
