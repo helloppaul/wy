@@ -48,8 +48,6 @@ mid_opinion_feat as   --特征原始值  取每天最新批次数据 (如果只�
 		on chg.source_id = cast(a.corp_code as string)
 	where chg.source_code='FI'  
 ),
-
-
 -- modelres_adjusted_senti_self_ as 
 -- (
 -- 	select a.*,chg.corp_id,chg.corp_name as corp_nm,chg.credit_code
