@@ -30,7 +30,7 @@ create table pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP
 	update_by	string,
 	update_time	timestamp,
 	version	tinyint
-)
+)partitioned by (etl_date int)
 row format
 delimited fields terminated by '\16' escaped by '\\'
 stored as textfile;

@@ -5,6 +5,8 @@
 -- /* 2022-9-28  增加 origin_comprehensive_score 字段*/
 -- /* 2022-10-26 效率优化，近14天数据，除最新一天需计算，其余直接取历史表  impala:35s*/
 -- /* 2022-10-27 hive层效率优化，采用mapjoin方式提升关联效率，同时调整单主体舆情分取最大批次的方法 hive:1h27min */
+-- /* 2022-11-05 修复model_version和adjust_warnlevel反了的问题 */
+
 -- PS: 可以将综合舆情分发任务 拆解为：com_score_temp,label_hit_tab(这两部分并行)； insert部分(依赖前两部分完成后执行)
 --依赖 pth_rmp.rmp_calendar,pth_rmp.RMP_ALERT_SCORE_SUMM,pth_rmp.RMP_COMPANY_CORE_REL,pth_rmp.RMP_COMPY_CORE_REL_DEGREE_CFG
 	-- pth_rmp.rmp_opinion_risk_info,hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf(特征原始值) 
@@ -41,7 +43,7 @@ RMP_ALERT_SCORE_SUMM_ as --取距离当前ETL_date最近的14天单主体舆情�
 	UNION ALL 
 	select 
 		1 as his_flag,
-		'' as batch_dt,
+		score_dt as batch_dt,
 		corp_id,corp_nm,credit_code,score_dt,score,yq_num,score_hit_ci,score_hit_yq,score_hit,label_hit,alert,fluctuated,model_version,delete_flag,update_time
 	from 
 	(   --取除去距离当前ETL_DATE最近一天日期的近13的数据
@@ -494,7 +496,7 @@ label_hit_tab AS  --风险预警
 		)B
 	)C
 )
-insert into pth_rmp.rmp_alert_comprehs_score_temp  --@pth_rmp.rmp_alert_comprehs_score_temp
+insert into pth_rmp.rmp_alert_comprehs_score_temp  partition(etl_date=${ETL_DATE})--@pth_rmp.rmp_alert_comprehs_score_temp
 select distinct
 	md5(concat(to_date(G.batch_dt),nvl(G.corp_id,''),nvl(lb.relation_id,''),'0')) as sid_kw,
 	cast(G.batch_dt as string) as batch_dt,
@@ -517,8 +519,8 @@ select distinct
 	lb.label_hit,
 	if(G.score_hit=1 or lb.label_hit=1,1,0) as alert,   
 	G.fluctuated,
-	'' AS adjust_warnlevel,
 	G.model_version,
+	'' AS adjust_warnlevel,
 	0 as delete_flag,
 	'' as create_by,
 	current_timestamp() as create_time,
@@ -545,7 +547,7 @@ from
 	from 
 	(
 		select 
-			max(batch_dt) over(partition by corp_id,score_dt) as batch_dt,
+			max(batch_dt) over(partition by corp_id,score_dt) as batch_dt,  --此处会有近14天所有企业batch_dt，取对应企业每天最大批次时间
 			corp_id,
 			score_dt,
 			Main_score_hit_yq,
