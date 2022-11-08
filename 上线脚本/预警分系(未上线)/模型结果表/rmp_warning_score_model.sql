@@ -1,5 +1,6 @@
 -- RMP_WARNING_SCORE_MODEL (同步方式：一天多批次插入) --
 --/*2022-10-20 调整后预警等级 映射逻辑调整为R1-R6*/
+--/*2022-11-08 增加模型版本控制接口表 */
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg
@@ -18,13 +19,43 @@ corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg
 	where a.delete_flag=0 and b.delete_flag=0
 ),
 --—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
+-- 模型版本控制 --
+model_version_intf_ as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf   @app_ehzh.rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf
+(
+    select 'creditrisk_lowfreq_concat' model_name,'v1.0.4' model_version,'active' status  --低频模型
+    union all
+    select 'creditrisk_midfreq_cityinv' model_name,'v1.0.4' model_version,'active' status  --中频-城投模型
+    union all 
+    select 'creditrisk_midfreq_general' model_name,'v1.0.2' model_version,'active' status  --中频-产业模型
+    union all 
+    select 'creditrisk_highfreq_scorecard' model_name,'v1.0.4' model_version,'active' status  --高频-评分卡模型(高频)
+    union all 
+    select 'creditrisk_highfreq_unsupervised' model_name,'v1.0.2' model_version,'active' status  --高频-无监督模型
+    union all 
+    select 'creditrisk_union' model_name,'v1.0.2' model_version,'active' status  --信用风险综合模型
+    -- select 
+    --     notes,
+    --     model_name,
+    --     model_version,
+    --     status,
+    --     etl_date
+    -- from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf a
+    -- where a.etl_date in (select max(etl_date) from t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf)
+    --   and status='active'
+    -- group by notes,model_name,model_version,status,etl_date
+),
 -- 预警分 --
 _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接口
 (
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-	where 1=1
-	  and to_date(rating_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	select a.*
+	from 
+	(
+		select * 
+		from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+		where 1=1
+		and to_date(rating_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 warn_union_adj_sync_score as --取最新批次的融合调整后综合预警分
