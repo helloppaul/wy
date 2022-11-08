@@ -3,6 +3,7 @@
 -- /* 2022-10-27 修复 归因个数计算，是基于该时点的企业下type层的归因个数统计而非脱离企业层的统计 */
 -- /* 2022-10-28 以高中低频合并的特征贡献度表的指标名称为准 */
 -- /* 2022-11-01 归因详情数据逻辑优化，不依赖归因详情历史表获取昨日指标值，直接从上游高中低频合并的特征原始值获取 */
+--/* 2022-11-08 增加模型版本控制接口表 */
 -- 依赖 模型 综合预警分，特征原始值高中低，特征贡献度高中低无监督以及综合，评分卡高中低，归因详情及其历史 PS:不依赖pth_rmp.模型结果表
 --q1：维度风险等级的计算依靠贡献度占比，贡献度占比特征会少于特征原始值，此时最后关联将会产生某些维度关联补上维度风险等级，导致为NULL(暂时决定踢掉)
 --q2：特征值以高中低频合并的特征贡献度表为基准，主表有特征原始值切换为高中低频合并的特征贡献度表
@@ -26,7 +27,7 @@ corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
-),
+)
 --—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 -- 时间限制开关 --
 timeLimit_switch as 
@@ -35,7 +36,7 @@ timeLimit_switch as
     -- select False as flag
 ),
 -- 模型版本控制 --
-model_version as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf   @app_ehzh.rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf
+model_version_intf_ as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf   @app_ehzh.rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf
 (
     select 'creditrisk_lowfreq_concat' model_name,'v1.0.4' model_version,'active' status  --低频模型
     union all
@@ -43,7 +44,7 @@ model_version as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_int
     union all 
     select 'creditrisk_midfreq_general' model_name,'v1.0.2' model_version,'active' status  --中频-产业模型
     union all 
-    select 'creditrisk_highfreq_scorecard' model_name,'v1.0.4' model_version,'active' status  --高频-评分卡模型
+    select 'creditrisk_highfreq_scorecard' model_name,'v1.0.4' model_version,'active' status  --高频-评分卡模型(高频)
     union all 
     select 'creditrisk_highfreq_unsupervised' model_name,'v1.0.2' model_version,'active' status  --高频-无监督模型
     union all 
@@ -61,17 +62,22 @@ model_version as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_int
 ),
 -- 预警分 --
 rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接口
-(
-    -- 时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(rating_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all
-    -- 非时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+( 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(rating_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all
+        -- 非时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+        where 1 in (select not max(flag) from timeLimit_switch) 
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_batch as 
 (
@@ -83,178 +89,244 @@ rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_batch as
 -- 特征原始值(取今昨两天数据) --
 rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_ as  --特征原始值_高频 原始接口
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
-      and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select *
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
+        and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all 
+        -- 非时间限制部分 --
+        select *
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf
+        where 1 in (select not max(flag) from timeLimit_switch) 
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf_ as  --特征原始值_低频 原始接口
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
-      and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
+        and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all 
+        -- 非时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
+        where 1 in (select not max(flag) from timeLimit_switch) 
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf_ as  --特征原始值_中频_城投 原始接口
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
-      and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
+        and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all 
+        -- 非时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf
+        where 1 in (select not max(flag) from timeLimit_switch) 
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf_ as  --特征原始值_中频_产业债 原始接口
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
-      and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
+        and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all 
+        -- 非时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf
+        where 1 in (select not max(flag) from timeLimit_switch) 
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 -- 特征贡献度 --
 rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as  --特征贡献度_融合调整后综合 原始接口（增加了无监督特征：creditrisk_highfreq_unsupervised  ）
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all 
+        -- 非时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
+        where 1 in (select not max(flag) from timeLimit_switch) 
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf_ as --特征贡献度_高频
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all 
+        -- 非时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf
+        where 1 in (select not max(flag) from timeLimit_switch) 
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_ as  --特征贡献度_低频
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all 
+        -- 非时间限制部分 --
+        select * 
+        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf
+        where 1 in (select not max(flag) from timeLimit_switch) 
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf_ as  --特征贡献度_中频城投
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all 
+        -- 非时间限制部分 --
+        select * 
+        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf
+        where 1 in (select not max(flag) from timeLimit_switch) 
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf_ as  --特征贡献度_中频产业
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all 
+        -- 非时间限制部分 --
+        select * 
+        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf
+        where 1 in (select not max(flag) from timeLimit_switch) 
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 -- 特征得分(特征打分卡) --
 rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf_ as  --特征得分_高频 原始接口 
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all 
+        -- 非时间限制部分 --
+        select * 
+        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf
+        where 1 in (select not max(flag) from timeLimit_switch) 
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
+    
 ),
 rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf_ as  --特征得分_低频 原始接口
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all 
+        -- 非时间限制部分 --
+        select * 
+        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf
+        where 1 in (select not max(flag) from timeLimit_switch) 
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf_ as  --特征得分_中频_城投 原始接口
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all 
+        -- 非时间限制部分 --
+        select * 
+        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf
+        where 1 in (select not max(flag) from timeLimit_switch)
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name 
 ),
 rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf_ as  --特征得分_中频_产业债 原始接口
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    select a.*
+    from 
+    (
+        -- 时间限制部分 --
+        select * 
+        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf
+        where 1 in (select max(flag) from timeLimit_switch) 
+        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        union all 
+        -- 非时间限制部分 --
+        select * 
+        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf
+        where 1 in (select not max(flag) from timeLimit_switch) 
+    ) a join model_version_intf_ b
+    on a.model_version = b.model_version and a.model_name=b.model_name 
 ),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
 warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
