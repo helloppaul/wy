@@ -4,6 +4,8 @@
 -- /* 2022-10-28 ÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íµÄÖ¸±êÃû³ÆÎª×¼ */
 -- /* 2022-11-01 ¹éÒòÏêÇéÊı¾İÂß¼­ÓÅ»¯£¬²»ÒÀÀµ¹éÒòÏêÇéÀúÊ·±í»ñÈ¡×òÈÕÖ¸±êÖµ£¬Ö±½Ó´ÓÉÏÓÎ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷Ô­Ê¼Öµ»ñÈ¡ */
 --/* 2022-11-08 Ôö¼ÓÄ£ĞÍ°æ±¾¿ØÖÆ½Ó¿Ú±í */
+--/* 2022-11-08 ĞÂÔö ¸ù¾İÖĞÖ¤ÆóÒµ³¨¿Ú·ÖÀà »ñÈ¡¶ÔÓ¦ÆóÒµµÍÆµ×ÓÄ£ĞÍ·ÖÀàµÄÖ¸±êÊÍÒå */
+--/* 2022-11-09 Î¬¶È·çÏÕµÈ¼¶ÎÊÌâĞŞ¸´£¬µ÷ÕûºóÔ¤¾¯µÈ¼¶·çÏÕ ÒÑ±©Â¶ºÍºìÉ«Ô¤¾¯ Ó³Éäµ÷ÕûÎª-3 */
 -- ÒÀÀµ Ä£ĞÍ ×ÛºÏÔ¤¾¯·Ö£¬ÌØÕ÷Ô­Ê¼Öµ¸ßÖĞµÍ£¬ÌØÕ÷¹±Ï×¶È¸ßÖĞµÍÎŞ¼à¶½ÒÔ¼°×ÛºÏ£¬ÆÀ·Ö¿¨¸ßÖĞµÍ£¬¹éÒòÏêÇé¼°ÆäÀúÊ· PS:²»ÒÀÀµpth_rmp.Ä£ĞÍ½á¹û±í
 --q1£ºÎ¬¶È·çÏÕµÈ¼¶µÄ¼ÆËãÒÀ¿¿¹±Ï×¶ÈÕ¼±È£¬¹±Ï×¶ÈÕ¼±ÈÌØÕ÷»áÉÙÓÚÌØÕ÷Ô­Ê¼Öµ£¬´ËÊ±×îºó¹ØÁª½«»á²úÉúÄ³Ğ©Î¬¶È¹ØÁª²¹ÉÏÎ¬¶È·çÏÕµÈ¼¶£¬µ¼ÖÂÎªNULL(ÔİÊ±¾ö¶¨Ìßµô)
 --q2£ºÌØÕ÷ÖµÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÎª»ù×¼£¬Ö÷±íÓĞÌØÕ÷Ô­Ê¼ÖµÇĞ»»Îª¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±í
@@ -16,7 +18,8 @@ with
 corp_chg as  --´øÓĞ ³ÇÍ¶/²úÒµÅĞ¶ÏºÍ¹ú±êÒ»¼¶ĞĞÒµ µÄÌØÊâcorp_chg
 (
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
-    ,b.bond_type,b.zjh_industry_l1 as industryphy_name  --Ö¤¼à»áĞĞÒµ
+    ,b.bond_type,b.zjh_industry_l1 as industryphy_name  --Ö¤¼à»áĞĞÒµ 
+    ,b.exposure  --ÖĞÕı³¨¿Ú used ÓÃÓÚÈ¡ÌØÕ÷ÊÖ¹¤ÅäÖÃ±íÎ¨Ò»ÌØÕ÷ÊÍÒå
 	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
 		  where cid1.etl_date in (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
 			-- on cid1.etl_date=cid2.etl_date
@@ -27,7 +30,7 @@ corp_chg as  --´øÓĞ ³ÇÍ¶/²úÒµÅĞ¶ÏºÍ¹ú±êÒ»¼¶ĞĞÒµ µÄÌØÊâcorp_chg
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
-)
+),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª ½Ó¿Ú²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 -- Ê±¼äÏŞÖÆ¿ª¹Ø --
 timeLimit_switch as 
@@ -343,7 +346,8 @@ feat_CFG as  --ÌØÕ÷ÊÖ¹¤ÅäÖÃ±í
     select distinct
         feature_cd,
         feature_name,
-        substr(sub_model_type,1,6) as sub_model_type,  --È¡Ç°Á½¸öÖĞÎÄ×Ö·û
+        sub_model_type,  --µÍÆµ-½ğÈÚÆ½Ì¨¡¢µÍÆµ-Ò½Ò©ÖÆÔì ...
+        -- substr(sub_model_type,1,6) as sub_model_type,  --È¡Ç°Á½¸öÖĞÎÄ×Ö·û
         feature_name_target,
         dimension,
         type,
@@ -369,12 +373,12 @@ feat_CFG as  --ÌØÕ÷ÊÖ¹¤ÅäÖÃ±í
     where sub_model_type in ('ÖĞÆµ-²úÒµ','ÖĞÆµ-³ÇÍ¶','ÎŞ¼à¶½')
 ),
 --Ó³Éäºó ÌØÕ÷ÊÖ¹¤ÅäÖÃ±í --
-warn_feat_CFG as 
+warn_feat_CFG as
 (
     select 
         feature_cd,
         feature_name,
-        sub_model_type,
+        sub_model_type,    --µÍÆµ-½ğÈÚÆ½Ì¨¡¢µÍÆµ-Ò½Ò©ÖÆÔì ...
         feature_name_target,
         case dimension 
             when '²ÆÎñ' then 1
@@ -390,6 +394,23 @@ warn_feat_CFG as
         unit_target
         -- count(feature_cd) over(partition by dimension,type) as contribution_cnt
     from feat_CFG
+),
+-- Ó³ÉäºóµÄ ´øÓĞÆóÒµ³¨¿ÚµÄ ÌØÕ÷ÊÖ¹¤ÅäÖÃ±í --
+warn_feat_corp_property_CFG as  --Í¨¹ıµÍÆµ·ÖÀàÊı¾İµÄsub_model_type»ñÈ¡¶ÔÓ¦³¨¿ÚµÄÆóÒµ    Ê¹ÓÃ·¶Î§:¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±í
+(
+    select 
+        b.corp_id,
+        b.source_id as corp_code,
+        max(b.corp_name) as corp_nm,
+        'µÍÆµ' as big_sub_model_type,
+        a.sub_model_type,
+        a.feature_cd,
+        a.feature_name
+    from warn_feat_CFG a 
+    join corp_chg b 
+        on substr(a.sub_model_type,8) = b.exposure and b.source_code='ZXZX'
+    where substr(a.sub_model_type,1,6) = 'µÍÆµ'
+    group by b.corp_id,b.source_id,a.sub_model_type,a.feature_cd,a.feature_name   --È¥³ıÖØ¸´Êı¾İ
 ),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª ÖĞ¼ä²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 -- Ô¤¾¯·Ö --
@@ -414,10 +435,10 @@ RMP_WARNING_SCORE_MODEL_ as  --Ô¤¾¯·Ö-Ä£ĞÍ½á¹û±í£¨ÒÑÊÇ×îĞÂÅú´Î£©
 				'-1'   --µÍ·çÏÕ
 			when a.interval_text_adjusted  = '³ÈÉ«Ô¤¾¯' then 
 				'-2'  --ÖĞ·çÏÕ
-			when a.interval_text_adjusted  ='ºìÉ«Ô¤¾¯' then 
+			when a.interval_text_adjusted  in ('ºìÉ«Ô¤¾¯','·çÏÕÒÑ±©Â¶') then 
 				'-3'  --¸ß·çÏÕ
-			when a.interval_text_adjusted  ='·çÏÕÒÑ±©Â¶' then 
-				'-4'   --·çÏÕÒÑ±©Â¶
+			-- when a.interval_text_adjusted  ='·çÏÕÒÑ±©Â¶' then 
+			-- 	'-4'   --·çÏÕÒÑ±©Â¶
 		end as adjust_warnlevel,
 		a.model_name,
 		a.model_version
@@ -650,7 +671,7 @@ warn_feature_value_with_median_cal as
         sub_model_name,
         idx_name,
         appx_median(idx_value) as median
-        -- percentile(idx_value,0.5) as median  --hive
+        -- percentile_approx(idx_value,0.5) as median  --hive
     from warn_feature_value_with_median
     where bond_type=2
     group by bond_type,corp_id,batch_dt,score_dt,sub_model_name,idx_name
@@ -663,6 +684,7 @@ warn_feature_value_with_median_cal as
         sub_model_name,
         idx_name,
         appx_median(idx_value) as median
+        -- percentile_approx(idx_value,0.5) as median  --hive
     from warn_feature_value_with_median
     where bond_type<>2 and zjh <> ''
     group by  bond_type,zjh,corp_id,batch_dt,score_dt,sub_model_name,idx_name
@@ -731,16 +753,19 @@ warn_feature_contrib as --ÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
 		union all 
 		--µÍÆµ
 		select distinct
-			end_dt as batch_dt,
-			corp_code,
-			end_dt,
-			feature_name,
-			cast(feature_pct*100 as float) as feature_pct,  --ÌØÕ÷¹±Ï×¶È
-			'µÍÆµ' as model_freq_type,
-			feature_risk_interval,  --ÌØÕ÷Òì³£±êÊ¶£¨0/1,1´ú±íÒì³££©
-			model_name,
-			model_version
-		from rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_batch
+			k1.end_dt as batch_dt,
+			k1.corp_code,
+			k1.end_dt,
+			k1.feature_name,
+			cast(k1.feature_pct*100 as float) as feature_pct,  --ÌØÕ÷¹±Ï×¶È
+            k2.sub_model_type as model_freq_type,  --¾ßÌå¸ù¾İÖĞÕı³¨¿Ú·ÖÀàµÄµÍÆµ·ÖÀà£¬ÀıÈç µÍÆµ-½ğÈÚÆ½Ì¨£¬µÍÆµ-·¿µØ²ú ..
+			-- 'µÍÆµ' as model_freq_type,
+			k1.feature_risk_interval,  --ÌØÕ÷Òì³£±êÊ¶£¨0/1,1´ú±íÒì³££©
+			k1.model_name,
+			k1.model_version
+		from rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_batch k1 
+        join warn_feat_corp_property_CFG k2 
+            on cast(k1.corp_code as string) = k2.corp_code
 		union all 
 		--ÖĞÆµ-³ÇÍ¶
 		select distinct
@@ -768,7 +793,7 @@ warn_feature_contrib as --ÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
 			model_version
 		from rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf_batch
 	)A join corp_chg chg 
-        on cast(a.corp_code as string)=chg.source_id and chg.source_code='ZXZX'
+            on cast(a.corp_code as string)=chg.source_id and chg.source_code='ZXZX'
 ),
 warn_feature_contrib_res1 as  --´øÓĞ Î¬¶È¹±Ï×¶ÈÕ¼±È µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ  
 (
@@ -959,7 +984,7 @@ warn_score_card as
         on cast(a.corp_code as string)=chg.source_id and chg.source_code='ZXZX'
 ),
 -- ½á¹û¼¯ --
-res0 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷Ãû³ÆÎª×¼)
+res0 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷Ãû³ÆÎª×¼)  Âı:1min  67ÍòÌõ
 (
     select distinct
         main.batch_dt,
@@ -979,7 +1004,7 @@ res0 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷
     left join warn_feature_value_with_median_res b  --ÈıÆµºÏ²¢µÄÌØÕ÷Ô­Ê¼Öµ
         on c.corp_id=b.corp_id and c.batch_dt=b.batch_dt and c.feature_name=b.idx_name
 ),
-res1 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷Ãû³ÆÎª×¼)+×ÛºÏ¹±Ï×¶È
+res1 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷Ãû³ÆÎª×¼)+×ÛºÏ¹±Ï×¶È  
 (
     select distinct
         main.batch_dt,
@@ -1026,7 +1051,7 @@ res1 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷
             -- and a1.feature_name = 'creditrisk_highfreq_unsupervised'
         ) A 
 ),
-res2 as --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷Ãû³ÆÎª×¼)+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨
+res2 as --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷Ãû³ÆÎª×¼)+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨ Âı:1min20s  67ÍòÌõ
 (
     select distinct
         main.batch_dt,
@@ -1052,7 +1077,7 @@ res2 as --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷Ãû
             and main.sub_model_name=b.sub_model_name 
             and main.idx_name=b.idx_name
 ),
-res3 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í
+res3 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í  Âı:1min20s  40ÍòÌõ
 (
     select  
         main.batch_dt,
@@ -1086,7 +1111,7 @@ res3 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í
     -- left join warn_feat_CFG f_cfg
         on main.idx_name=f_cfg.feature_cd and main.model_freq_type=f_cfg.sub_model_type --and  main.model_freq_type=substr(f_cfg.sub_model_type,1,6)
 ),
-res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷Ãû³ÆÎª×¼)+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í+¸÷Î¬¶È·çÏÕË®Æ½(¸ßÖĞµÍÆµ¹±Ï×¶ÈÇóµÃ)
+res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷Ãû³ÆÎª×¼)+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í+¸÷Î¬¶È·çÏÕË®Æ½(¸ßÖĞµÍÆµ¹±Ï×¶ÈÇóµÃ)   Âı:1min20s  34ÍòÌõ
 (
     select distinct
         main.batch_dt,
@@ -1122,7 +1147,7 @@ res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ
 )
 ------------------------------------ÒÔÉÏ²¿·ÖÎªÁÙÊ±±í-------------------------------------------------------------------
 insert into pth_rmp.RMP_WARNING_SCORE_DETAIL partition(etl_date=${ETL_DATE})
-select distinct
+select 
     concat(corp_id,'_',MD5(concat(batch_dt,dimension,type,sub_model_name,idx_name))) as sid_kw,  --hive
     batch_dt,
     corp_id,
