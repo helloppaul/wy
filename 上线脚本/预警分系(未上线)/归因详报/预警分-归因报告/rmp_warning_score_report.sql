@@ -1,8 +1,8 @@
 -- RMP_WARNING_SCORE_REPORT (一天多批次插入) --
 insert into app_ehzh.rmp_warning_score_report partition(etl_date=${ETL_DATE})
 select 
-	'' as sid_kw,  --impala
-	-- md5(concat(a.batch_dt,corp_id,cast(a.score_dt as string))) as sid_kw,  --hive
+	-- '' as sid_kw,  --impala
+	md5(concat(a.batch_dt,a.corp_id,cast(a.score_dt as string))) as sid_kw,  --hive
 	a.batch_dt,
 	a.corp_id,
 	a.corp_nm,

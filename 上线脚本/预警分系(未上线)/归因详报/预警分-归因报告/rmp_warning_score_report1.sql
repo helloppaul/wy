@@ -3,7 +3,8 @@
 --/**2022-10-22 首段，新增 提示颜色/
 
 set hive.exec.parallel=true;
-set hive.auto.convert.join=ture;
+set hive.auto.convert.join = false;
+set hive.ignore.mapjoin.hint = false;  
 
 drop table if exists pth_rmp.rmp_warning_score_report1;  
 create table pth_rmp.rmp_warning_score_report1 as    --@pth_rmp.rmp_warning_score_report1

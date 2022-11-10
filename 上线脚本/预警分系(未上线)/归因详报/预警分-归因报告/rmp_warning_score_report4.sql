@@ -4,7 +4,8 @@
 
 
 set hive.exec.parallel=true;
-set hive.auto.convert.join=ture;
+set hive.auto.convert.join = false;
+set hive.ignore.mapjoin.hint = false;  
 
 drop table if exists pth_rmp.rmp_warning_score_report4;  
 create table pth_rmp.rmp_warning_score_report4 as  --@pth_rmp.rmp_warning_score_report4

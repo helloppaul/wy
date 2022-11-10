@@ -2,7 +2,8 @@
 
 
 set hive.exec.parallel=true;
-set hive.auto.convert.join=ture;
+set hive.auto.convert.join = false;
+set hive.ignore.mapjoin.hint = false;  
 
 
 drop table if exists pth_rmp.rmp_warning_score_report2;    
@@ -826,7 +827,7 @@ Second_Part_Data_Prepare as
 	join warn_dim_risk_level_cfg_ cfg 
 		on main.dim_warn_level=cast(cfg.risk_lv as string)
 	left join mid_risk_info rinfo 
-		on main.corp_id=rinfo.corp_id and main.score_dt=rinfo.notice_date and main.idx_name=rinfo.feature_cd
+		on main.corp_id=rinfo.corp_id and main.score_dt>=rinfo.notice_date and main.idx_name=rinfo.feature_cd
 ),
 Second_Part_Data as 
 (
