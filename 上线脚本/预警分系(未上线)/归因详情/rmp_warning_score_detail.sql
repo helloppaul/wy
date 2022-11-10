@@ -6,6 +6,7 @@
 --/* 2022-11-08 增加模型版本控制接口表 */
 --/* 2022-11-08 新增 根据中证企业敞口分类 获取对应企业低频子模型分类的指标释义 */
 --/* 2022-11-09 维度风险等级问题修复，调整后预警等级风险 已暴露和红色预警 映射调整为-3 */
+--/* 2022-11-10 修复 维度风险等级都显示为风险最高的问题  */
 -- 依赖 模型 综合预警分，特征原始值高中低，特征贡献度高中低无监督以及综合，评分卡高中低，归因详情及其历史 PS:不依赖pth_rmp.模型结果表
 --q1：维度风险等级的计算依靠贡献度占比，贡献度占比特征会少于特征原始值，此时最后关联将会产生某些维度关联补上维度风险等级，导致为NULL(暂时决定踢掉)
 --q2：特征值以高中低频合并的特征贡献度表为基准，主表有特征原始值切换为高中低频合并的特征贡献度表
@@ -803,7 +804,7 @@ warn_feature_contrib_res1 as  --带有 维度贡献度占比 的特征贡献度-合并高中低频
         corp_nm,
         score_dt,
         dimension,
-        model_freq_type,  ----特征所属子模型分类/模型频率分类
+        -- model_freq_type,  ----特征所属子模型分类/模型频率分类
         sum(feature_pct) as dim_submodel_contribution_ratio  --维度贡献度占比
     from
     (
@@ -815,7 +816,7 @@ warn_feature_contrib_res1 as  --带有 维度贡献度占比 的特征贡献度-合并高中低频
             f_cfg.dimension,
             a.feature_name,
             a.feature_pct,  --贡献度占比 %
-            a.model_freq_type,
+            -- a.model_freq_type,
             a.feature_risk_interval,
             -- a.model_name,
             a.sub_model_name
@@ -823,7 +824,7 @@ warn_feature_contrib_res1 as  --带有 维度贡献度占比 的特征贡献度-合并高中低频
         join warn_feat_CFG f_cfg    --讨论后，直接采用join做关联，特征原始值没有的不考虑展示
         -- left join warn_feat_CFG f_cfg 
             on a.feature_name=f_cfg.feature_cd and a.model_freq_type=f_cfg.sub_model_type --and a.model_freq_type=substr(f_cfg.sub_model_type,1,6)
-    )B group by batch_dt,corp_id,corp_nm,score_dt,dimension,model_freq_type
+    )B group by batch_dt,corp_id,corp_nm,score_dt,dimension--,model_freq_type
 ),
 warn_feature_contrib_res2 as  -- 带有 维度风险等级 的特征贡献度-合并高中低频
 (
@@ -849,7 +850,7 @@ warn_feature_contrib_res2 as  -- 带有 维度风险等级 的特征贡献度-合并高中低频
                 main.corp_nm,
                 main.score_dt,
                 main.dimension,
-                main.model_freq_type,
+                -- main.model_freq_type,
                 main.dim_submodel_contribution_ratio,   --各子模型对应维度贡献度占比，used by 归因报告第二段
                 b.risk_lv,
                 b.risk_lv_desc   -- 原始风险等级描述
@@ -887,23 +888,25 @@ warn_feature_contrib_res3 as  -- 根据综合预警等级调整后的维度风险水平 的特征贡献
     from 
     (
         select 
-            *,
+            a.*,
             case 
-                when cast(dim_risk_lv as string)<>adjust_warnlevel then 
-                    adjust_warnlevel
+                when cast(a.dim_risk_lv as string)<>a.adjust_warnlevel then 
+                    a.adjust_warnlevel
                 else 
-                    cast(dim_risk_lv as string)
+                    cast(a.dim_risk_lv as string)
             end as dim_warn_level  --根据综合预警等级调整后的维度风险水平
         from warn_feature_contrib_res3_tmp a 
-        join (select max(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp) b  --获取获取最高风险水平对应的维度
-            on a.dim_risk_lv=b.max_dim_risk_lv
+        where a.dim_risk_lv in (select min(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp)  --风险最高的
+        -- join (select max(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp) b  --获取最高风险水平对应的维度
+        --     on a.dim_risk_lv=b.max_dim_risk_lv
         union all 
         select 
-            *,
-            cast(dim_risk_lv as string) as dim_warn_level
+            a.*,
+            cast(a.dim_risk_lv as string) as dim_warn_level
         from warn_feature_contrib_res3_tmp a 
-        join (select max(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp) b  --获取除最高风险水平对应的维度
-        where a.dim_risk_lv <> b.max_dim_risk_lv
+        where a.dim_risk_lv not in (select min(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp)  --非风险最高的
+        -- join (select max(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp) b  --获取除最高风险水平对应的维度
+        -- where a.dim_risk_lv <> b.max_dim_risk_lv
     )C
 ),
 warn_contribution_ratio_with_factor_evl as  --带因子评价的特征贡献度应用层数据(不包含无监督)
