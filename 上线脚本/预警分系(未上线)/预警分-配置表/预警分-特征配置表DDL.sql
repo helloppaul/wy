@@ -26,7 +26,7 @@ load data inpath '/user/pth_rmp/importfile/WARNING_SCORE_FEATURE_CFG.csv'
 into table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_;  
 
 drop table if exists pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_BAC;   --删除备份表
-create table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_BAC as select * from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_;  --数据备份
+create table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_BAC as select * from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG;  --数据备份
 CREATE table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG as select * from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_;  --建立新数据
 ------------------------------ ------------------------------------------------------------------------------------
 

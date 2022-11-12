@@ -35,7 +35,7 @@ create table pth_rmp.rmp_warn_dim_risk_level_cfg as
 with
 warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
 (
-	select 60 as low_contribution_percent,100 as high_contribution_percent,-3 as risk_lv ,'高风险' as risk_lv_desc   --(60,100]
+	select 60 as low_contribution_percent,101 as high_contribution_percent,-3 as risk_lv ,'高风险' as risk_lv_desc   --(60,100]
 	union all
 	select 40 as low_contribution_percent,60 as high_contribution_percent,-2 as risk_lv,'中风险' as risk_lv_desc   --(40,60]
 	union all
