@@ -906,7 +906,7 @@ warn_feature_contrib_res3_tmp as
 ),
 warn_feature_contrib_res3 as  -- ¸ù¾İ×ÛºÏÔ¤¾¯µÈ¼¶µ÷ÕûºóµÄÎ¬¶È·çÏÕË®Æ½ µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
 (
-    select distinct
+    select 
         batch_dt,
         corp_id,
         corp_nm,
@@ -935,7 +935,7 @@ warn_feature_contrib_res3 as  -- ¸ù¾İ×ÛºÏÔ¤¾¯µÈ¼¶µ÷ÕûºóµÄÎ¬¶È·çÏÕË®Æ½ µÄÌØÕ÷¹±Ï×
         where a.dim_risk_lv not in (select min(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp)  --·Ç·çÏÕ×î¸ßµÄ
         -- join (select max(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp) b  --»ñÈ¡³ı×î¸ß·çÏÕË®Æ½¶ÔÓ¦µÄÎ¬¶È
         -- where a.dim_risk_lv <> b.max_dim_risk_lv
-    )C
+    )C group by batch_dt,corp_id,corp_nm,score_dt,dimension,dim_warn_level  --È¥ÖØ
 ),
 warn_contribution_ratio_with_factor_evl as  --´øÒò×ÓÆÀ¼ÛµÄÌØÕ÷¹±Ï×¶ÈÓ¦ÓÃ²ãÊı¾İ(²»°üº¬ÎŞ¼à¶½)
 (
@@ -1184,7 +1184,6 @@ res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ
         main.contribution_cnt  --¹éÒò¸öÊı
     from (select distinct * from res3) main
     join warn_feature_contrib_res3 b  --ÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶ÈµÄÌØÕ÷ÖµÎª»ù×¼
-    -- left join warn_feature_contrib_res3 b
         on main.batch_dt=b.batch_dt and main.corp_id=b.corp_id and main.dimension=b.dimension
 )
 ------------------------------------ÒÔÉÏ²¿·ÖÎªÁÙÊ±±í-------------------------------------------------------------------
