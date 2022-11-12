@@ -11,6 +11,7 @@
 -- /* 2022-11-12 修复 idx_name取值调整为feature_name_target */
 -- /* 2022-11-12 修复 上游模型和目标表输出指标数量不一致的问题 */
 -- /* 2022-11-12 新增 idx_value 根据目标单位转换的逻辑 */
+-- /* 2022-11-12 修复 contribution_cnt 统计维度的问题，统计维度调整为type */
 -- 依赖 模型 综合预警分，特征原始值高中低，特征贡献度高中低无监督以及综合，评分卡高中低，归因详情及其历史 PS:不依赖pth_rmp.模型结果表
 --q1：维度风险等级的计算依靠贡献度占比，贡献度占比特征会少于特征原始值，此时最后关联将会产生某些维度关联补上维度风险等级，导致为NULL(暂时决定踢掉)
 --q2：特征值以高中低频合并的特征贡献度表为基准，主表有特征原始值切换为高中低频合并的特征贡献度表
@@ -1119,12 +1120,12 @@ res3 as   --预警分+特征原始值+综合贡献度+指标评分卡+特征配置表  慢:1min20s  40万
         f_cfg.feature_explain as idx_explain,
         f_cfg.unit_origin,
         f_cfg.unit_target,
-        count() over(partition by main.batch_dt,main.corp_id,main.score_dt,f_cfg.dimension) as  contribution_cnt  --归因个数计算，基于该时点企业对应type层的指标个数统计
+        count(*) over(partition by main.batch_dt,main.corp_id,main.score_dt,f_cfg.dimension,f_cfg.type) as  contribution_cnt  --归因个数计算，基于该时点企业对应type层的指标个数统计
         -- f_cfg.contribution_cnt  --归因个数
     from res2 main
     join warn_feat_CFG f_cfg
-    -- left join warn_feat_CFG f_cfg
         on main.idx_name=f_cfg.feature_cd and main.model_freq_type=f_cfg.sub_model_type --and  main.model_freq_type=substr(f_cfg.sub_model_type,1,6)
+    -- left join warn_feat_CFG f_cfg
 ),
 res4 as -- --预警分+特征原始值(特征原始值名称以高中低频合并的特征贡献度表中的特征名称为准)+综合贡献度+指标评分卡+特征配置表+各维度风险水平(高中低频贡献度求得)   慢:1min20s  34万条
 (
