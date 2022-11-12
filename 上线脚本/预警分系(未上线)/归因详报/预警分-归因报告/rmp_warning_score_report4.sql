@@ -343,7 +343,7 @@ RMP_WARNING_dim_warn_lv_And_idx_score_chg as   --È¡Ã¿Ìì×îĞÂÅú´ÎµÄÎ¬¶È·çÏÕµÈ¼¶±ä¶
 		b.dim_warn_level as dim_warn_level_1,   --×òÈÕÎ¬¶È·çÏÕµÈ¼¶
 		b.dim_warn_level_desc as dim_warn_level_1_desc,
 		case 
-			when cast(a.dim_warn_level as int)-cast(b.dim_warn_level as int) >0 then 'ÉÏÉı'
+			when cast(a.dim_warn_level as int)-cast(b.dim_warn_level as int) <0 then 'ÉÏÉı'
 			else ''
 		end as dim_warn_level_chg_desc,
 		a.factor_evaluate,		
