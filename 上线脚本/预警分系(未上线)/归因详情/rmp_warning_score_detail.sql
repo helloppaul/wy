@@ -9,6 +9,7 @@
 -- /* 2022-11-10 ÐÞ¸´ Î¬¶È·çÏÕµÈ¼¶¶¼ÏÔÊ¾Îª·çÏÕ×î¸ßµÄÎÊÌâ  */
 -- /* 2022-11-12 Î¬¶È·çÏÕµÈ¼¶Âß¼­µ÷ÕûÓÅ»¯£¬¸ÄÓÃ Òì³£Ö¸±êÕ¼±È(%) ×÷ÎªÎ¬¶È·çÏÕµÈ¼¶»®·ÖÒÀ¾Ý£¬²¢ÏàÓ¦µ÷ÕûÎ¬¶È·çÏÕµÈ¼¶ÅäÖÃ±í  */
 -- /* 2022-11-12 ÐÞ¸´ idx_nameÈ¡Öµµ÷ÕûÎªfeature_name_target */
+-- /* 2022-11-12 ÐÞ¸´ ÉÏÓÎÄ£ÐÍºÍÄ¿±ê±íÊä³öÖ¸±êÊýÁ¿²»Ò»ÖÂµÄÎÊÌâ */
 -- ÒÀÀµ Ä£ÐÍ ×ÛºÏÔ¤¾¯·Ö£¬ÌØÕ÷Ô­Ê¼Öµ¸ßÖÐµÍ£¬ÌØÕ÷¹±Ï×¶È¸ßÖÐµÍÎÞ¼à¶½ÒÔ¼°×ÛºÏ£¬ÆÀ·Ö¿¨¸ßÖÐµÍ£¬¹éÒòÏêÇé¼°ÆäÀúÊ· PS:²»ÒÀÀµpth_rmp.Ä£ÐÍ½á¹û±í
 --q1£ºÎ¬¶È·çÏÕµÈ¼¶µÄ¼ÆËãÒÀ¿¿¹±Ï×¶ÈÕ¼±È£¬¹±Ï×¶ÈÕ¼±ÈÌØÕ÷»áÉÙÓÚÌØÕ÷Ô­Ê¼Öµ£¬´ËÊ±×îºó¹ØÁª½«»á²úÉúÄ³Ð©Î¬¶È¹ØÁª²¹ÉÏÎ¬¶È·çÏÕµÈ¼¶£¬µ¼ÖÂÎªNULL(ÔÝÊ±¾ö¶¨Ìßµô)
 --q2£ºÌØÕ÷ÖµÒÔ¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÎª»ù×¼£¬Ö÷±íÓÐÌØÕ÷Ô­Ê¼ÖµÇÐ»»Îª¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±í
@@ -33,6 +34,7 @@ corp_chg as  --´øÓÐ ³ÇÍ¶/²úÒµÅÐ¶ÏºÍ¹ú±êÒ»¼¶ÐÐÒµ µÄÌØÊâcorp_chg
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
+      and a.source_code='ZXZX'   --¿ØÖÆÏî
 ),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª ½Ó¿Ú²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 -- Ê±¼äÏÞÖÆ¿ª¹Ø --
@@ -1007,8 +1009,8 @@ res0 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖÐµÄÌØÕ÷
         b.idx_value,   --½ñÈÕÖ¸±êÖµ  ps:ÈôÎª¿Õ£¬Ö±½Ó±£ÁôNULL£¬²»ËæÒâ¶ÔÌØÕ÷Ô­Ê¼Öµ¸³Ä¬ÈÏÖµ
         b.lst_idx_value as last_idx_value,  --×òÈÕÖ¸±êÖµ
         '' as idx_unit,   --£¡£¡£¡´ýÅäÖÃ±í²¹³äÍêÕû
-        b.model_freq_type,
-        b.sub_model_name,
+        c.model_freq_type,   --¸ÄÓÃ¸ßÖÐµÍÆµºÏ²¢ÌØÕ÷¹±Ï×¶ÈµÄ ´úÂëÊÖ¹¤Î¬»¤µÄÖÐÎÄÃû³ÆµÄÄ£ÐÍ·ÖÀà 2022-11-12
+        c.sub_model_name,   --¸ÄÓÃ¸ßÖÐµÍÆµºÏ²¢ÌØÕ÷¹±Ï×¶ÈµÄ ÉÏÓÎÄ£ÐÍ×Ô´øµÄ×ÓÄ£ÐÍÓ¢ÎÄÃû³Æ 2022-11-12
         b.median  
     from warn_feature_contrib c   --ÈýÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È  
     join  warn_union_adj_sync_score main --Ô¤¾¯·Ö
@@ -1016,7 +1018,7 @@ res0 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖÐµÄÌØÕ÷
     left join warn_feature_value_with_median_res b  --ÈýÆµºÏ²¢µÄÌØÕ÷Ô­Ê¼Öµ
         on c.corp_id=b.corp_id and c.batch_dt=b.batch_dt and c.feature_name=b.idx_name
 ),
-res1 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖÐµÄÌØÕ÷Ãû³ÆÎª×¼)+×ÛºÏ¹±Ï×¶È  
+res1 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖÐµÄÌØÕ÷Ãû³ÆÎª×¼)+×ÛºÏÌØÕ÷¹±Ï×¶È(ÎÞ¼à¶½) 
 (
     select distinct
         main.batch_dt,
@@ -1130,7 +1132,7 @@ res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖÐµÄÌØÕ
         main.corp_id,
         main.corp_nm,
         main.score_dt,
-        main.feature_name_target as idx_name,
+        main.feature_name_target as idx_name,  --×îºóÒ»²½½«idx_nameµ÷³ÉÎª×îÖÕÒ³ÃæÕ¹Ê¾ÐÎÊ½µÄÖ¸±êÃû³Æ
         main.idx_value,
         main.idx_unit,
         main.model_freq_type,
