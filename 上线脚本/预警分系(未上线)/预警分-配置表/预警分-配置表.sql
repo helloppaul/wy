@@ -74,6 +74,7 @@ select * from warn_dim_risk_level_cfg_
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 蒙尢朔返垢塘崔燕 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
 -- ps:excel擬秘
 -- select * from pth_rmp.rmp_warning_score_feature_cfg;
+drop table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_;
 CREATE TABLE pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_
 (
 	sid_kw int,
@@ -100,6 +101,9 @@ GRANT ALL ON URI "hdfs://htsecnew/user/pth_rmp/" TO ROLE pth_rmp;  --泌惚喘薩嗤a
 load data inpath '/user/pth_rmp/importfile/圓少蛍-蒙尢返垢燕.csv' 
 into table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_;  
 
+drop table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_BAC;
+create table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_BAC as select * from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG;
+drop table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG;
 CREATE table pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG as select * from pth_rmp.RMP_WARNING_SCORE_FEATURE_CFG_;
 ------------------------------ ------------------------------------------------------------------------------------
 
