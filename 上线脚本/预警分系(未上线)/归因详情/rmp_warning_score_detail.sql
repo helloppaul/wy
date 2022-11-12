@@ -3,14 +3,15 @@
 -- /* 2022-10-27 ÐÞ¸´ ¹éÒò¸öÊý¼ÆËã£¬ÊÇ»ùÓÚ¸ÃÊ±µãµÄÆóÒµÏÂtype²ãµÄ¹éÒò¸öÊýÍ³¼Æ¶ø·ÇÍÑÀëÆóÒµ²ãµÄÍ³¼Æ */
 -- /* 2022-10-28 ÒÔ¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íµÄÖ¸±êÃû³ÆÎª×¼ */
 -- /* 2022-11-01 ¹éÒòÏêÇéÊý¾ÝÂß¼­ÓÅ»¯£¬²»ÒÀÀµ¹éÒòÏêÇéÀúÊ·±í»ñÈ¡×òÈÕÖ¸±êÖµ£¬Ö±½Ó´ÓÉÏÓÎ¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷Ô­Ê¼Öµ»ñÈ¡ */
---/* 2022-11-08 Ôö¼ÓÄ£ÐÍ°æ±¾¿ØÖÆ½Ó¿Ú±í */
---/* 2022-11-08 ÐÂÔö ¸ù¾ÝÖÐÖ¤ÆóÒµ³¨¿Ú·ÖÀà »ñÈ¡¶ÔÓ¦ÆóÒµµÍÆµ×ÓÄ£ÐÍ·ÖÀàµÄÖ¸±êÊÍÒå */
---/* 2022-11-09 Î¬¶È·çÏÕµÈ¼¶ÎÊÌâÐÞ¸´£¬µ÷ÕûºóÔ¤¾¯µÈ¼¶·çÏÕ ÒÑ±©Â¶ºÍºìÉ«Ô¤¾¯ Ó³Éäµ÷ÕûÎª-3 */
---/* 2022-11-10 ÐÞ¸´ Î¬¶È·çÏÕµÈ¼¶¶¼ÏÔÊ¾Îª·çÏÕ×î¸ßµÄÎÊÌâ  */
+-- /* 2022-11-08 Ôö¼ÓÄ£ÐÍ°æ±¾¿ØÖÆ½Ó¿Ú±í */
+-- /* 2022-11-08 ÐÂÔö ¸ù¾ÝÖÐÖ¤ÆóÒµ³¨¿Ú·ÖÀà »ñÈ¡¶ÔÓ¦ÆóÒµµÍÆµ×ÓÄ£ÐÍ·ÖÀàµÄÖ¸±êÊÍÒå */
+-- /* 2022-11-09 Î¬¶È·çÏÕµÈ¼¶ÎÊÌâÐÞ¸´£¬µ÷ÕûºóÔ¤¾¯µÈ¼¶·çÏÕ ÒÑ±©Â¶ºÍºìÉ«Ô¤¾¯ Ó³Éäµ÷ÕûÎª-3 */
+-- /* 2022-11-10 ÐÞ¸´ Î¬¶È·çÏÕµÈ¼¶¶¼ÏÔÊ¾Îª·çÏÕ×î¸ßµÄÎÊÌâ  */
+-- /* 2022-11-12 Î¬¶È·çÏÕµÈ¼¶Âß¼­µ÷ÕûÓÅ»¯£¬¸ÄÓÃ Òì³£Ö¸±êÕ¼±È(%) ×÷ÎªÎ¬¶È·çÏÕµÈ¼¶»®·ÖÒÀ¾Ý£¬²¢ÏàÓ¦µ÷ÕûÎ¬¶È·çÏÕµÈ¼¶ÅäÖÃ±í  */
 -- ÒÀÀµ Ä£ÐÍ ×ÛºÏÔ¤¾¯·Ö£¬ÌØÕ÷Ô­Ê¼Öµ¸ßÖÐµÍ£¬ÌØÕ÷¹±Ï×¶È¸ßÖÐµÍÎÞ¼à¶½ÒÔ¼°×ÛºÏ£¬ÆÀ·Ö¿¨¸ßÖÐµÍ£¬¹éÒòÏêÇé¼°ÆäÀúÊ· PS:²»ÒÀÀµpth_rmp.Ä£ÐÍ½á¹û±í
 --q1£ºÎ¬¶È·çÏÕµÈ¼¶µÄ¼ÆËãÒÀ¿¿¹±Ï×¶ÈÕ¼±È£¬¹±Ï×¶ÈÕ¼±ÈÌØÕ÷»áÉÙÓÚÌØÕ÷Ô­Ê¼Öµ£¬´ËÊ±×îºó¹ØÁª½«»á²úÉúÄ³Ð©Î¬¶È¹ØÁª²¹ÉÏÎ¬¶È·çÏÕµÈ¼¶£¬µ¼ÖÂÎªNULL(ÔÝÊ±¾ö¶¨Ìßµô)
 --q2£ºÌØÕ÷ÖµÒÔ¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÎª»ù×¼£¬Ö÷±íÓÐÌØÕ÷Ô­Ê¼ÖµÇÐ»»Îª¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±í
-
+-- ²âÊÔÓÃÀý 20221102 °²¼ªÏØ³ÇÎ÷±±¿ª·¢ÓÐÏÞ¹«Ë¾
 set hive.exec.parallel=true;
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
@@ -336,6 +337,7 @@ rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf_ as  --ÌØÕ÷µÃ·Ö_ÖÐÆµ_²úÒµÕ® Ô­Ê¼½
 warn_dim_risk_level_cfg_ as  -- Î¬¶È¹±Ï×¶ÈÕ¼±È¶ÔÓ¦·çÏÕË®Æ½-ÅäÖÃ±í
 (
 	select
+        dimension,
 		low_contribution_percent,   --60 ...
 		high_contribution_percent,  --100  ...
 		risk_lv,   -- -3 ...
@@ -805,10 +807,11 @@ warn_feature_contrib_res1 as  --´øÓÐ Î¬¶È¹±Ï×¶ÈÕ¼±È µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖÐµÍÆµ
         score_dt,
         dimension,
         -- model_freq_type,  ----ÌØÕ÷ËùÊô×ÓÄ£ÐÍ·ÖÀà/Ä£ÐÍÆµÂÊ·ÖÀà
-        sum(feature_pct) as dim_submodel_contribution_ratio  --Î¬¶È¹±Ï×¶ÈÕ¼±È
+        -- sum(feature_pct) as dim_submodel_contribution_ratio  --Î¬¶È¹±Ï×¶ÈÕ¼±È
+       total_idx_is_abnormal_cnt/total_idx_cnt*100 as dim_submodel_contribution_ratio   --¸÷Î¬¶È Òì³£Ö¸±êÕ¼±È (dim_submodel_contribution_ratio×Ö¶ÎÃûÑØÓÃÖ®Ç°Î¬¶È¹±Ï×¶ÈÕ¼±È)
     from
     (
-        select distinct
+        select 
             a.batch_dt,
             a.corp_id,
             a.corp_nm,
@@ -817,14 +820,18 @@ warn_feature_contrib_res1 as  --´øÓÐ Î¬¶È¹±Ï×¶ÈÕ¼±È µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖÐµÍÆµ
             a.feature_name,
             a.feature_pct,  --¹±Ï×¶ÈÕ¼±È %
             -- a.model_freq_type,
-            a.feature_risk_interval,
+            a.feature_risk_interval,   --Òì³£Ö¸±ê
+
+            count(a.feature_name) over(partition by a.corp_id,a.score_dt,a.batch_dt,f_cfg.dimension,a.feature_risk_interval) as total_idx_is_abnormal_cnt,   --¶ÔÓÚÃ¿¼ÒÆóÒµÃ¿¸öÊ±µã¸÷Î¬¶ÈÏÂµÄÒì³£Ö¸±ê ÒÔ¼° ·ÇÒì³£Ö¸±êÖ®ºÍ  2022-11-12 ÐÂÔö
+            count(a.feature_name) over(partition by a.corp_id,a.score_dt,a.batch_dt,f_cfg.dimension) as total_idx_cnt,          --¶ÔÓÚÃ¿¼ÒÆóÒµÃ¿¸öÊ±µã¸÷Î¬¶ÈÏÂµÄÖ¸±êÖ®ºÍ 2022-11-12 ÐÂÔö
             -- a.model_name,
             a.sub_model_name
         from warn_feature_contrib a 
         join warn_feat_CFG f_cfg    --ÌÖÂÛºó£¬Ö±½Ó²ÉÓÃjoin×ö¹ØÁª£¬ÌØÕ÷Ô­Ê¼ÖµÃ»ÓÐµÄ²»¿¼ÂÇÕ¹Ê¾
         -- left join warn_feat_CFG f_cfg 
             on a.feature_name=f_cfg.feature_cd and a.model_freq_type=f_cfg.sub_model_type --and a.model_freq_type=substr(f_cfg.sub_model_type,1,6)
-    )B group by batch_dt,corp_id,corp_nm,score_dt,dimension--,model_freq_type
+    )B where feature_risk_interval = 1 --Òì³£Ö¸±ê
+    group by batch_dt,corp_id,corp_nm,score_dt,dimension,total_idx_is_abnormal_cnt,total_idx_cnt   --Êý¾ÝÈ¥ÖØ    --,model_freq_type
 ),
 warn_feature_contrib_res2 as  -- ´øÓÐ Î¬¶È·çÏÕµÈ¼¶ µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖÐµÍÆµ
 (
@@ -856,6 +863,7 @@ warn_feature_contrib_res2 as  -- ´øÓÐ Î¬¶È·çÏÕµÈ¼¶ µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖÐµÍÆµ
                 b.risk_lv_desc   -- Ô­Ê¼·çÏÕµÈ¼¶ÃèÊö
             from warn_feature_contrib_res1 main 
             join warn_dim_risk_level_cfg_ b 
+                on main.dimension=b.dimension   --2022-11-12 Î¬¶È·çÏÕµÈ¼¶ÅäÖÃ±í ÐÂÔödimension×Ö¶Î×öãÐÖµ»®·Ö
             where main.dim_submodel_contribution_ratio>b.low_contribution_percent and main.dim_submodel_contribution_ratio<=b.high_contribution_percent
         )C 
     )D
