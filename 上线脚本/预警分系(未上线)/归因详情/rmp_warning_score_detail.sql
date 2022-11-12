@@ -10,6 +10,7 @@
 -- /* 2022-11-12 Î¬¶È·çÏÕµÈ¼¶Âß¼­µ÷ÕûÓÅ»¯£¬¸ÄÓÃ Òì³£Ö¸±êÕ¼±È(%) ×÷ÎªÎ¬¶È·çÏÕµÈ¼¶»®·ÖÒÀ¾İ£¬²¢ÏàÓ¦µ÷ÕûÎ¬¶È·çÏÕµÈ¼¶ÅäÖÃ±í  */
 -- /* 2022-11-12 ĞŞ¸´ idx_nameÈ¡Öµµ÷ÕûÎªfeature_name_target */
 -- /* 2022-11-12 ĞŞ¸´ ÉÏÓÎÄ£ĞÍºÍÄ¿±ê±íÊä³öÖ¸±êÊıÁ¿²»Ò»ÖÂµÄÎÊÌâ */
+-- /* 2022-11-12 ĞÂÔö idx_value ¸ù¾İÄ¿±êµ¥Î»×ª»»µÄÂß¼­ */
 -- ÒÀÀµ Ä£ĞÍ ×ÛºÏÔ¤¾¯·Ö£¬ÌØÕ÷Ô­Ê¼Öµ¸ßÖĞµÍ£¬ÌØÕ÷¹±Ï×¶È¸ßÖĞµÍÎŞ¼à¶½ÒÔ¼°×ÛºÏ£¬ÆÀ·Ö¿¨¸ßÖĞµÍ£¬¹éÒòÏêÇé¼°ÆäÀúÊ· PS:²»ÒÀÀµpth_rmp.Ä£ĞÍ½á¹û±í
 --q1£ºÎ¬¶È·çÏÕµÈ¼¶µÄ¼ÆËãÒÀ¿¿¹±Ï×¶ÈÕ¼±È£¬¹±Ï×¶ÈÕ¼±ÈÌØÕ÷»áÉÙÓÚÌØÕ÷Ô­Ê¼Öµ£¬´ËÊ±×îºó¹ØÁª½«»á²úÉúÄ³Ğ©Î¬¶È¹ØÁª²¹ÉÏÎ¬¶È·çÏÕµÈ¼¶£¬µ¼ÖÂÎªNULL(ÔİÊ±¾ö¶¨Ìßµô)
 --q2£ºÌØÕ÷ÖµÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÎª»ù×¼£¬Ö÷±íÓĞÌØÕ÷Ô­Ê¼ÖµÇĞ»»Îª¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±í
@@ -1133,7 +1134,18 @@ res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ
         main.corp_nm,
         main.score_dt,
         main.feature_name_target as idx_name,  --×îºóÒ»²½½«idx_nameµ÷³ÉÎª×îÖÕÒ³ÃæÕ¹Ê¾ĞÎÊ½µÄÖ¸±êÃû³Æ
-        main.idx_value,
+        case 
+            when main.unit_origin='Ôª' and main.unit_target='ÒÚÔª' then 
+                main.idx_value/100000000
+            when main.unit_origin='Ôª' and main.unit_target='ÍòÔª' then 
+                main.idx_value/10000
+            when main.unit_origin='ÊıÖµ' and main.unit_target='%' then 
+                main.idx_value*100
+            when main.unit_origin='ÈË' and main.unit_target='ÍòÈË' then 
+                main.idx_value/10000
+            else 
+                main.idx_value
+        end as idx_value,
         main.idx_unit,
         main.model_freq_type,
         main.sub_model_name,
