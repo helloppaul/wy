@@ -12,6 +12,7 @@
 -- /* 2022-11-12 修复 上游模型和目标表输出指标数量不一致的问题 */
 -- /* 2022-11-12 新增 idx_value 根据目标单位转换的逻辑 */
 -- /* 2022-11-12 修复 contribution_cnt 统计维度的问题，统计维度调整为type */
+-- /* 2022-11-12 修复 指标中位数计算的问题 */
 -- 依赖 模型 综合预警分，特征原始值高中低，特征贡献度高中低无监督以及综合，评分卡高中低，归因详情及其历史 PS:不依赖pth_rmp.模型结果表
 --q1：维度风险等级的计算依靠贡献度占比，贡献度占比特征会少于特征原始值，此时最后关联将会产生某些维度关联补上维度风险等级，导致为NULL(暂时决定踢掉)
 --q2：特征值以高中低频合并的特征贡献度表为基准，主表有特征原始值切换为高中低频合并的特征贡献度表
@@ -664,7 +665,13 @@ warn_feature_value_with_median as --原始特征值_合并高中低频+中位数计算
         a.model_freq_type,
         a.sub_model_name,
         nvl(b.industryphy_name,'') as zjh,
-        nvl(b.bond_type,0) as bond_type  --0：非产业和城投 1：产业债 2：城投债
+        nvl(b.bond_type,0) as bond_type,  --0：非产业和城投 1：产业债 2：城投债
+        case 
+            when nvl(b.bond_type,0)=2 then 
+                ''
+            when nvl(b.bond_type,0)<>2 then 
+                nvl(b.industryphy_name,'')
+        end as zjh_cal   --计算用证监会一级行业分类
     from warn_feature_value a 
     left join (select corp_id,corp_name,bond_type,industryphy_name from corp_chg where source_code='ZXZX') b 
         on a.corp_id=b.corp_id 
@@ -672,30 +679,38 @@ warn_feature_value_with_median as --原始特征值_合并高中低频+中位数计算
 warn_feature_value_with_median_cal as 
 (
     select 
-        batch_dt,
-        score_dt,
-        corp_id,
-        bond_type,
-        sub_model_name,
-        idx_name,
-        appx_median(idx_value) as median
-        -- percentile_approx(idx_value,0.5) as median  --hive
-    from warn_feature_value_with_median
-    where bond_type=2
-    group by bond_type,corp_id,batch_dt,score_dt,sub_model_name,idx_name
-    union all 
-    select 
-        batch_dt,
-        score_dt,
-        corp_id,
-        bond_type,
-        sub_model_name,
-        idx_name,
-        appx_median(idx_value) as median
-        -- percentile_approx(idx_value,0.5) as median  --hive
-    from warn_feature_value_with_median
-    where bond_type<>2 and zjh <> ''
-    group by  bond_type,zjh,corp_id,batch_dt,score_dt,sub_model_name,idx_name
+        a.corp_id,a.batch_dt,a.score_dt,a.zjh_cal,a.sub_model_name,a.idx_name
+        ,appx_median(b.idx_value) as median  --impala
+        -- ,percentile_approx(b.idx_value,0.5) as median  --hive
+    from warn_feature_value_with_median a 
+    join warn_feature_value_with_median b 
+        on a.batch_dt=b.batch_dt and a.score_dt=b.score_dt and a.zjh_cal=b.zjh_cal and a.idx_name=b.idx_name  --获取 与当前行的企业 同时间点 同行业 同指标的指标中位数
+    group by a.corp_id,a.batch_dt,a.score_dt,a.zjh_cal,a.sub_model_name,a.idx_name
+    -- select 
+    --     batch_dt,
+    --     score_dt,
+    --     corp_id,
+    --     bond_type,
+    --     sub_model_name,
+    --     idx_name,
+    --     appx_median(idx_value) as median
+    --     -- percentile_approx(idx_value,0.5) as median  --hive
+    -- from warn_feature_value_with_median
+    -- where bond_type=2
+    -- group by bond_type,corp_id,batch_dt,score_dt,sub_model_name,idx_name
+    -- union all 
+    -- select 
+    --     batch_dt,
+    --     score_dt,
+    --     corp_id,
+    --     bond_type,
+    --     sub_model_name,
+    --     idx_name,
+    --     appx_median(idx_value) as median
+    --     -- percentile_approx(idx_value,0.5) as median  --hive
+    -- from warn_feature_value_with_median
+    -- where bond_type<>2 and zjh <> ''
+    -- group by  bond_type,zjh,corp_id,batch_dt,score_dt,sub_model_name,idx_name
 ),
 warn_feature_value_with_median_res as -- used
 (
