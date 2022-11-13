@@ -530,7 +530,8 @@ MID_Data_Summ as   --与Fourth_Part_Data_idx_name数据结构基本相同，选取了后续加工
 	from Fourth_Part_Data_idx_name
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
-Fourth_Part_Data_Dim_type_ as   --恶化指标数据
+-- 恶化指标数据 --
+Fourth_Part_Data_Dim_type_ as   
 (
 	select distinct
 		batch_dt,
@@ -575,7 +576,8 @@ Fourth_Part_Data_Dim_type as  --恶化指标汇总到type层描述
 	from Fourth_Part_Data_Dim_type_
 	group by batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel,dimension,dimension_ch,type
 ),
-Fourth_Part_Data_Dim as -- 汇总到维度层 （仅展示）
+-- 维度层数据 （仅展示） --
+Fourth_Part_Data_Dim as 
 (
 	select distinct
 		batch_dt,
@@ -651,6 +653,7 @@ Fourth_Msg_ as
 		a.synth_warnlevel_l_desc,
 		a.dimension,
 		a.dimension_ch,
+		a.max_dimension_ch,
 		case 
 			when (b.dimension_ch is null) or (a.dim_warn_level_chg_desc<>'上升')  then --说明此时无维度风险描述，则罗列每一个维度的情况
 				NULL
@@ -670,17 +673,30 @@ Fourth_Msg_ as
 Fourth_Msg_corp_ as    --汇总到企业层（维度风险变动+指标恶化 数据）
 (
 	select 
-		batch_dt,
-		corp_id,
-		corp_nm,
-		score_dt,
-		if(synth_warnlevel_desc='风险已暴露','风险已暴露预警等级',synth_warnlevel_desc) as synth_warnlevel_desc,
-		chg_direction_desc,
-		synth_warnlevel_l_desc,
-		-- concat_ws('',collect_set(msg_dim)) as msg_corp_  -- hive
-		group_concat(distinct msg_dim,'') as msg_corp_   -- impala
-	from Fourth_Msg_
-	group by batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,chg_direction_desc,synth_warnlevel_l_desc
+		batch_dt,corp_id,corp_nm,score_dt,corp_max_dimension_ch,
+		synth_warnlevel_desc,chg_direction_desc,synth_warnlevel_l_desc,
+		case 
+			when msg_corp_ = '' or msg_corp_ is NULL then 
+				concat('风险水平上升的主要维度为',corp_max_dimension_ch)
+			else 
+				concat('主要',msg_corp_)   --"主要由于xxx维度风险等级...由于xxx维度风险等级
+		end as msg_corp
+	from 
+	(
+		select 
+			batch_dt,
+			corp_id,
+			corp_nm,
+			score_dt,
+			max(max_dimension_ch) as corp_max_dimension_ch,
+			if(synth_warnlevel_desc='风险已暴露','风险已暴露预警等级',synth_warnlevel_desc) as synth_warnlevel_desc,
+			chg_direction_desc,
+			if(synth_warnlevel_l_desc='风险已暴露','风险已暴露预警等级',synth_warnlevel_l_desc) as synth_warnlevel_l_desc,
+			-- concat_ws('',collect_set(msg_dim)) as msg_corp_  -- hive
+			group_concat(distinct msg_dim,'') as msg_corp_   -- impala
+		from Fourth_Msg_
+		group by batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,chg_direction_desc,synth_warnlevel_l_desc
+	) A
 ),
 Fourth_Msg_Corp as  --汇总到企业层（预警等级变动+维度风险变动+指标恶化 数据）
 (
@@ -694,11 +710,11 @@ Fourth_Msg_Corp as  --汇总到企业层（预警等级变动+维度风险变动+指标恶化 数据）
 		synth_warnlevel_l_desc,
 		concat( 
 			'相较于前一天，','预警等级由',synth_warnlevel_l_desc,chg_direction_desc,'至',synth_warnlevel_desc,'，',
-			msg_corp_
+			msg_corp
 		) as msg_no_color,
 		concat( 
 			'相较于前一天，','预警等级由','<span class="RED"><span class="WEIGHT">',synth_warnlevel_l_desc,chg_direction_desc,'至',synth_warnlevel_desc,'</span></span>','，',
-			msg_corp_
+			msg_corp
 		) as msg4
 	from Fourth_Msg_corp_
 )
