@@ -1,4 +1,5 @@
 -- RMP_WARNING_SCORE_REPORT µÚËÄ¶Î-¹éÒò±ä¶¯ --
+-- /*2022-11-13 ¹éÒòÏêÇéÀúÊ·½Ó¿Ú²ãµ÷Õû£¬ÓÃ¹éÒòÏêÇéµ±ÈÕ±íµÄÊı¾İ£¬¹éÒòÏêÇéµ±ÈÕ±íÈ·±£»á´æ·ÅÁ¬ĞøÁ½ÌìµÄÊı¾İ */
 --»¹²î Ô¤¾¯µÈ¼¶±ä¶¯µÄÊı¾İ½ÓÈë½øÒ»²½ÑéÖ¤
 --×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯²ã£º×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯±í   Òò×Ó±ä¶¯²ãÊı¾İ£º¹éÒòÏêÇéµ±ÈÕ(Ö÷±í)+¹éÒòÏêÇéÀúÊ·±í+Ô¤¾¯·ÖÄ£ĞÍ½á¹û±íµ±ÈÕ(×ÛºÏÔ¤¾¯µÈ¼¶×Ö¶ÎÀ´Ô´)
 
@@ -97,18 +98,29 @@ RMP_WARNING_SCORE_DETAIL_ as  --Ô¤¾¯·Ö--¹éÒòÏêÇé Ô­Ê¼½Ó¿Ú
     from pth_rmp.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
     where 1 in (select not max(flag) from timeLimit_switch)  and delete_flag=0
 ),
-RMP_WARNING_SCORE_DETAIL_HIS_ as  --Ô¤¾¯·Ö--¹éÒòÏêÇéÀúÊ· Ô­Ê¼½Ó¿Ú
+RMP_WARNING_SCORE_DETAIL_HIS_ as  --Ô¤¾¯·Ö--¹éÒòÏêÇéÀúÊ·(È¡¹éÒòÏêÇé±í£¬¹éÒòÏêÇé±í»á±£Ö¤´æ·ÅÁ¬¶ÁÁ½ÌìµÄÊı¾İ) Ô­Ê¼½Ó¿Ú
 (
 	-- Ê±¼äÏŞÖÆ²¿·Ö --
 	select * 
-	from pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS  --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
+	from pth_rmp.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
 	where 1 in (select max(flag) from timeLimit_switch)  and delete_flag=0
       and to_date(score_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
 	union all 
 	-- ·ÇÊ±¼äÏŞÖÆ²¿·Ö --
     select * 
-    from pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS  --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
+    from pth_rmp.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
     where 1 in (select not max(flag) from timeLimit_switch)  and delete_flag=0
+
+	-- -- Ê±¼äÏŞÖÆ²¿·Ö --
+	-- select * 
+	-- from pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS  --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
+	-- where 1 in (select max(flag) from timeLimit_switch)  and delete_flag=0
+    --   and to_date(score_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
+	-- union all 
+	-- -- ·ÇÊ±¼äÏŞÖÆ²¿·Ö --
+    -- select * 
+    -- from pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS  --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
+    -- where 1 in (select not max(flag) from timeLimit_switch)  and delete_flag=0
 ),
 -- Ô¤¾¯µÈ¼¶±ä¶¯ --
 RMP_WARNING_SCORE_CHG_ as 
@@ -226,12 +238,21 @@ RMP_WARNING_SCORE_DETAIL_Batch as -- È¡Ã¿Ìì×îĞÂÅú´ÎÊı¾İ£¨µ±ÌìÊı¾İÌØÕ÷×ö·¶Î§ÏŞÖÆ£
 	from RMP_WARNING_SCORE_DETAIL_ a
 	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
 		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
-	where a.idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
+	where a.ori_idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
+),
+RMP_WARNING_SCORE_DETAIL_HIS_Batch as --È¡ÀúÊ·¹éÒòÏêÇé ×î´óÅú´Î(È¡×Ô¹éÒòÏêÇéµ±ÈÕ±í£¬ËùÒÔĞèÒª×î´óÅú´Î´¦Àí)
+(
+	select a.*
+	from RMP_WARNING_SCORE_DETAIL_HIS_ a
+	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_HIS_ group by score_dt) b
+		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
+	where a.ori_idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
+
 ),
 mid_RMP_WARNING_SCORE_DETAIL_HIS as 
 (
 	select main.*,cfg.risk_lv_desc as dim_warn_level_desc
-	from RMP_WARNING_SCORE_DETAIL_HIS_ main
+	from RMP_WARNING_SCORE_DETAIL_HIS_Batch main
 	join warn_dim_risk_level_cfg_ cfg 
 		on main.dim_warn_level=cast(cfg.risk_lv as string)
 ),
@@ -245,8 +266,10 @@ Second_Part_Data_Prepare as
 		nvl(a.synth_warnlevel,'0') as synth_warnlevel, --×ÛºÏÔ¤¾¯µÈ¼¶
 		main.dimension,    --Î¬¶È±àÂë
 		f_cfg.dimension as dimension_ch,  --Î¬¶ÈÃû³Æ
+		main.dim_submodel_contribution_ratio as dim_abnormal_idx_contribution_ratio,   --Î¬¶È Òì³£Ö¸±ê ¹±Ï×¶ÈÕ¼±È
 		main.type,  	-- used
-		main.idx_name,  -- used 
+		main.idx_name,  -- used   ÓÃÓÚÕ¹Ê¾µÄÖ¸±êÃû³Æ
+		main.ori_idx_name,  --Ô­Ê¼Ä£ĞÍÌá¹©µÄÖ¸±êÃû³Æ£¬Ö÷ÒªÓÃÓÚ¹ØÁª¶ø·ÇÕ¹Ê¾
 		main.idx_value,  -- used
 		main.last_idx_value, -- used in ¼ò±¨wy
 		main.idx_unit,  -- used
@@ -258,7 +281,7 @@ Second_Part_Data_Prepare as
 		cfg.risk_lv_desc as dim_warn_level_desc  --Î¬¶È·çÏÕµÈ¼¶(ÄÑµã)  used
 	from RMP_WARNING_SCORE_DETAIL_Batch main
 	left join feat_CFG f_cfg 	
-		on main.idx_name=f_cfg.feature_cd
+		on main.ori_idx_name=f_cfg.feature_cd
 	left join RMP_WARNING_SCORE_MODEL_Batch a
 		on main.corp_id=a.corp_id and main.batch_dt=a.batch_dt
 	join warn_dim_risk_level_cfg_ cfg 
@@ -277,9 +300,9 @@ Second_Part_Data as   --Òò×Ó²ãÊı¾İ
 			synth_warnlevel,
 			dimension,
 			dimension_ch,
-			-- sum(contribution_ratio) as dim_contrib_ratio,
+			dim_abnormal_idx_contribution_ratio,
 			contribution_ratio,
-			sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension) as dim_contrib_ratio,
+			-- sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension) as dim_contrib_ratio,
 			sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate) as dim_factorEvalu_contrib_ratio,
 			dim_warn_level,
 			dim_warn_level_desc,  --Î¬¶È·çÏÕµÈ¼¶(ÄÑµã)
@@ -295,7 +318,7 @@ Second_Part_Data as   --Òò×Ó²ãÊı¾İ
 			count(idx_name) over(partition by corp_id,batch_dt,score_dt,dimension)  as dim_factor_cnt,
 			count(idx_name) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate)  as dim_factorEvalu_factor_cnt
 		from Second_Part_Data_Prepare 
-		order by corp_id,score_dt desc,dim_contrib_ratio desc
+		order by corp_id,score_dt desc--,dim_contrib_ratio desc
 	) A
 ),
 -- ×ÛºÏÔ¤¾¯µÈ¼¶±ğ¶¯ÀàÊı¾İ --
@@ -336,8 +359,9 @@ RMP_WARNING_dim_warn_lv_And_idx_score_chg as   --È¡Ã¿Ìì×îĞÂÅú´ÎµÄÎ¬¶È·çÏÕµÈ¼¶±ä¶
 		a.synth_warnlevel,
 		a.dimension,
 		a.dimension_ch,
+		a.dim_abnormal_idx_contribution_ratio,
 		a.type,
-		a.dim_contrib_ratio,   --Î¬¶È¹±Ï×¶ÈÕ¼±È(ÅÅĞòÓÃ) used
+		-- a.dim_contrib_ratio,   --Î¬¶È¹±Ï×¶ÈÕ¼±È(ÅÅĞòÓÃ) used
 		a.dim_warn_level,	  --½ñÈÕÎ¬¶È·çÏÕµÈ¼¶
 		a.dim_warn_level_desc,
 		b.dim_warn_level as dim_warn_level_1,   --×òÈÕÎ¬¶È·çÏÕµÈ¼¶
@@ -365,7 +389,7 @@ RMP_WARNING_dim_warn_lv_And_idx_score_chg as   --È¡Ã¿Ìì×îĞÂÅú´ÎµÄÎ¬¶È·çÏÕµÈ¼¶±ä¶
 			and to_date(date_add(a.score_dt,-1)) = b.score_dt
 			and a.dimension=b.dimension
 ),
-Fourth_Part_Data_dim_warn_level_And_idx_score as    --Òò×Ó²ã£¬£¨1£©¼ÆËãÄ³¸öÎ¬¶ÈÊÇ·ñ¶ñ»¯ £¨2£©Í³¼ÆÒì³£Òò×ÓºÍÕı³£Òò×ÓÊıÁ¿
+Fourth_Part_Data_dim_warn_level_And_idx_score as    --Òò×Ó²ã£¬£¨1£©¼ÆËãÄ³¸öÎ¬¶ÈÊÇ·ñ¶ñ»¯ £¨2£©Í³¼ÆÒì³£Òò×ÓºÍÕı³£Òò×ÓÊıÁ¿ £¨3£©¶ÔÖ¸±êÖµ¸ù¾İµ¥Î»×öĞ¡ÊıÎ»Ô¼Êø
 (
 	select 
 		batch_dt,
@@ -375,9 +399,10 @@ Fourth_Part_Data_dim_warn_level_And_idx_score as    --Òò×Ó²ã£¬£¨1£©¼ÆËãÄ³¸öÎ¬¶ÈÊ
 		synth_warnlevel,
 		dimension,
 		dimension_ch,
-		first_value(dimension_ch) over(partition by batch_dt,corp_id,score_dt order by dim_contrib_ratio desc) as max_dimension,
+		dim_abnormal_idx_contribution_ratio,
+		first_value(dimension_ch) over(partition by batch_dt,corp_id,score_dt order by dim_abnormal_idx_contribution_ratio desc) as max_dimension_ch,
 		type,
-		dim_contrib_ratio,  --Î¬¶È¹±Ï×¶ÈÕ¼±È(ÅÅĞòÓÃ) used
+		-- dim_contrib_ratio,  --Î¬¶È¹±Ï×¶ÈÕ¼±È(ÅÅĞòÓÃ) used
 		dim_warn_level,  --½ñÈÕÎ¬¶È·çÏÕµÈ¼¶
 		dim_warn_level_desc,
 		dim_warn_level_1,  --×òÈÕÎ¬¶È·çÏÕµÈ¼¶
@@ -385,7 +410,24 @@ Fourth_Part_Data_dim_warn_level_And_idx_score as    --Òò×Ó²ã£¬£¨1£©¼ÆËãÄ³¸öÎ¬¶ÈÊ
 		dim_warn_level_chg_desc,  --Î¬¶È·çÏÕµÈ¼¶±ä¶¯ ÃèÊö
 		idx_name,
 		feature_name_target,
+		case 
+			when idx_unit='%' then 
+				cast(cast(round(idx_value,2) as decimal(10,2)) as string) 
+			when idx_unit in ('Ôª','ÍòÔª','ÒÚÔª','±¶','ÍòÈË','´Î') then 
+				cast(cast(round(idx_value,2) as decimal(10,2)) as string) 
+			else 	
+				cast(idx_value as string)
+		end as idx_value_str,
 		idx_value,
+		case 
+			when idx_unit='%' then 
+				cast(cast(round(last_idx_value,2) as decimal(10,2)) as string) 
+			when idx_unit in ('Ôª','ÍòÔª','ÒÚÔª','±¶','ÍòÈË','´Î') then 
+				cast(cast(round(last_idx_value,2) as decimal(10,2)) as string) 
+			else 	
+				cast(last_idx_value as string)
+		end as last_idx_value_str,
+		last_idx_value,
 		idx_unit,
 		contribution_ratio,
 		idx_score,
@@ -412,8 +454,10 @@ Fourth_Part_Data_idx_name as   --¹ØÁª ×ÛºÏÔ¤¾¯µÈ¼¶Êı¾İ & Î¬¶È±ä¶¯ºÍÒò×Ó±ä¶¯ÀàÊı¾
 		a.synth_warnlevel_l_desc,
 		b.dimension,
 		b.dimension_ch,
+		b.max_dimension_ch,
+		b.dim_abnormal_idx_contribution_ratio,
 		b.type,
-		b.dim_contrib_ratio,  --Î¬¶È¹±Ï×¶ÈÕ¼±È(ÅÅĞòÓÃ) used
+		-- b.dim_contrib_ratio,  --Î¬¶È¹±Ï×¶ÈÕ¼±È(ÅÅĞòÓÃ) used
 		b.dim_warn_level,  --½ñÈÕÎ¬¶È·çÏÕµÈ¼¶
 		b.dim_warn_level_desc,
 		b.dim_warn_level_1,  --×òÈÕÎ¬¶È·çÏÕµÈ¼¶
@@ -422,9 +466,11 @@ Fourth_Part_Data_idx_name as   --¹ØÁª ×ÛºÏÔ¤¾¯µÈ¼¶Êı¾İ & Î¬¶È±ä¶¯ºÍÒò×Ó±ä¶¯ÀàÊı¾
 		b.idx_name,
 		b.feature_name_target,
 		b.idx_value,
+		b.last_idx_value,
 		b.idx_unit,
 		b.contribution_ratio,
-		concat(b.feature_name_target,'Îª',cast(b.idx_value as string),b.idx_unit) as idx_desc,
+		concat(b.feature_name_target,'ÓÉ',b.last_idx_value_str,b.idx_unit,'±ä»¯ÖÁ',b.idx_value_str,b.idx_unit) as idx_desc,
+		-- concat(b.feature_name_target,'Îª',cast(b.idx_value as string),b.idx_unit) as idx_desc,
 		b.idx_score,
 		b.idx_score_1,
 		b.idx_score_chg_desc,    --Ö¸±ê²ã£¬¶ñ»¯
@@ -438,8 +484,10 @@ Fourth_Part_Data_idx_name as   --¹ØÁª ×ÛºÏÔ¤¾¯µÈ¼¶Êı¾İ & Î¬¶È±ä¶¯ºÍÒò×Ó±ä¶¯ÀàÊı¾
 		end as dim_idx_score_desc  --Î¬¶È²ã ´ò·Ö Çé¿öÃèÊö  used
 		-- b.dim_contrib_ratio_rank
 	from Fourth_Part_Data_synth_warnlevel a   --×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯ÀàÊı¾İ
-	left join Fourth_Part_Data_dim_warn_level_And_idx_score b --Î¬¶È·çÏÕµÈ¼¶ÒÔ¼°Ö¸±êÀàÊı¾İ
-		on  a.batch_dt=b.batch_dt
+	join Fourth_Part_Data_dim_warn_level_And_idx_score b --Î¬¶È·çÏÕµÈ¼¶ÒÔ¼°Ö¸±êÀàÊı¾İ 
+	-- left join Fourth_Part_Data_dim_warn_level_And_idx_score b --Î¬¶È·çÏÕµÈ¼¶ÒÔ¼°Ö¸±êÀàÊı¾İ 
+		on  1=1
+			-- and a.batch_dt=b.batch_dt
 			and a.corp_id=b.corp_id 
 			and a.score_dt=b.score_dt
 			-- and cast(a.synth_warnlevel as string)=cast(b.synth_warnlevel as string)   --Î¬¶È²ã·çÏÕµÈ¼¶±ä»¯ ÒªÇó ÏŞ¶¨Óëµ±ÈÕÔ¤¾¯µÈ¼¶ÏàµÈ
@@ -460,7 +508,8 @@ MID_Data_Summ as   --ÓëFourth_Part_Data_idx_nameÊı¾İ½á¹¹»ù±¾ÏàÍ¬£¬Ñ¡È¡ÁËºóĞø¼Ó¹¤
 
 		dimension,
 		dimension_ch,
-		dim_contrib_ratio,
+		max_dimension_ch,
+		dim_abnormal_idx_contribution_ratio,
 
 		dim_warn_level,  --½ñÈÕÎ¬¶È·çÏÕµÈ¼¶
 		dim_warn_level_desc,
@@ -475,7 +524,9 @@ MID_Data_Summ as   --ÓëFourth_Part_Data_idx_nameÊı¾İ½á¹¹»ù±¾ÏàÍ¬£¬Ñ¡È¡ÁËºóĞø¼Ó¹¤
 
 		idx_desc,   --Ö¸±êÃèÊö
 		idx_score_chg_desc,
-		contribution_ratio
+		contribution_ratio,
+		idx_score_1,
+		idx_score
 	from Fourth_Part_Data_idx_name
 ),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª Ó¦ÓÃ²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
@@ -540,7 +591,8 @@ Fourth_Part_Data_Dim as -- »ã×Üµ½Î¬¶È²ã £¨½öÕ¹Ê¾£©
 
 		dimension,
 		dimension_ch,
-		dim_contrib_ratio,
+		max_dimension_ch,
+		dim_abnormal_idx_contribution_ratio,
 
 		dim_warn_level,  --½ñÈÕÎ¬¶È·çÏÕµÈ¼¶
 		dim_warn_level_desc,
@@ -551,6 +603,7 @@ Fourth_Part_Data_Dim as -- »ã×Üµ½Î¬¶È²ã £¨½öÕ¹Ê¾£©
 		dim_idx_score_cnt,
 		dim_idx_score_desc    -- ÑùÀı£ºÓĞx¸öÖ¸±ê·¢Éú¶ñ»¯
 	from MID_Data_Summ
+	where idx_score_chg_desc = '¶ñ»¯'   --Õ¹Ê¾Îª·¢Éú¶ñ»¯µÄÖ¸±êÃèÊö
 ),
 -- µÚËÄ¶ÎĞÅÏ¢ --
 Fourth_Msg_Dim as --¶ñ»¯Ö¸±ê»ã×Üµ½Î¬¶È²ãÃèÊö
@@ -600,14 +653,12 @@ Fourth_Msg_ as
 		a.dimension_ch,
 		case 
 			when (b.dimension_ch is null) or (a.dim_warn_level_chg_desc<>'ÉÏÉı')  then --ËµÃ÷´ËÊ±ÎŞÎ¬¶È·çÏÕÃèÊö£¬ÔòÂŞÁĞÃ¿Ò»¸öÎ¬¶ÈµÄÇé¿ö
-				concat(
-					'·çÏÕË®Æ½ÉÏÉıµÄÖ÷ÒªÎ¬¶ÈÎª','²ÆÎñÎ¬¶È¡£'
-				)
+				NULL
 			else
 				concat(
-					a.dimension_ch,'Î¬¶È','ÓÉ',a.dim_warn_level_1_desc,a.dim_warn_level_chg_desc,'ÖÁ',a.dim_warn_level_desc,'£¬',
-					if(a.dim_idx_score_desc='','',concat(a.dimension_ch,'ÖĞ',a.dim_idx_score_desc)),
-					'¾ßÌå±íÏÖÎª£º',b.idx_desc_in_one_dimension
+					'ÓÉÓÚ',a.dimension_ch,'Î¬¶È','ÓÉ',a.dim_warn_level_1_desc,a.dim_warn_level_chg_desc,'ÖÁ',a.dim_warn_level_desc,
+					if(a.dim_idx_score_desc='','¡£',concat('£¬',a.dimension_ch,'Î¬¶È','ÖĞ',a.dim_idx_score_desc,'¾ßÌå±íÏÖÎª£º',b.idx_desc_in_one_dimension))
+					-- '¾ßÌå±íÏÖÎª£º',b.idx_desc_in_one_dimension
 				) 
 		end  as msg_dim
 	from Fourth_Part_Data_Dim a   -- ´ó¿í±í
@@ -623,11 +674,11 @@ Fourth_Msg_corp_ as    --»ã×Üµ½ÆóÒµ²ã£¨Î¬¶È·çÏÕ±ä¶¯+Ö¸±ê¶ñ»¯ Êı¾İ£©
 		corp_id,
 		corp_nm,
 		score_dt,
-		synth_warnlevel_desc,
+		if(synth_warnlevel_desc='·çÏÕÒÑ±©Â¶','·çÏÕÒÑ±©Â¶Ô¤¾¯µÈ¼¶',synth_warnlevel_desc) as synth_warnlevel_desc,
 		chg_direction_desc,
 		synth_warnlevel_l_desc,
-		-- concat_ws('¡£',collect_set(msg_dim)) as msg_corp_  -- hive
-		group_concat(distinct msg_dim,'¡£') as msg_corp_   -- impala
+		-- concat_ws('',collect_set(msg_dim)) as msg_corp_  -- hive
+		group_concat(distinct msg_dim,'') as msg_corp_   -- impala
 	from Fourth_Msg_
 	group by batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,chg_direction_desc,synth_warnlevel_l_desc
 ),
