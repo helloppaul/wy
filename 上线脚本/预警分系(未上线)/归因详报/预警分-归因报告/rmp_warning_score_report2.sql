@@ -256,7 +256,7 @@ RMP_WARNING_SCORE_DETAIL_Batch as -- 取每天最新批次数据（当天数据做范围限制）
 	from RMP_WARNING_SCORE_DETAIL_ a
 	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
 		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
-	where a.idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
+	where a.ori_idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
 ),
 -- 新闻公告类数据 --
 mid_news as 
@@ -268,7 +268,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where case_type_ii_cd='6008001' --问询关注
@@ -280,7 +280,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where case_type_ii_cd='6002012'  --其他财务预警
@@ -292,7 +292,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where case_type_ii_cd='6002012'  --其他财务预警
@@ -304,7 +304,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -318,7 +318,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -332,7 +332,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -347,7 +347,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -362,7 +362,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -377,7 +377,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -392,7 +392,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -405,7 +405,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -418,7 +418,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -430,7 +430,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -443,7 +443,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -456,7 +456,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -469,7 +469,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -509,7 +509,7 @@ mid_cx_ as
 		msg_title
 	from cx_intf_
 	where 1=1
-	  and tit0026_typelevel6='22000078'  --tIT0026_TypeLevel7='纳入被执行人'
+	--   and tit0026_typelevel6='22000078'  --tIT0026_TypeLevel7='纳入被执行人'
 	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-180))
 	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 ),
@@ -601,14 +601,15 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 	from sf_cpws_inft_ 
 	where cr0055_030='合同纠纷' 
 	union all 
-	--近12个月_法院诉讼_案由明细_合同纠纷_占比(last12M_lawsuit_lawsuitamt_mean)
+	--近12个月_法院诉讼_涉案金额_平均值(last12M_lawsuit_lawsuitamt_mean)
 	select distinct
-		'近12个月_法院诉讼_涉案金额_平均值' as feature_cd,
+		'last12M_lawsuit_lawsuitamt_mean' as feature_cd,
 		corp_id,
 		notice_date,
 		source_id as msg_id,
 		msg_title
 	from sf_cpws_inft_ 
+	where CR0055_034 is not null and CR0055_034<>''
 	union all
 	--近12个月_法院诉讼_当事人类型_被申请人_占比(last12M_lawsuit_partyrole_4_rate)
 	select distinct
@@ -821,13 +822,13 @@ Second_Part_Data_Prepare as
 		cfg.risk_lv_desc as dim_warn_level_desc  --维度风险等级(难点)  used
 	from RMP_WARNING_SCORE_DETAIL_Batch main
 	left join feat_CFG f_cfg 	
-		on main.idx_name=f_cfg.feature_cd
+		on main.ori_idx_name=f_cfg.feature_cd
 	left join RMP_WARNING_SCORE_MODEL_Batch a
 		on main.corp_id=a.corp_id and main.batch_dt=a.batch_dt
 	join warn_dim_risk_level_cfg_ cfg 
 		on main.dim_warn_level=cast(cfg.risk_lv as string)
 	left join mid_risk_info rinfo 
-		on main.corp_id=rinfo.corp_id and main.score_dt>=rinfo.notice_date and main.idx_name=rinfo.feature_cd
+		on main.corp_id=rinfo.corp_id and main.score_dt>=rinfo.notice_date and main.ori_idx_name=rinfo.feature_cd
 ),
 Second_Part_Data as 
 (
