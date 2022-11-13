@@ -14,6 +14,7 @@
 -- /* 2022-11-12 ĞŞ¸´ contribution_cnt Í³¼ÆÎ¬¶ÈµÄÎÊÌâ£¬Í³¼ÆÎ¬¶Èµ÷ÕûÎªtype */
 -- /* 2022-11-12 ĞŞ¸´ Ö¸±êÖĞÎ»Êı¼ÆËãµÄÎÊÌâ */
 -- /* 2022-11-12 ĞŞ¸´ ÆóÒµÊıÁ¿ÓëÉÏÓÎ×ÛºÏÔ¤¾¯µÈ¼¶Ä£ĞÍ½á¹û±íÆóÒµÊıÁ¿²»Ò»ÖÂµÄÎÊÌâ */
+-- /* 2022-11-13 ĞÂÔö ori_idx_nameºÍdim_submodel_contribution_ratio(¸÷Î¬¶ÈÒì³£Ö¸±êÕ¼±È) ÓÃÓÚ¹éÒòÏê±¨µÚËÄ¶ÎºÍ¹éÒò¼ò±¨wy¿ª·¢ */
 -- ÒÀÀµ Ä£ĞÍ ×ÛºÏÔ¤¾¯·Ö£¬ÌØÕ÷Ô­Ê¼Öµ¸ßÖĞµÍ£¬ÌØÕ÷¹±Ï×¶È¸ßÖĞµÍÎŞ¼à¶½ÒÔ¼°×ÛºÏ£¬ÆÀ·Ö¿¨¸ßÖĞµÍ£¬¹éÒòÏêÇé¼°ÆäÀúÊ· PS:²»ÒÀÀµpth_rmp.Ä£ĞÍ½á¹û±í
 --q1£ºÎ¬¶È·çÏÕµÈ¼¶µÄ¼ÆËãÒÀ¿¿¹±Ï×¶ÈÕ¼±È£¬¹±Ï×¶ÈÕ¼±ÈÌØÕ÷»áÉÙÓÚÌØÕ÷Ô­Ê¼Öµ£¬´ËÊ±×îºó¹ØÁª½«»á²úÉúÄ³Ğ©Î¬¶È¹ØÁª²¹ÉÏÎ¬¶È·çÏÕµÈ¼¶£¬µ¼ÖÂÎªNULL(ÔİÊ±¾ö¶¨Ìßµô)
 --q2£ºÌØÕ÷ÖµÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÎª»ù×¼£¬Ö÷±íÓĞÌØÕ÷Ô­Ê¼ÖµÇĞ»»Îª¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±í
@@ -819,7 +820,7 @@ warn_feature_contrib as --ÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
 	)A join corp_chg chg 
             on cast(a.corp_code as string)=chg.source_id and chg.source_code='ZXZX'
 ),
-warn_feature_contrib_res1 as  --´øÓĞ Î¬¶È¹±Ï×¶ÈÕ¼±È µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ  
+warn_feature_contrib_res1 as  --´øÓĞ Î¬¶ÈÒì³£Ö¸±êÕ¼±È µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ  
 (
     select 
         batch_dt,
@@ -862,6 +863,7 @@ warn_feature_contrib_res2 as  -- ´øÓĞ Î¬¶È·çÏÕµÈ¼¶ µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
         corp_nm,
         score_dt,
         dimension,
+        dim_submodel_contribution_ratio,  --¸÷Î¬¶È Òì³£Ö¸±êÕ¼±È
         dim_risk_lv,
         dim_risk_lv_desc  --µ÷ÕûÇ°Î¬¶È·çÏÕµÈ¼¶ used
     from
@@ -879,7 +881,7 @@ warn_feature_contrib_res2 as  -- ´øÓĞ Î¬¶È·çÏÕµÈ¼¶ µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
                 main.score_dt,
                 main.dimension,
                 -- main.model_freq_type,
-                main.dim_submodel_contribution_ratio,   --¸÷×ÓÄ£ĞÍ¶ÔÓ¦Î¬¶È¹±Ï×¶ÈÕ¼±È£¬used by ¹éÒò±¨¸æµÚ¶ş¶Î
+                main.dim_submodel_contribution_ratio,   ----¸÷Î¬¶È Òì³£Ö¸±êÕ¼±È used by ¹éÒò±¨¸æµÚ¶ş¶Î
                 b.risk_lv,
                 b.risk_lv_desc   -- Ô­Ê¼·çÏÕµÈ¼¶ÃèÊö
             from warn_feature_contrib_res1 main 
@@ -897,6 +899,7 @@ warn_feature_contrib_res3_tmp as
         main.corp_nm,
         main.score_dt,
         main.dimension,
+        main.dim_submodel_contribution_ratio,
         main.dim_risk_lv,
         main.dim_risk_lv_desc,  --Î¬¶È·çÏÕµÈ¼¶ ¸ß·çÏÕ£¬ÖĞ·çÏÕ£¬µÍ·çÏÕ
         nvl(b.adj_synth_level,'') as adj_synth_level,  --×ÛºÏÔ¤¾¯µÈ¼¶
@@ -913,6 +916,7 @@ warn_feature_contrib_res3 as  -- ¸ù¾İ×ÛºÏÔ¤¾¯µÈ¼¶µ÷ÕûºóµÄÎ¬¶È·çÏÕË®Æ½ µÄÌØÕ÷¹±Ï×
         corp_nm,
         score_dt,
         dimension,
+        dim_submodel_contribution_ratio,
         dim_warn_level  --×îÖÕµ÷ÕûºóµÄÎ¬¶È·çÏÕµÈ¼¶
     from 
     (
@@ -936,7 +940,7 @@ warn_feature_contrib_res3 as  -- ¸ù¾İ×ÛºÏÔ¤¾¯µÈ¼¶µ÷ÕûºóµÄÎ¬¶È·çÏÕË®Æ½ µÄÌØÕ÷¹±Ï×
         where a.dim_risk_lv not in (select min(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp)  --·Ç·çÏÕ×î¸ßµÄ
         -- join (select max(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp) b  --»ñÈ¡³ı×î¸ß·çÏÕË®Æ½¶ÔÓ¦µÄÎ¬¶È
         -- where a.dim_risk_lv <> b.max_dim_risk_lv
-    )C group by batch_dt,corp_id,corp_nm,score_dt,dimension,dim_warn_level  --È¥ÖØ
+    )C group by batch_dt,corp_id,corp_nm,score_dt,dimension,dim_submodel_contribution_ratio,dim_warn_level  --È¥ÖØ
 ),
 warn_contribution_ratio_with_factor_evl as  --´øÒò×ÓÆÀ¼ÛµÄÌØÕ÷¹±Ï×¶ÈÓ¦ÓÃ²ãÊı¾İ(²»°üº¬ÎŞ¼à¶½)
 (
@@ -1182,7 +1186,9 @@ res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ
         main.last_idx_value,
         main.unit_origin,
         main.unit_target,
-        main.contribution_cnt  --¹éÒò¸öÊı
+        main.contribution_cnt,  --¹éÒò¸öÊı
+        main.idx_name as ori_idx_name,   --Ô­Ê¼Ö¸±êÃû³Æ
+        b.dim_submodel_contribution_ratio  --¸÷Î¬¶ÈÒì³£Ö¸±êÕ¼±È
     from res3 main
     left join warn_feature_contrib_res3 b  --»ñÈ¡Î¬¶È·çÏÕµÈ¼¶Êı¾İ£¬left join ÒÔÃâ¶ªÊ§ÎŞ¼à¶½Êı¾İ
         on main.batch_dt=b.batch_dt and main.corp_id=b.corp_id and main.dimension=b.dimension
@@ -1200,7 +1206,7 @@ select
     0 as type_cd,
     type,
     sub_model_name,
-    idx_name,
+    idx_name,   --×ª»»³ÉÎª×îÖÕÒ³ÃæÕ¹Ê¾ĞÎÊ½µÄÖ¸±êÃû³Æ
     idx_value,   --£¡£¡£¡Ö¸±êÖµ×îÖÕĞèÒª×ª»»ÎªÄ¿±êÊä³öÕ¹Ê¾ĞÎÌ¬£¬ºÍÅäÖÃ±íµÄµ¥Î»ÁĞÓĞ¹Ø£¬ÔİÊ±Êä³öÔ­Ê¼Öµ
     idx_unit,  
     idx_score,   
@@ -1216,7 +1222,9 @@ select
 	current_timestamp() as create_time,
 	'' as update_by,
 	current_timestamp() as update_time,
-	0 as version
+	0 as version,
+    ori_idx_name,  --Ô­Ê¼Ö¸±êÃû³Æ£¬ÓÃÓÚÏê±¨µÚ¶ş¶Î£¬µÚËÄ¶ÎÊ¹ÓÃ
+    dim_submodel_contribution_ratio  --¸÷Î¬¶ÈÒì³£Ö¸±êÕ¼±È£¬uesed ¹éÒò±¨¸æµÚËÄ¶Î ÒÔ¼° ¹éÒò¼ò±¨wy
 from res4
 where score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 ; 
