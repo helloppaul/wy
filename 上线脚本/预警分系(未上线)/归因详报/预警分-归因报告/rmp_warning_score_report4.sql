@@ -27,7 +27,7 @@ corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (
 		  	-- on b1.etl_date=b2.etl_date
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
-	where a.delete_flag=0 and b.delete_flag=0
+	where a.delete_flag=0 and b.delete_flag=0 and a.source_code='ZXZX'
 ),
 --—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 -- 时间限制开关 --
@@ -654,6 +654,8 @@ Fourth_Msg_ as
 		a.dimension,
 		a.dimension_ch,
 		a.max_dimension_ch,
+		if(a.dim_idx_score_desc='','',concat(a.max_dimension_ch,'维度','中',a.dim_idx_score_desc,'具体表现为：',b.idx_desc_in_one_dimension)) 
+			as msg_max_dimension_ch,  --当无风险等级发生变动时，最大风险等级的指标层的描述信息
 		case 
 			when (b.dimension_ch is null) or (a.dim_warn_level_chg_desc<>'上升')  then --说明此时无维度风险描述，则罗列每一个维度的情况
 				NULL
@@ -670,14 +672,17 @@ Fourth_Msg_ as
 			and a.batch_dt=b.batch_dt 
 			and a.dimension=b.dimension 
 ),
-Fourth_Msg_corp_ as    --汇总到企业层（维度风险变动+指标恶化 数据）
+Fourth_Msg_corp_ as    --汇总到企业层（维度风险变动+指标恶化+风险水平上升的主要维度 数据）
 (
 	select 
 		batch_dt,corp_id,corp_nm,score_dt,corp_max_dimension_ch,
 		synth_warnlevel_desc,chg_direction_desc,synth_warnlevel_l_desc,
 		case 
 			when msg_corp_ = '' or msg_corp_ is NULL then 
-				concat('风险水平上升的主要维度为',corp_max_dimension_ch)
+				concat(
+					'风险水平上升的主要维度为',corp_max_dimension_ch,'维度',
+					if(msg_max_dimension_ch='','。',concat('，',msg_max_dimension_ch))
+				)
 			else 
 				concat('主要',msg_corp_)   --"主要由于xxx维度风险等级...由于xxx维度风险等级
 		end as msg_corp
@@ -689,6 +694,7 @@ Fourth_Msg_corp_ as    --汇总到企业层（维度风险变动+指标恶化 数据）
 			corp_nm,
 			score_dt,
 			max(max_dimension_ch) as corp_max_dimension_ch,
+			max(msg_max_dimension_ch) as msg_max_dimension_ch,
 			if(synth_warnlevel_desc='风险已暴露','风险已暴露预警等级',synth_warnlevel_desc) as synth_warnlevel_desc,
 			chg_direction_desc,
 			if(synth_warnlevel_l_desc='风险已暴露','风险已暴露预警等级',synth_warnlevel_l_desc) as synth_warnlevel_l_desc,
@@ -718,7 +724,7 @@ Fourth_Msg_Corp as  --汇总到企业层（预警等级变动+维度风险变动+指标恶化 数据）
 		) as msg4
 	from Fourth_Msg_corp_
 )
-select distinct
+select
 	* 
 from Fourth_Msg_Corp
 ;
