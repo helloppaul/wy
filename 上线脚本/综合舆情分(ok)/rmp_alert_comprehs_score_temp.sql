@@ -498,7 +498,7 @@ label_hit_tab AS  --风险预警
 )
 insert into pth_rmp.rmp_alert_comprehs_score_temp  partition(etl_date=${ETL_DATE})--@pth_rmp.rmp_alert_comprehs_score_temp
 select distinct
-	md5(concat(to_date(G.batch_dt),nvl(G.corp_id,''),nvl(lb.relation_id,''),'0')) as sid_kw,
+	md5(concat(G.batch_dt,cast(G.score_dt as string),nvl(G.corp_id,''),nvl(lb.relation_id,''),'0')) as sid_kw,
 	cast(G.batch_dt as string) as batch_dt,
 	G.corp_id,
 	chg.corp_name as corp_nm,
