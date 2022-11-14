@@ -26,6 +26,18 @@ warn_level_ratio_cfg_ as -- 综合预警等级等级划分档位-配置表
 	select 1 property_cd,'产业' as property,'-2' as warn_lv,'前20%-30%' as percent_desc,'黄色预警等级' as warn_lv_desc
 	union all
 	select 1 property_cd,'产业' as property,'-1' as warn_lv,'后30%-100%' as percent_desc,'绿色预警等级' as warn_lv_desc 
+
+	union all
+
+	select 0 property_cd,'产业' as property,'-5' as warn_lv,'前1%' as percent_desc,'风险已暴露' as warn_lv_desc
+	union all
+	select 0 property_cd,'产业' as property,'-4' as warn_lv,'前1%-10%' as percent_desc,'红色预警等级' as warn_lv_desc
+	union all
+	select 0 property_cd,'产业' as property,'-3' as warn_lv,'前10%-20%' as percent_desc,'橙色预警等级' as warn_lv_desc
+	union all
+	select 0 property_cd,'产业' as property,'-2' as warn_lv,'前20%-30%' as percent_desc,'黄色预警等级' as warn_lv_desc
+	union all
+	select 0 property_cd,'产业' as property,'-1' as warn_lv,'后30%-100%' as percent_desc,'绿色预警等级' as warn_lv_desc 
 )
 select * from warn_level_ratio_cfg_
 ;
