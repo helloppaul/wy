@@ -184,106 +184,131 @@ three_cum AS
 insert into pth_rmp.rmp_COMPANY_CORE_REL partition(etl_date=${ETL_DATE},type_='gd')
 ------------------------------ 以上部分为临时表 ---------------------------------------------------------
 select 
-	md5(concat(corp_id,relation_id,cast(relation_type_l2_code as string),type6,cast(relation_dt as string))) as sid_kw,
-	T.*
+	sid_kw,
+	relation_dt,
+	corp_id,
+	relation_id,
+	relation_nm,
+	rela_party_type,
+	relation_type_l1_code,
+	relation_type_l1,
+	relation_type_l2_code,
+	relation_type_l2,
+	cum_ratio,
+	compy_type,
+	type6,
+	rel_remark1,
+	delete_flag,
+	create_by,
+	create_time,
+	update_by,
+	update_time,
+	version
 from 
 (
-	select distinct
-		-- md5(concat(L.corp_id,L.relation_id,cast(L.relation_type_l2_code as string),L.type6)) as sid_kw,
-		to_date(CURRENT_TIMESTAMP()) relation_dt,
-		L.corp_id,
-		L.relation_id,
-		chg.corp_name as relation_nm,
-		case L.rela_party_type
-			WHEN 'E' then 2  --企业 
-			WHEN 'P' THEN 1 --个人
-			WHEN 'O' THEN 3  --产品
-			ELSE 99
-		end as rela_party_type,
-		L.relation_type_l1_code,
-		L.relation_type_l1,
-		L.relation_type_l2_code,
-		L.relation_type_l2,
-		L.cum_ratio,
-		cmp.compy_type,
-		cast(L.type6 as string)  as type6,
-		L.rel_remark1,
-		0 as delete_flag,
-		'' as create_by,
-		current_timestamp() as create_time,
-		'' as update_by,
-		current_timestamp() update_time,
-		0 as version
-		-- to_date(CURRENT_TIMESTAMP()) as dt,
-		-- 'gd' as type_
-	from	
+	select 
+		md5(concat(corp_id,relation_id,cast(relation_type_l2_code as string),type6,cast(relation_dt as string))) as sid_kw,
+		row_number() over(partition by corp_id,relation_id,relation_type_l2_code,type6,relation_dt) as rm,
+		T.*
+	from 
 	(
-		select 
-			Final.corp_id,
-			Final.relation_id,
-			max(Final.relation_nm) as relation_nm,
-			Final.rela_party_type,
-			Final.relation_type_l1_code,
-			Final.relation_type_l1,
-			Final.relation_type_l2_code,
-			Final.relation_type_l2,
-			max(Final.compy_type) as compy_type,
-			if(max(Final.cum_ratio)>1,1,max(Final.cum_ratio)) as cum_ratio,
-			max(Final.type6) as type6,
-			max(Final.rel_remark1) as rel_remark1
-		from 
-		(	
-			select distinct
-				cm_id as corp_id,
-				gd_id as relation_id,
-				gd as relation_nm,
-				gd_type as rela_party_type,
-				2 as relation_type_l1_code,
-				'直接股东' as relation_type_l1,
-				CASE
-					when cum_ratio>=0.3 then 21
-					when cum_ratio>=0.1 then 22
-					else 23
-				END as relation_type_l2_code,
-				CASE
-					when cum_ratio>=0.3 then '累积持股30%以上'
-					when cum_ratio>=0.1 then '累计持股比例10%-30%'
-					else '累计持股比例5%-10%'
-				END as relation_type_l2,
-				'' as compy_type,  --关联方企业类型
-				cum_ratio,
-				0 as type6,
-				'' as rel_remark1
-			from three_cum where cum_ratio>=0.05 and lv=1
-			UNION ALL 
-			select distinct 
-				cm_id as corp_id,
-				gd_id as relation_id,
-				gd as relation_nm,
-				gd_type as rela_party_type,
-				3 as relation_type_l1_code,
-				'间接股东（3层穿透）'  as relation_type_l1,
-				CASE
-					when cum_ratio>=0.3 then 31
-					when cum_ratio>=0.1 then 32
-					when cum_ratio>=0.05 then 33
-				END as relation_type_l2_code,
-				CASE
-					when cum_ratio>=0.3 then '累积持股30%以上'
-					when cum_ratio>=0.1 then '累计持股比例10%-30%'
-					else '累计持股比例5%-10%'
-				END as relation_type_l2,
-				'' as compy_type,  --关联方企业类型
-				cum_ratio,
-				0 as type6,
-				'' as rel_remark1
-			from three_cum 
-			where (gd_id is not null or gd_id<>'') --去重无效关联不到的数据 
-			and cum_ratio>=0.05 and lv>=2
-		)Final join compy_range cr on Final.corp_id=cr.corp_id
-		group by Final.corp_id,Final.relation_id,Final.rela_party_type,Final.relation_type_l1_code,Final.relation_type_l1,Final.relation_type_l2_code,Final.relation_type_l2--,Final.cum_ratio
-	) L join compy_range cr on cr.corp_id=L.corp_id
-		left join cm_property cmp on L.corp_id = cmp.corp_id
-		LEFT JOIN corp_chg chg on L.relation_id=chg.corp_id
-)T
+		select distinct
+			-- md5(concat(L.corp_id,L.relation_id,cast(L.relation_type_l2_code as string),L.type6)) as sid_kw,
+			to_date(CURRENT_TIMESTAMP()) relation_dt,
+			L.corp_id,
+			L.relation_id,
+			chg.corp_name as relation_nm,
+			case L.rela_party_type
+				WHEN 'E' then 2  --企业 
+				WHEN 'P' THEN 1 --个人
+				WHEN 'O' THEN 3  --产品
+				ELSE 99
+			end as rela_party_type,
+			L.relation_type_l1_code,
+			L.relation_type_l1,
+			L.relation_type_l2_code,
+			L.relation_type_l2,
+			L.cum_ratio,
+			cmp.compy_type,
+			cast(L.type6 as string)  as type6,
+			L.rel_remark1,
+			0 as delete_flag,
+			'' as create_by,
+			current_timestamp() as create_time,
+			'' as update_by,
+			current_timestamp() update_time,
+			0 as version
+			-- to_date(CURRENT_TIMESTAMP()) as dt,
+			-- 'gd' as type_
+		from	
+		(
+			select 
+				Final.corp_id,
+				Final.relation_id,
+				max(Final.relation_nm) as relation_nm,
+				Final.rela_party_type,
+				Final.relation_type_l1_code,
+				Final.relation_type_l1,
+				Final.relation_type_l2_code,
+				Final.relation_type_l2,
+				max(Final.compy_type) as compy_type,
+				if(max(Final.cum_ratio)>1,1,max(Final.cum_ratio)) as cum_ratio,
+				max(Final.type6) as type6,
+				max(Final.rel_remark1) as rel_remark1
+			from 
+			(	
+				select distinct
+					cm_id as corp_id,
+					gd_id as relation_id,
+					gd as relation_nm,
+					gd_type as rela_party_type,
+					2 as relation_type_l1_code,
+					'直接股东' as relation_type_l1,
+					CASE
+						when cum_ratio>=0.3 then 21
+						when cum_ratio>=0.1 then 22
+						else 23
+					END as relation_type_l2_code,
+					CASE
+						when cum_ratio>=0.3 then '累积持股30%以上'
+						when cum_ratio>=0.1 then '累计持股比例10%-30%'
+						else '累计持股比例5%-10%'
+					END as relation_type_l2,
+					'' as compy_type,  --关联方企业类型
+					cum_ratio,
+					0 as type6,
+					'' as rel_remark1
+				from three_cum where cum_ratio>=0.05 and lv=1
+				UNION ALL 
+				select distinct 
+					cm_id as corp_id,
+					gd_id as relation_id,
+					gd as relation_nm,
+					gd_type as rela_party_type,
+					3 as relation_type_l1_code,
+					'间接股东（3层穿透）'  as relation_type_l1,
+					CASE
+						when cum_ratio>=0.3 then 31
+						when cum_ratio>=0.1 then 32
+						when cum_ratio>=0.05 then 33
+					END as relation_type_l2_code,
+					CASE
+						when cum_ratio>=0.3 then '累积持股30%以上'
+						when cum_ratio>=0.1 then '累计持股比例10%-30%'
+						else '累计持股比例5%-10%'
+					END as relation_type_l2,
+					'' as compy_type,  --关联方企业类型
+					cum_ratio,
+					0 as type6,
+					'' as rel_remark1
+				from three_cum 
+				where (gd_id is not null or gd_id<>'') --去重无效关联不到的数据 
+				and cum_ratio>=0.05 and lv>=2
+			)Final join compy_range cr on Final.corp_id=cr.corp_id
+			group by Final.corp_id,Final.relation_id,Final.rela_party_type,Final.relation_type_l1_code,Final.relation_type_l1,Final.relation_type_l2_code,Final.relation_type_l2--,Final.cum_ratio
+		) L join compy_range cr on cr.corp_id=L.corp_id
+			left join cm_property cmp on L.corp_id = cmp.corp_id
+			LEFT JOIN corp_chg chg on L.relation_id=chg.corp_id
+	)T
+)T1 where rm=1
 ;

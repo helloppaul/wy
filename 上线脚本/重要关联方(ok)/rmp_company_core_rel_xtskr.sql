@@ -80,86 +80,111 @@ cm_property as
 insert into pth_rmp.rmp_COMPANY_CORE_REL partition(etl_date=${ETL_DATE},type_='xtskr')
 ------------------------------ 以上部分为临时表 ---------------------------------------------------------
 select 
-	md5(concat(corp_id,relation_id,cast(relation_type_l2_code as string),type6,cast(relation_dt as string))) as sid_kw,
-	T.* 
+	sid_kw,
+	relation_dt,
+	corp_id,
+	relation_id,
+	relation_nm,
+	rela_party_type,
+	relation_type_l1_code,
+	relation_type_l1,
+	relation_type_l2_code,
+	relation_type_l2,
+	cum_ratio,
+	compy_type,
+	type6,
+	rel_remark1,
+	delete_flag,
+	create_by,
+	create_time,
+	update_by,
+	update_time,
+	version
 from 
 (
-	select distinct
-		-- md5(concat(chg_main.corp_id,L.relation_id,cast(L.relation_type_l2_code as string),L.type6)) as sid_kw,
-		to_date(CURRENT_TIMESTAMP()) relation_dt,
-		chg_main.corp_id,
-		case 
-			when chg.corp_id is null then L.relation_id 
-			else chg.corp_id 
-		end as relation_id,
-		-- L.relation_id,
-		-- chg.corp_id as relation_id,
-		chg.corp_name as relation_nm,
-		case L.rela_party_type
-			WHEN 'E' then 2  --企业 
-			WHEN 'P' THEN 1 --个人
-			WHEN 'O' THEN 3  --产品
-			ELSE 99
-		end as rela_party_type,
-		L.relation_type_l1_code,
-		L.relation_type_l1,
-		L.relation_type_l2_code,
-		L.relation_type_l2,
-		L.cum_ratio,
-		cmp.compy_type,
-		cast(L.type6 as string)  as type6,
-		L.rel_remark1,
-		0 as delete_flag,
-		'' as create_by,
-		current_timestamp() as create_time,
-		'' as update_by,
-		current_timestamp() update_time,
-		0 as version
-		-- to_date(CURRENT_TIMESTAMP()) as dt,
-		-- 'xtskr' as type_,
-	FROM
+	select 
+		md5(concat(corp_id,relation_id,cast(relation_type_l2_code as string),type6,cast(relation_dt as string))) as sid_kw,
+		row_number() over(partition by corp_id,relation_id,relation_type_l2_code,type6,relation_dt) as rm,
+		T.* 
+	from 
 	(
 		select distinct
-			cast(main_A as string) as corp_id,
-			cast(main_B as string) as relation_id,
-			'' as relation_nm,
-			'P' as rela_party_type,
-			6 as relation_type_l1_code ,  
-			'相同实控人' as relation_type_l1,
-			61 as relation_type_l2_code ,
-			'相同实控人' as relation_type_l2,
-			'' as compy_type,
-			0 as cum_ratio,
-			1 as type6,
-			concat (act_contro_id, '\;',act_contro) as rel_remark1
-		from 
+			-- md5(concat(chg_main.corp_id,L.relation_id,cast(L.relation_type_l2_code as string),L.type6)) as sid_kw,
+			to_date(CURRENT_TIMESTAMP()) relation_dt,
+			chg_main.corp_id,
+			case 
+				when chg.corp_id is null then L.relation_id 
+				else chg.corp_id 
+			end as relation_id,
+			-- L.relation_id,
+			-- chg.corp_id as relation_id,
+			chg.corp_name as relation_nm,
+			case L.rela_party_type
+				WHEN 'E' then 2  --企业 
+				WHEN 'P' THEN 1 --个人
+				WHEN 'O' THEN 3  --产品
+				ELSE 99
+			end as rela_party_type,
+			L.relation_type_l1_code,
+			L.relation_type_l1,
+			L.relation_type_l2_code,
+			L.relation_type_l2,
+			L.cum_ratio,
+			cmp.compy_type,
+			cast(L.type6 as string)  as type6,
+			L.rel_remark1,
+			0 as delete_flag,
+			'' as create_by,
+			current_timestamp() as create_time,
+			'' as update_by,
+			current_timestamp() update_time,
+			0 as version
+			-- to_date(CURRENT_TIMESTAMP()) as dt,
+			-- 'xtskr' as type_,
+		FROM
 		(
-			select 
-				a.corp_code as main_A, 
-				a.actual_controller_id as act_contro_id,
-				a.actual_controller as act_contro,
-				b.corp_code as main_B 
-			from (	select * 
-					from (	select * , max (announcement_date) over (partition by corp_code) newest_date 
-							from hds.t_ods_fic_hb_corp_actual_controller
-							where etl_date=${ETL_DATE} 
-							-- and controller_type='个人'
-							and controller_type not in ('国资委','地方国资委')
-							and isvalid=1
-						) k 
-					where newest_date= announcement_date) a
-					join (select * from 
-								(	select *,max(announcement_date) over(partition by corp_code) newest_date 
-									from hds.t_ods_fic_hb_corp_actual_controller
-									where etl_date=${ETL_DATE}
-									and controller_type='个人'and isvalid=1
-								) k1 where newest_date= announcement_date
-						) b on a.actual_controller_id=b.actual_controller_id --and a.announcement_date=最新发布日and b.annc
-		)c where main_B<>main_A 
-	) L join compy_range cr on cr.corp_id=L.corp_id
-		left join cm_property cmp on L.corp_id = cmp.corp_id
-		LEFT JOIN corp_chg chg on L.relation_id=chg.corp_id
-		join corp_chg chg_main 
-			on L.corp_id=chg_main.source_id and chg_main.source_code='FI'
-)T
+			select distinct
+				cast(main_A as string) as corp_id,
+				cast(main_B as string) as relation_id,
+				'' as relation_nm,
+				'P' as rela_party_type,
+				6 as relation_type_l1_code ,  
+				'相同实控人' as relation_type_l1,
+				61 as relation_type_l2_code ,
+				'相同实控人' as relation_type_l2,
+				'' as compy_type,
+				0 as cum_ratio,
+				1 as type6,
+				concat (act_contro_id, '\;',act_contro) as rel_remark1
+			from 
+			(
+				select 
+					a.corp_code as main_A, 
+					a.actual_controller_id as act_contro_id,
+					a.actual_controller as act_contro,
+					b.corp_code as main_B 
+				from (	select * 
+						from (	select * , max (announcement_date) over (partition by corp_code) newest_date 
+								from hds.t_ods_fic_hb_corp_actual_controller
+								where etl_date=${ETL_DATE} 
+								-- and controller_type='个人'
+								and controller_type not in ('国资委','地方国资委')
+								and isvalid=1
+							) k 
+						where newest_date= announcement_date) a
+						join (select * from 
+									(	select *,max(announcement_date) over(partition by corp_code) newest_date 
+										from hds.t_ods_fic_hb_corp_actual_controller
+										where etl_date=${ETL_DATE}
+										and controller_type='个人'and isvalid=1
+									) k1 where newest_date= announcement_date
+							) b on a.actual_controller_id=b.actual_controller_id --and a.announcement_date=最新发布日and b.annc
+			)c where main_B<>main_A 
+		) L join compy_range cr on cr.corp_id=L.corp_id
+			left join cm_property cmp on L.corp_id = cmp.corp_id
+			LEFT JOIN corp_chg chg on L.relation_id=chg.corp_id
+			join corp_chg chg_main 
+				on L.corp_id=chg_main.source_id and chg_main.source_code='FI'
+	)T
+)T1 where rm=1
 ; 
