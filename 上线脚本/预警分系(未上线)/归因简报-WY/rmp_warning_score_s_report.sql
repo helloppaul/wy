@@ -312,13 +312,12 @@ Second_Part_Data as
 			idx_value,
 			last_idx_value,
 			idx_unit,
-			contribution_ratio,
 			idx_score,   --指标评分 used
 			concat(feature_name_target,'为',cast(idx_value as string),idx_unit) as idx_desc,
 			count(idx_name) over(partition by corp_id,batch_dt,score_dt,dimension)  as dim_factor_cnt,
 			count(idx_name) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate)  as dim_factorEvalu_factor_cnt
 		from Second_Part_Data_Prepare 
-		order by corp_id,score_dt desc,dim_contrib_ratio desc
+		order by corp_id,score_dt desc--,dim_contrib_ratio desc
 	) A
 ),
 RMP_WARNING_dim_warn_lv_And_idx_score_chg as --取每天最新批次的维度风险等级变动 以及 特征评分变动 数据，因子层面
@@ -328,19 +327,21 @@ RMP_WARNING_dim_warn_lv_And_idx_score_chg as --取每天最新批次的维度风险等级变动 
 		a.corp_id,
 		a.corp_nm,
 		a.score_dt,
+		a.synth_warnlevel,
 		a.dimension,
 		a.dimension_ch,
+		a.dim_abnormal_idx_contribution_ratio,
 		a.type,
-		a.dim_contrib_ratio,   --维度贡献度占比(排序用) used
+		-- a.dim_contrib_ratio,   --维度贡献度占比(排序用) used
 		a.dim_warn_level,	  --今日维度风险等级
 		a.dim_warn_level_desc,
 		b.dim_warn_level as dim_warn_level_1,   --昨日维度风险等级
 		b.dim_warn_level_desc as dim_warn_level_1_desc,
 		case 
-			when cast(a.dim_warn_level as int)-cast(b.dim_warn_level as int) >0 then '上升'
+			when cast(a.dim_warn_level as int)-cast(b.dim_warn_level as int) <0 then '上升'
 			else ''
 		end as dim_warn_level_chg_desc,
-		a.factor_evaluate,
+		a.factor_evaluate,		
 		a.idx_name, 
 		a.idx_value,
 		case 
