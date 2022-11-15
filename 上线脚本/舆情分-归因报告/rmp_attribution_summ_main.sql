@@ -46,14 +46,20 @@ corp_chg as
 rmp_opinion_risk_info_ as 
 (
 	select *
-	from pth_rmp.rmp_opinion_risk_info 
-	where notice_date = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-),
+	from pth_rmp.rmp_opinion_risk_info --init   20221114000000
+	where notice_date <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	--modify yangcan 20221115 取跑批日期当天及前一天数据
+	and notice_date >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
+),   
 tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf_ as --舆情分-贡献度占比
 (
-	select *,to_date(end_dt) as score_dt
-	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf
-	where to_date(end_dt) =  to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	select a.*,to_date(a.end_dt) as score_dt
+	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf a
+	where to_date(a.end_dt) =  to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	  --modify yangcan 20221114 指标个数重复统计
+	  and a.etl_date in(select max(b.etl_date)
+	                    from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf b
+	                   where to_date(b.end_dt) =  to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)))
 ),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
 rmp_opinion_featpct_desc_cfg_ as 
@@ -96,10 +102,12 @@ Second_one_msg as  --放主体归因信息
 		third_score,
 		score_hit,
 		label_hit,
-		case 
-			when cast(main_contrib_degree*100 as decimal(10,2))=0 then ''
+		case
+		    
+			--when cast(main_contrib_degree*100 as decimal(10,2))=0 then '' modify yangcan 20221114 得分未异动，不展示贡献度
+			when score_hit=0 then ''
 			--else concat('异常维度为主体自身舆情风险','(','贡献度占比',cast(round(main_contrib_degree*100,0) as string),'%)','。' )	
-			else concat('主体自身舆情风险','(','贡献度占比',cast(round(main_contrib_degree*100,0) as string),'%)','。' )	
+			else concat('<span class="WEIGHT">主体自身舆情风险','(','贡献度占比',cast(round(main_contrib_degree*100,0) as string),'%)</span>','。' )	
 		end as sentence_2_1
 	from Second_one a
 ),
@@ -124,8 +132,14 @@ sentiself_feapct_intf_newest as --模型_单主体舆情分_特征贡献度(最�
 		-- 	on a.end_dt=b.max_end_dt
 		join (select * from corp_chg where source_code='FI') chg
 			on cast(a.corp_code as string) = chg.source_id
-		join hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf c --app_ehzh.rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf c   --app_ehzh_train.featvalue_senti_self
-			on a.corp_code=c.corp_code and a.feature_name=c.feature_name and a.end_dt=c.end_dt
+		join (select a.*
+		        from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf a
+               where to_date(a.end_dt) =  to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	             and a.etl_date in(select max(b.etl_date)
+	                                 from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf b
+	                                where to_date(b.end_dt) =  to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)))
+			)c --app_ehzh.rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf c   --app_ehzh_train.featvalue_senti_self
+		on a.corp_code=c.corp_code and a.feature_name=c.feature_name and a.end_dt=c.end_dt
 	)A 
 ),
 sentiself_feapct_intf_newest_with_desc_cfg as 
@@ -153,7 +167,7 @@ sentiself_feapct_intf_newest_with_desc_cfg as
 		on A.feature_name = B.feature_name 
 	where B.index_min_val<>-1 
 	  and A.feature_name<>'importance_avg_abs' 
-	  and A.feature_pct=B.index_min_val
+	  --and A.feature_pct=B.index_min_val
 	union all 
 	select  
 		A.*,
@@ -166,7 +180,8 @@ sentiself_feapct_intf_newest_with_desc_cfg as
 		on A.feature_name = B.feature_name 
 	where B.index_min_val<>-1
 	  and A.feature_name='importance_avg_abs' 
-	  and A.feature_pct>=B.index_min_val and A.feature_pct<B.index_max_val
+	  --and A.feature_pct>=B.index_min_val and A.feature_pct<B.index_max_val
+	  and A.feature_value>=B.index_min_val and A.feature_value<B.index_max_val
 ),
 sentiself_feapct_intf_newest_with_accum AS  --处理后的特征贡献度(按照累计贡献度，大于90%累计贡献度的指标)
 (
@@ -232,6 +247,7 @@ second_two as
 		label_hit,
 		feat_cnt,
 		feat_cnt_0p9,
+		max(accum_feature_pct) as accum_feature_pct,
 		concat_ws('、',sort_array(collect_set(feat_desc))) as feat_desc_summ
 		-- group_concat(distinct feat_desc,'、') as feat_desc_summ
 	from 
@@ -281,7 +297,8 @@ second_two_msg as
 			else
 				concat(
 					'主体自身舆情分纳入的',cast(feat_cnt as string),'个指标中，',
-					cast(feat_cnt_0p9 as string),'个指标贡献舆情风险90%，','主要为一天内',
+					--cast(feat_cnt_0p9 as string),'个指标贡献舆情风险90%，','主要为一天内',  modify yangcan 20221114 贡献度取实际贡献度而不是固定90%
+					cast(feat_cnt_0p9 as string),'个指标贡献舆情风险',cast(round(accum_feature_pct*100) as string),'%，主要为一天内',
 					feat_desc_summ,'。'	
 				) 
 		end as sentence_2_2
@@ -302,7 +319,10 @@ com_score_with_risk_info AS
 		min(rsk.importance) as importance   --新闻原始脏数据清理
 	from RMP_ALERT_COMPREHS_SCORE_TEMP_Batch com
 	join rmp_opinion_risk_info_ rsk
-		on com.corp_id=rsk.corp_id and to_date(com.score_dt)=to_date(rsk.notice_dt)
+		--on com.corp_id=rsk.corp_id and to_date(com.score_dt)=to_date(rsk.notice_dt) modify yangcan 20221115
+		 on com.corp_id=rsk.corp_id
+		where to_date(date_add(from_unixtime(unix_timestamp(cast(rsk.notice_dt as string),'yyyy-MM-dd HH:mm:ss')),0)) >= to_date(date_add(from_unixtime(unix_timestamp(cast(com.batch_dt as string),'yyyy-MM-dd HH:mm:ss')),-1))
+		  and to_date(date_add(from_unixtime(unix_timestamp(cast(rsk.notice_dt as string),'yyyy-MM-dd HH:mm:ss')),0)) <  to_date(date_add(from_unixtime(unix_timestamp(cast(com.batch_dt as string),'yyyy-MM-dd HH:mm:ss')),0))
 	group by com.corp_id,com.corp_nm,com.score_dt,com.score_hit,com.label_hit,rsk.msg_id,rsk.case_type,rsk.case_type_ii,rsk.signal_type
 ),
 second_three as 
@@ -314,33 +334,45 @@ second_three as
 		score_hit,
 		label_hit,
 		max(rm) as rm,
-		concat_ws('、',sort_array(collect_set(corp_rsk_msg))) as rsk_msg
+		--concat_ws('、',sort_array(collect_set(corp_rsk_msg))) as rsk_msg
+		regexp_replace(regexp_replace(regexp_replace(concat_ws('、',sort_array(collect_set(case when rm<=10 then corp_rsk_msg else null end))),'sort01',''),'sort02',''),'sort03','') as rsk_msg
 		-- group_concat(distinct corp_rsk_msg,'、')  as rsk_msg
 	from 
 	(
 		select 
 			*,
 			row_number() over(partition by corp_id,corp_nm,to_date(score_dt) order by importance asc) as rm,
-			concat(case_type_ii,'(',importance_map,')') as corp_rsk_msg
+			concat(case importance when -3 then 'sort01'
+			                       when -2 then 'sort02'
+								   when -1 then 'sort03'
+				   end
+				   ,case_type_ii,'(',importance_map,')') as corp_rsk_msg
 		from 
 		(
-			select distinct
+			select 
 				corp_id,
 				corp_nm,
 				score_dt,
 				score_hit,
 				label_hit,
-				case_type,
+				--case_type,
 				case_type_ii,
-				importance,
-				case importance
+				--importance,
+				--case minimportance
+				--	when -3 then '严重负面'
+				--	when -2 then '重要负面'
+				--	when -1 then '一般负面'
+				--End as importance_map
+				min(importance) as importance,
+				case min(importance)
 					when -3 then '严重负面'
 					when -2 then '重要负面'
 					when -1 then '一般负面'
 				End as importance_map
 			from com_score_with_risk_info where signal_type=0  --仅新闻
+		   group by corp_id,corp_nm,score_dt,score_hit,label_hit,case_type_ii
 		) A 
-	)B where rm<=10 group by corp_id,corp_nm,score_dt,score_hit,label_hit
+	)B  group by corp_id,corp_nm,score_dt,score_hit,label_hit
 ),
 second_three_msg as 
 (
@@ -379,9 +411,9 @@ second_four as
 			com_rsk.case_type_ii as tag_ii
 			-- tag.tag_ii
 		from com_score_with_risk_info com_rsk 
+		join (select * from pth_rmp.rmp_opinion_risk_info_tag where importance=-3) tag
+			 on com_rsk.case_type_ii = tag.tag_ii
 		where com_rsk.label_hit=1
-		-- join (select * from pth_rmp.rmp_opinion_risk_info_tag where importance=-3) tag
-			-- on com_rsk.case_type_ii = tag.tag_ii
 	)A group by corp_id,corp_nm,score_dt
 ),
 second_four_msg as 

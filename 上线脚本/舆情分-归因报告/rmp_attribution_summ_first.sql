@@ -34,8 +34,8 @@ First_ as   --主体名称
 		second_score+third_score as rel_score_summ,
 		score_hit,
 		label_hit,
-		if(score<>0,'主体自身','') as ztzs,  
-		if(second_score+third_score<>0,'关联方舆情风险','') as glf,
+		if(score<>0,'<span class="WEIGHT">主体自身</span>','') as ztzs,  
+		if(second_score+third_score<>0,'<span class="WEIGHT">关联方舆情风险</span>','') as glf,
 		-- case
 			-- WHEN score_hit=1 and label_hit=0 then '相较过去14天平均水平表现异常。'
 			-- when score_hit=1 and label_hit=1 then '相较过去14天平均水平表现异常，'
@@ -46,10 +46,10 @@ First_ as   --主体名称
 			-- when label_hit=0 then '' 
 		-- end as label_hit_msg,
 		case 
-			WHEN score_hit=1 and label_hit=0 then '相较过去14天平均水平表现异常。'
-			WHEN score_hit=1 and label_hit=1 then '相较过去14天平均水平表现异常，同时命中重要风险事件。'
+			WHEN score_hit=1 and label_hit=0 then '相较过去14天平均水平<span class="WEIGHT">表现异常</span>。'
+			WHEN score_hit=1 and label_hit<>0 then '相较过去14天平均水平<span class="WEIGHT">表现异常</span>，同时命中重要风险事件。'
 			WHEN score_hit=0 and label_hit=0 then ''
-			WHEN score_hit=0 and label_hit=1 then '相较过去14天平均水平未表现异常，但命中重要风险事件。'
+			WHEN score_hit=0 and label_hit<>0 then '相较过去14天平均水平<span class="WEIGHT">未表现异常</span>，但命中重要风险事件。'
 		end as hit_msg
 	from RMP_ALERT_COMPREHS_SCORE_TEMP_Batch
 ),
@@ -65,7 +65,7 @@ First_msg as   --主体名称
 		score_hit,
 		label_hit,
 		concat(
-			'	',corp_nm,'综合舆情分触发异动预警,',ztzs,glf,
+			'	',corp_nm,'综合舆情分<span class="RED">触发异动预警</span>,',ztzs,glf,
 			hit_msg
 		) as sentence_1_1
 	from First_

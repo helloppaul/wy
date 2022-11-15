@@ -225,7 +225,7 @@ last_msg as
 		com.score_dt,
 		com.score,
 		(com.second_score+com.third_score) as rel_score_summ,
-		concat('综合考虑主体及其关联方风险情况，建议重点关注',
+		concat('综合考虑<span class="WEIGHT">主体及其关联方风险</span>情况，建议重点关注',
 			if(com.score>0,concat('主体自身的',main_msg.last_sentence_main_case_type,'。'),''),
 			case 
 				when com.score>0 and (com.second_score+com.third_score)>0 then 

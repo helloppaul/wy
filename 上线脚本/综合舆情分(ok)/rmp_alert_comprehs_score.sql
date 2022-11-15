@@ -5,7 +5,8 @@
 -- )
 insert into pth_rmp.RMP_ALERT_COMPREHS_SCORE partition(etl_date=${ETL_DATE})
 select distinct
-	a.sid_kw,
+	--a.sid_kw,modify yangcan 20221113 sid_kw是由corp_id,relation_id拼接后转换而来,此处distinct去重没有效果
+	md5(concat(to_date(a.batch_dt),nvl(a.corp_id,''),'0')) as sid_kw,
 	a.batch_dt,
 	a.corp_id,
 	a.corp_nm,

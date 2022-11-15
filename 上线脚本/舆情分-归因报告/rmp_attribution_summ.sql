@@ -49,12 +49,13 @@ from
 		main.score_dt,
 		one.First_sentence as report_msg1,
 		case 
+		    --yangcan modify 20221109
 			when main.score_hit=1 and main.score>=main.rel_score_summ then 
-				concat(main.Main_sentence,'\\r\\n',rel.rel_sentence,'\\r\\n',lst.last_sentence)
+				concat('	',nvl(main.Main_sentence,''),'\\r\\n',nvl(rel.rel_sentence,''),'\\r\\n',nvl(lst.last_sentence,''))
 			when main.score_hit=1 and main.score<main.rel_score_summ then 
-				concat(rel.rel_sentence,'\\r\\n',main.Main_sentence,'\\r\\n',lst.last_sentence)
+				concat('	',nvl(rel.rel_sentence,''),'\\r\\n',nvl(main.Main_sentence,''),'\\r\\n',nvl(lst.last_sentence,''))
 			when main.score_hit=0  then 
-				concat(main.Main_sentence,'\\r\\n',rel.rel_sentence,'\\r\\n',lst.last_sentence)
+				concat('	',nvl(main.Main_sentence,''),'\\r\\n',nvl(rel.rel_sentence,''),'\\r\\n',nvl(lst.last_sentence,'')) 
 			-- when score_hit=0 and main.score<main.rel_score_summ then 
 				-- concat(rel.rel_sentence,'\\r\\n',main.Main_sentence,'\\r\\n',lst.last_sentence)
 		end as report_msg2

@@ -34,8 +34,9 @@ RMP_COMPY_CONTRIB_DEGREE_ as
 rmp_opinion_risk_info_ as 
 (
 	select *
-	from pth_rmp.rmp_opinion_risk_info 
-	where notice_date = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	from pth_rmp.rmp_opinion_risk_info  --init
+	where notice_date <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	  and notice_date >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 RMP_COMPY_CONTRIB_DEGREE_BATCH as 
@@ -136,7 +137,7 @@ Third_one_msg as
 				when round(rel_contrib_degree*100,0)=0 then ''
 				else 
 					concat(
-						'关联方舆情风险','(','贡献度占比',cast(round(rel_contrib_degree*100,0) as string),'%',')。',
+						'<span class="WEIGHT">关联方舆情风险','(','贡献度占比',cast(round(rel_contrib_degree*100,0) as string),'%',')</span>。',
 						corp_nm,'共',cast(rel_cnt as string),'个','关联方贡献风险，','分别为',rel_msg,'。',
 						if(max_rel_contrib_corp_nm is null,'',concat('其中',max_rel_contrib_corp_nm,'为主要的舆情风险贡献来源。') )
 					)					-- concat(
@@ -164,7 +165,10 @@ com_score_with_risk_info AS
 		min(rsk.importance) as importance   --新闻原始脏数据清理
 	from RMP_ALERT_COMPREHS_SCORE_TEMP_Batch com
 	join rmp_opinion_risk_info_ rsk
-		on com.relation_id=rsk.corp_id and to_date(com.score_dt)=to_date(rsk.notice_dt)
+		--on com.relation_id=rsk.corp_id and to_date(com.score_dt)=to_date(rsk.notice_dt)
+		on com.relation_id=rsk.corp_id
+		where to_date(date_add(from_unixtime(unix_timestamp(cast(rsk.notice_dt as string),'yyyy-MM-dd HH:mm:ss')),0)) >= to_date(date_add(from_unixtime(unix_timestamp(cast(com.batch_dt as string),'yyyy-MM-dd HH:mm:ss')),-1))
+		  and to_date(date_add(from_unixtime(unix_timestamp(cast(rsk.notice_dt as string),'yyyy-MM-dd HH:mm:ss')),0)) <  to_date(date_add(from_unixtime(unix_timestamp(cast(com.batch_dt as string),'yyyy-MM-dd HH:mm:ss')),0))
 	group by com.corp_id,com.corp_nm,com.score_dt,com.label_hit,com.relation_id,com.relation_nm, rsk.msg_id,rsk.case_type,rsk.case_type_ii,rsk.signal_type
 ),
 Third_two as  --风险事件的描述(仅新闻)
@@ -174,7 +178,8 @@ Third_two as  --风险事件的描述(仅新闻)
 		corp_nm,
 		score_dt,
 		risk_cnt,
-		concat_ws('、',sort_array(collect_set(tmp_risk_imp_msg))) as risk_imp_msg
+		--concat_ws('、',sort_array(collect_set(tmp_risk_imp_msg))) as risk_imp_msg  modify yangcan 20221109
+		regexp_replace(regexp_replace(regexp_replace(concat_ws('、',sort_array(collect_set(tmp_risk_imp_msg))),'sort01',''),'sort02',''),'sort03','') as risk_imp_msg
 		-- group_concat(tmp_risk_imp_msg,'、')  as risk_imp_msg
 	from 
 	(
@@ -184,7 +189,12 @@ Third_two as  --风险事件的描述(仅新闻)
 			score_dt,
 			risk_cnt,
 			importance,
-			concat(importance_map,cast(risk_imp_cnt as string),'条') as tmp_risk_imp_msg
+			--concat(importance_map,cast(risk_imp_cnt as string),'条') as tmp_risk_imp_msg  modify yangcan 20221109
+			concat(case importance when -3 then 'sort01'
+			                       when -2 then 'sort02'
+								   when -1 then 'sort03'
+				   end 
+				   ,importance_map,cast(risk_imp_cnt as string),'条') as tmp_risk_imp_msg
 			--废弃 concat_ws('、',sort_array(collect_set(concat(importance_map,cast(risk_imp_cnt as string),'条')))) as risk_imp_msg 废弃
 			--废弃 group_concat(concat(importance_map,cast(risk_imp_cnt as string),'条'),'、')  as risk_imp_msg 废弃
 		from 
@@ -228,7 +238,8 @@ Third_three AS
 		corp_nm,
 		score_dt,
 		max(rm) as rm,
-		concat_ws('、',sort_array(collect_set(rel_rsk_msg))) as rsk_msg
+		--concat_ws('、',sort_array(collect_set(rel_rsk_msg))) as rsk_msg modify yangcan 20221109
+		regexp_replace(regexp_replace(regexp_replace(concat_ws('、',sort_array(collect_set(case when rm<=10 then rel_rsk_msg else null end))),'sort01',''),'sort02',''),'sort03','') as rsk_msg
 		-- group_concat(distinct rel_rsk_msg,'、')  as rsk_msg
 
 	from 
@@ -236,25 +247,43 @@ Third_three AS
 		select 
 			*,
 			row_number() over(partition by corp_id,corp_nm,to_date(score_dt) order by importance asc) as rm,
-			concat(case_type_ii,'(',importance_map,')') rel_rsk_msg
+			--concat(case_type_ii,'(',importance_map,')') rel_rsk_msg modify yangcan 20221109
+			concat(case importance when -3 then 'sort01'
+			                       when -2 then 'sort02'
+								   when -1 then 'sort03'
+				   end
+				   ,case_type_ii,'(',importance_map,')') rel_rsk_msg
 		from 
 		(
 			select
 				corp_id,
 				corp_nm,
 				score_dt,
-				relation_id,
-				relation_nm,
+				--relation_id,
+				--relation_nm,
 				case_type_ii,
-				importance,
-				case importance
+				--importance,
+				--case importance
+				--	when -3 then '严重负面'
+				--	when -2 then '重要负面'
+				--	when -1 then '一般负面'
+				--End as importance_map
+				min(importance) as importance,
+				case min(importance)
 					when -3 then '严重负面'
 					when -2 then '重要负面'
 					when -1 then '一般负面'
 				End as importance_map
-			from com_score_with_risk_info where signal_type=0  --仅新闻
-		) A order by importance asc
-	)B where rm<=10 group by corp_id,corp_nm,score_dt
+			from com_score_with_risk_info --where signal_type=0  --仅新闻 modify yangcan 20221115
+			--modify yangcan 20221109
+			group by corp_id,
+			         corp_nm,
+					 score_dt,
+					 case_type_ii
+		) A --order by importance asc
+	)B --where rm<=10 
+	   group by corp_id,corp_nm,score_dt
+	--modify yangcan 20221109 end
 ),
 Third_three_msg as 
 (
@@ -290,9 +319,9 @@ Third_four as --重要风险事件
 				com_rsk.case_type_ii as tag_ii
 				-- tag.tag_ii
 			from com_score_with_risk_info com_rsk
+			 join (select * from pth_rmp.rmp_opinion_risk_info_tag where importance=-3) tag
+				 on com_rsk.case_type_ii = tag.tag_ii
 			where com_rsk.label_hit=2
-			-- join (select * from pth_rmp.rmp_opinion_risk_info_tag where importance=-3) tag
-				-- on com_rsk.case_type_ii = tag.tag_ii
 		)B 
 	)A where rm<=5
 	   group by corp_id,corp_nm,score_dt

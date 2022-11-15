@@ -132,8 +132,9 @@ select
 	E.score_hit_yq,  --不需要刷到oracle
 	E.score_hit,
 	E.label_hit,
-	if(E.score_hit_ci=1 or E.label_hit=1,1,0) as alert,  --！！！2022-8-25 上线临时调整，得分预警不考虑舆情数量的限制条件
+	--if(E.score_hit_ci=1 or E.label_hit=1,1,0) as alert,  --！！！2022-8-25 上线临时调整，得分预警不考虑舆情数量的限制条件
 	--if(E.score_hit=1 or E.label_hit=1,1,0) as alert,  --！！！最终预警，分值预警和风险预警同时  ，备份
+	if(E.score_hit=1 or E.label_hit=1,1,0) as alert,  --modify yangcan 20221113
 	E.fluctuated,
 	E.model_version,
 	0 as delete_flag,

@@ -104,12 +104,14 @@ MID_RMP_ALERT_SCORE_SUMM as  -- 取每天最新批次的 单主体舆情分数�
 		a.corp_id,
 		a.corp_nm,
 		to_date(a.score_dt) as score_dt,  --已转换为日期，不带时分秒（原始值为带批次时间的日期 '2022-01-02 02:00:00'）
-		a.score,
+		--modify yangcan 20221110
+		round(a.score,4) as score,
 		a.yq_num,
 		a.score_hit_yq,
 		a.score_hit_ci,
 		a.score_hit,
-		a.label_hit,alert,
+		a.label_hit,
+		alert,
 		a.fluctuated,
 		a.model_version 
 	from RMP_ALERT_SCORE_SUMM_ a
@@ -126,12 +128,14 @@ MID_RMP_ALERT_SCORE_SUMM as  -- 取每天最新批次的 单主体舆情分数�
 		a.corp_id,
 		a.corp_nm,
 		to_date(a.score_dt) as score_dt,  --已转换为日期，不带时分秒（原始值为带批次时间的日期 '2022-01-02 02:00:00'）
-		a.score,
+		--modify yangcan 20221110
+		round(a.score,4) as score,
 		a.yq_num,
 		a.score_hit_yq,
 		a.score_hit_ci,
 		a.score_hit,
-		a.label_hit,alert,
+		a.label_hit,
+		alert,
 		a.fluctuated,
 		a.model_version 
 	from RMP_ALERT_SCORE_SUMM_ a
@@ -161,16 +165,16 @@ MID_RMP_ALERT_SCORE_SUMM as  -- 取每天最新批次的 单主体舆情分数�
 -- 	join (select * from corp_chg where source_code='FI')b on a.corp_id=b.corp_id
 -- 	where a.delete_flag=0
 -- ),
-news as(   --！！！注意此处notice_dt 处理为日期型，当日数据需要实时处理
+news as(   --！！！注意此处notice_dt 处理为日期型，当日数据需要实时处理  --
 	select distinct corp_id,corp_nm,to_date(notice_dt) as notice_dt,msg_id,0 as today_flag
-	from rmp_opinion_risk_info_ 
+	from rmp_opinion_risk_info_   --etl_date 前一天数据 2022-11-08   2022-11-09
 	where signal_type=0
-	  and notice_dt<to_date(current_timestamp())
+	  and notice_dt<to_date(current_timestamp())  --2022-11-10
 	UNION ALL 
 	select distinct corp_id,corp_nm,to_date(current_timestamp()) as notice_dt,msg_id,1 as today_flag
 	from rmp_opinion_risk_info_  
-	where signal_type=0
-	  and notice_dt>= from_unixtime((unix_timestamp()-3600*24)) and  notice_dt<= current_timestamp()
+	where signal_type=0  --2022-11-09 21：00：00                              --2022-11-10 21：00：00
+	  and notice_dt>= from_unixtime((unix_timestamp()-3600*24)) and  notice_dt<= current_timestamp()  
 ),
 Single_news as (
 	select corp_id,corp_nm,notice_dt,count(*) as yq_num from news group by corp_id,corp_nm,notice_dt
@@ -295,8 +299,9 @@ core_relcompy_score_res as   --关联方的 综合舆情分结果 （考虑存�
 		r,
 		r_score_cal,
 		news_duplicates_ratio,
-		0.3*sum(r_score_cal) over(partition by corp_id,score_dt) as second_score,
-		0.7*max(r_score_cal) over(partition by corp_id,score_dt) as third_score,
+		--yangcan modify 20221110
+		round(0.3*sum(r_score_cal) over(partition by corp_id,score_dt),4) as second_score,
+		round(0.7*max(r_score_cal) over(partition by corp_id,score_dt),4) as third_score,
 		model_version
 	from core_relcompy_score
 ),
@@ -498,7 +503,7 @@ label_hit_tab AS  --风险预警
 )
 insert into pth_rmp.rmp_alert_comprehs_score_temp  partition(etl_date=${ETL_DATE})--@pth_rmp.rmp_alert_comprehs_score_temp
 select distinct
-	md5(concat(G.batch_dt,cast(G.score_dt as string),nvl(G.corp_id,''),nvl(lb.relation_id,''),'0')) as sid_kw,
+	md5(concat(G.batch_dt,cast(g.score_dt as string),nvl(G.corp_id,''),nvl(lb.relation_id,''),'0')) as sid_kw,
 	cast(G.batch_dt as string) as batch_dt,
 	G.corp_id,
 	chg.corp_name as corp_nm,
@@ -511,13 +516,17 @@ select distinct
 	lb.r,
 	lb.r_score_cal,
 	lb.news_duplicates_ratio,
-	round(G.second_score,4) as second_score,
-	round(G.third_score) as third_score,
+	--round(G.second_score,4) as second_score,
+	G.second_score  as second_score, 
+	--round(G.third_score) as third_score,
+	G.third_score as third_score,
 	origin_comprehensive_score,
-	round(G.comprehensive_score,4) as comprehensive_score,
+	--round(G.comprehensive_score,4) as comprehensive_score,
+	G.comprehensive_score as comprehensive_score,
 	G.score_hit,
 	lb.label_hit,
-	if(G.score_hit=1 or lb.label_hit=1,1,0) as alert,   
+	--if(G.score_hit=1 or lb.label_hit=1,1,0) as alert, modify yangcan 20221110
+	if(G.score_hit=1 or lb.label_hit=1 or lb.label_hit=2,1,0) as alert,
 	G.fluctuated,
 	G.model_version,
 	'' AS adjust_warnlevel,
