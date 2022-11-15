@@ -33,19 +33,49 @@ timeLimit_switch as
     select True as flag   --TRUE:时间约束，FLASE:时间不做约束，通常用于初始化
     -- select False as flag
 ),
+-- 模型版本控制 --
+model_version_intf_ as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf   @app_ehzh.rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf
+(
+    select 'creditrisk_lowfreq_concat' model_name,'v1.0.4' model_version,'active' status  --低频模型
+    union all
+    select 'creditrisk_midfreq_cityinv' model_name,'v1.0.4' model_version,'active' status  --中频-城投模型
+    union all 
+    select 'creditrisk_midfreq_general' model_name,'v1.0.2' model_version,'active' status  --中频-产业模型
+    union all 
+    select 'creditrisk_highfreq_scorecard' model_name,'v1.0.4' model_version,'active' status  --高频-评分卡模型(高频)
+    union all 
+    select 'creditrisk_highfreq_unsupervised' model_name,'v1.0.2' model_version,'active' status  --高频-无监督模型
+    union all 
+    select 'creditrisk_union' model_name,'v1.0.2' model_version,'active' status  --信用风险综合模型
+    -- select 
+    --     notes,
+    --     model_name,
+    --     model_version,
+    --     status,
+    --     etl_date
+    -- from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf a
+    -- where a.etl_date in (select max(etl_date) from t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf)
+    --   and status='active'
+    -- group by notes,model_name,model_version,status,etl_date
+),
 -- 预警分 --
 rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接口
 (
-    -- 时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
-    union all
-    -- 非时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+	select a.*
+    from 
+    (
+		-- 时间限制部分 --
+		select * 
+		from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+		where 1 in (select max(flag) from timeLimit_switch) 
+		and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
+		union all
+		-- 非时间限制部分 --
+		select * 
+		from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+		where 1 in (select not max(flag) from timeLimit_switch) 
+	) a join model_version_intf_ b
+		on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 RMP_WARNING_SCORE_MODEL_ as  --预警分-模型结果表
 (
@@ -99,29 +129,34 @@ RMP_WARNING_SCORE_DETAIL_ as  --预警分--归因详情 原始接口
 RMP_WARNING_SCORE_DETAIL_HIS_ as  --预警分--归因详情历史 原始接口
 (
 	-- 时间限制部分 --
-    select * 
-    from pth_rmp.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
-    where 1 in (select max(flag) from timeLimit_switch) 
+	select * 
+	from pth_rmp.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
+	where 1 in (select max(flag) from timeLimit_switch)  and delete_flag=0
       and to_date(score_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
-    union all
-    -- 非时间限制部分 --
+	union all 
+	-- 非时间限制部分 --
     select * 
-    from pth_rmp.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    from pth_rmp.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL_HIS
+    where 1 in (select not max(flag) from timeLimit_switch)  and delete_flag=0
 ),
 -- 特征贡献度 --
-rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as --特征贡献度_综合预警等级
+rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as --特征贡献度_综合预警等级(用于限制当日特征名称)
 (
-	-- 时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf   --hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
-    union all
-    -- 非时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+	select a.*
+    from 
+    (
+		-- 时间限制部分 --
+		select * 
+		from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
+		where 1 in (select max(flag) from timeLimit_switch) 
+		and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+		union all 
+		-- 非时间限制部分 --
+		select * 
+		from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
+		where 1 in (select not max(flag) from timeLimit_switch) 
+	) a join model_version_intf_ b
+		on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 -- 模型外挂规则 --
 warn_adj_rule_cfg as --预警分-模型外挂规则配置表   取最新etl_date的数据 (更新频率:日度更新)
@@ -203,18 +238,20 @@ RMP_WARNING_SCORE_DETAIL_Batch as -- 取每天最新批次数据（当天数据做范围限制）
 		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
 	where a.ori_idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
 ),
--- RMP_WARNING_SCORE_DETAIL_Batch as 
--- (
--- 	select a.*
--- 	from RMP_WARNING_SCORE_DETAIL_Batch_Tmp a 
--- 	join rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch c 
--- 		on a.idx_name=c.feature_name  --特征范围限制
--- ),
-mid_RMP_WARNING_SCORE_DETAIL_HIS as --！！！检查
+RMP_WARNING_SCORE_DETAIL_HIS_Batch as --取历史归因详情 最大批次(取自归因详情当日表，所以需要最大批次处理)
+(
+	select a.*
+	from RMP_WARNING_SCORE_DETAIL_HIS_ a
+	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_HIS_ group by score_dt) b
+		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
+	where a.ori_idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
+
+),
+mid_RMP_WARNING_SCORE_DETAIL_HIS as 
 (
 	select main.*,cfg.risk_lv_desc as dim_warn_level_desc
-	from RMP_WARNING_SCORE_DETAIL_HIS_ main
-	left join warn_dim_risk_level_cfg_ cfg 
+	from RMP_WARNING_SCORE_DETAIL_HIS_Batch main
+	join warn_dim_risk_level_cfg_ cfg 
 		on main.dim_warn_level=cast(cfg.risk_lv as string)
 ),
 -- 第二段数据 --
@@ -228,10 +265,12 @@ Second_Part_Data_Prepare as
 		nvl(a.synth_warnlevel,'0') as synth_warnlevel, --综合预警等级
 		main.dimension,    --维度编码
 		f_cfg.dimension as dimension_ch,  --维度名称
+		main.dim_submodel_contribution_ratio as dim_abnormal_idx_contribution_ratio,   --维度 异常指标 贡献度占比
 		main.type,  	-- used
-		main.idx_name,  -- used 
+		main.idx_name,  -- used   用于展示的指标名称
+		main.ori_idx_name,  --原始模型提供的指标名称，主要用于关联而非展示
 		main.idx_value,  -- used
-		main.last_idx_value, -- used
+		main.last_idx_value, -- used in 简报wy
 		main.idx_unit,  -- used
 		main.idx_score,  -- used
 		f_cfg.feature_name_target,  --特征名称-目标(系统)  used
@@ -260,8 +299,9 @@ Second_Part_Data as
 			synth_warnlevel,
 			dimension,
 			dimension_ch,
-			-- sum(contribution_ratio) as dim_contrib_ratio,
-			sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension) as dim_contrib_ratio,
+			dim_abnormal_idx_contribution_ratio,
+			contribution_ratio,
+			-- sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension) as dim_contrib_ratio,
 			sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate) as dim_factorEvalu_contrib_ratio,
 			dim_warn_level,
 			dim_warn_level_desc,  --维度风险等级(难点)
