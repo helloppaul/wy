@@ -21,7 +21,7 @@ corp_chg as
 )
 insert overwrite table pth_rmp.rmp_opinion_risk_info partition(etl_date=${ETL_DATE},type_='sf_sxbzxr')
 select 
-	concat(corp_id,'_',md5(concat(cast(notice_dt as string),msg_title,case_type_ii,msg))) as sid_kw,
+	msg_id as sid_kw,
 	* 
 from 
 (
@@ -30,7 +30,7 @@ from
 		Final.corp_nm,
 		Final.notice_dt,
 		-- Final.msg_id, --impala
-		concat(md5(concat(cast(Final.notice_dt as string),Final.msg))) as msg_id,  
+		md5(concat(cid_chg.corp_id,cast(Final.notice_dt as string),Final.case_type_ii_cd)) as msg_id, 
 		-- concat(Final.corp_id,'_',md5(concat(cast(Final.notice_dt as string),Final.msg_title,Final.case_type_ii,Final.msg))) as msg_id,   -- hive版本支持：MD5(corp_id,notice_dt,case_type_ii,RISK_DESC)*/
 		Final.msg_title,
 		Final.case_type_cd,

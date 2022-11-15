@@ -26,7 +26,7 @@ corp_chg as
 )
 insert overwrite table pth_rmp.rmp_opinion_risk_info partition(etl_date=${ETL_DATE},type_='sf_bzxr')
 select 
-	concat(corp_id,'_',md5(concat(cast(notice_dt as string),msg_title,case_type_ii,msg))) as sid_kw,
+	msg_id as sid_kw,
 	*
 from
 (
@@ -35,8 +35,7 @@ from
 		Final.corp_nm,
 		Final.notice_dt,
 		-- Final.msg_id,  --impala
-		concat(md5(concat(cast(Final.notice_dt as string),Final.msg))) as msg_id,  
-		-- concat(Final.corp_id,'_',md5(concat(cast(Final.notice_dt as string),Final.msg_title,Final.case_type_ii,Final.msg))) as msg_id,   -- hive版本支持：MD5(corp_id,notice_dt,case_type_ii,RISK_DESC)*/
+		md5(concat(cid_chg.corp_id,cast(Final.notice_dt as string),Final.case_type_ii_cd)) as msg_id, 
 		Final.msg_title,
 		Final.case_type_cd,
 		Final.case_type,
@@ -152,7 +151,7 @@ from
 								ITCODE2 as COMPANY_ID, -- 公司代码(企业库) as 公司代码
 								max(ITCODE) as COMPANY_ID2, -- 公司代码(金融库) AS 公司代码2
 								max(ITNAME) as company_nm,  --公司名称 as 公司名称(被执行人名称)
-								cast(CR0037_004 as timestamp) as NOTICE_DT,  -- 立案时间 as 发生时间
+								to_date(cast(CR0037_004 as timestamp)) as NOTICE_DT,  -- 立案时间 as 发生时间
 								CR0037_001 as case_no,  --案号 as 案号
 								--count(*) as case_no_cnt,  --当天某公司的案号数量
 								max(CR0037_002) as jud_organ, --执行法院 as 执法机构(法院)
