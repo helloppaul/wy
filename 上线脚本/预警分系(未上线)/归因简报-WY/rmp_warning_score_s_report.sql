@@ -414,13 +414,13 @@ Warn_lv_Feat_score_Idx_value_Summ as --合并 维度风险等级，特征评分 以及 指标变动
 								when last_idx_value<=idx_value then 
 									concat(
 											concat(last_idx_value_str,idx_unit),
-											'升至',
+											'变化至',
 											concat(idx_value_str,idx_unit)
 									)
 								else 
 									concat(
 											concat(last_idx_value_str,idx_unit),
-											'降至',
+											'变化至',
 											concat(idx_value_str,idx_unit)
 									)
 							end
@@ -439,7 +439,7 @@ Warn_lv_Feat_score_Idx_value_Summ as --合并 维度风险等级，特征评分 以及 指标变动
 								when last_idx_value<=idx_value then 
 									concat(	'<span class="RED">',
 											concat(last_idx_value_str,idx_unit),
-											'升至',
+											'变化至',
 											concat(idx_value_str,idx_unit),
 											'</span>'
 									)
@@ -447,7 +447,7 @@ Warn_lv_Feat_score_Idx_value_Summ as --合并 维度风险等级，特征评分 以及 指标变动
 									concat(
 											'<span class="RED">',
 											concat(last_idx_value_str,idx_unit),
-											'降至',
+											'变化至',
 											concat(idx_value_str,idx_unit),
 											'</span>'
 									)
