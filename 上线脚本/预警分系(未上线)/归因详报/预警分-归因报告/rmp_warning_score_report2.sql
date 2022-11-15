@@ -195,6 +195,7 @@ sf_cpws_inft_ as --裁判文书
 warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
 (
 	select
+        dimension,
 		low_contribution_percent,   --60 ...
 		high_contribution_percent,  --100  ...
 		risk_lv,   -- -3 ...
@@ -206,7 +207,8 @@ feat_CFG as  --特征手工配置表
     select distinct
         feature_cd,
         feature_name,
-        substr(sub_model_type,1,6) as sub_model_type,  --取前两个中文字符
+        sub_model_type,  --低频-金融平台、低频-医药制造 ...
+        -- substr(sub_model_type,1,6) as sub_model_type,  --取前两个中文字符
         feature_name_target,
         dimension,
         type,
@@ -276,7 +278,7 @@ RMP_WARNING_SCORE_MODEL_Batch as  -- 取每天最新批次数据
 	-- join (select max(batch_dt) as max_batch_dt,score_date from RMP_WARNING_SCORE_MODEL_ group by score_date) b
 	-- 	on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
 ),
-rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch as --取每天最新批次 综合预警-贡献度排行榜(用于限制今天特征范围，昨天的不用限制)
+rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch as --取每天最新批次 综合预警-特征贡献度(用于限制今天特征范围，昨天的不用限制)
 (
 	select distinct a.feature_name,cfg.feature_name_target
 	from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ a
@@ -644,7 +646,6 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 		source_id as msg_id,
 		msg_title
 	from sf_cpws_inft_ 
-	where CR0055_034 is not null and CR0055_034<>''
 	union all
 	--近12个月_法院诉讼_当事人类型_被申请人_占比(last12M_lawsuit_partyrole_4_rate)
 	select distinct
@@ -836,34 +837,50 @@ mid_risk_info as   --合并新闻、诚信、司法数据
 Second_Part_Data_Prepare as 
 (
 	select distinct
-		main.batch_dt,
-		main.corp_id,
-		main.corp_nm,
-		main.score_dt,
-		nvl(a.synth_warnlevel,'0') as synth_warnlevel, --综合预警等级
-		main.dimension,    --维度编码
-		f_cfg.dimension as dimension_ch,  --维度名称
-		main.type,  	-- used
-		main.factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
-		main.idx_name,  -- used 
-		main.idx_value,  -- used
-		main.last_idx_value, -- used in 简报wy
-		main.idx_unit,  -- used 
-		main.idx_score,  -- used
-		rinfo.msg_title,    --风险信息（一个指标对应多个风险事件）
-		f_cfg.feature_name_target,  --特征名称-目标(系统)  used
-		main.contribution_ratio,
-		main.dim_warn_level,
-		cfg.risk_lv_desc as dim_warn_level_desc  --维度风险等级(难点)  used
-	from RMP_WARNING_SCORE_DETAIL_Batch main
-	left join feat_CFG f_cfg 	
-		on main.ori_idx_name=f_cfg.feature_cd
-	left join RMP_WARNING_SCORE_MODEL_Batch a
-		on main.corp_id=a.corp_id and main.batch_dt=a.batch_dt
-	join warn_dim_risk_level_cfg_ cfg 
-		on main.dim_warn_level=cast(cfg.risk_lv as string)
-	left join mid_risk_info rinfo 
-		on main.corp_id=rinfo.corp_id and main.score_dt>=rinfo.notice_date and main.ori_idx_name=rinfo.feature_cd
+		T.*,rinfo.msg_title
+	from 
+	(
+		select 
+			main.batch_dt,
+			main.corp_id,
+			main.corp_nm,
+			main.score_dt,
+			nvl(a.synth_warnlevel,'0') as synth_warnlevel, --综合预警等级
+			main.dimension,    --维度编码
+			case main.dimension 
+				when 1 then '财务'
+				when 2 then '经营'
+				when 3 then '市场'
+				when 4 then '舆情'
+				when 5 then '异常风险检测'
+			end as dimension_ch,
+			sum(contribution_ratio) over(partition by main.corp_id,main.batch_dt,main.score_dt,main.dimension) as dim_contrib_ratio,
+			sum(contribution_ratio) over(partition by main.corp_id,main.batch_dt,main.score_dt,main.dimension,main.factor_evaluate) as dim_factorEvalu_contrib_ratio,
+			-- f_cfg.dimension_ch as dimension_ch,  --维度名称
+			main.type,  	-- used
+			main.factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
+			main.ori_idx_name,
+			main.idx_name,  -- used 
+			main.idx_value,  -- used
+			main.last_idx_value, -- used in 简报wy
+			main.idx_unit,  -- used 
+			main.idx_score,  -- used
+			-- rinfo.msg_title,    --风险信息（一个指标对应多个风险事件）
+			main.idx_name as feature_name_target,
+			-- f_cfg.feature_name_target,  --特征名称-目标(系统)  used
+			main.contribution_ratio,
+			main.dim_warn_level,
+			cfg.risk_lv_desc as dim_warn_level_desc  --维度风险等级(难点)  used
+		from RMP_WARNING_SCORE_DETAIL_Batch main
+		-- left join warn_feat_CFG f_cfg 	
+		-- 	on main.ori_idx_name=f_cfg.feature_cd and main.dimension=f_cfg.dimension
+		left join RMP_WARNING_SCORE_MODEL_Batch a
+			on main.corp_id=a.corp_id and main.batch_dt=a.batch_dt
+		join warn_dim_risk_level_cfg_ cfg 
+			on main.dim_warn_level=cast(cfg.risk_lv as string) and main.dimension=cfg.dimension
+	)T left join mid_risk_info rinfo 
+		on T.corp_id=rinfo.corp_id and T.score_dt>=rinfo.notice_date and T.ori_idx_name=rinfo.feature_cd
+	-- 	on main.corp_id=rinfo.corp_id and main.score_dt>=rinfo.notice_date and main.ori_idx_name=rinfo.feature_cd
 ),
 Second_Part_Data as 
 (
@@ -879,8 +896,10 @@ Second_Part_Data as
 			dimension,
 			dimension_ch,
 			-- sum(contribution_ratio) as dim_contrib_ratio,
-			sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension) as dim_contrib_ratio,
-			sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate) as dim_factorEvalu_contrib_ratio,
+			dim_contrib_ratio,
+			dim_factorEvalu_contrib_ratio,
+			-- sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension) as dim_contrib_ratio,
+			-- sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate) as dim_factorEvalu_contrib_ratio,
 			contribution_ratio,
 			dim_warn_level,
 			dim_warn_level_desc,  --维度风险等级(难点)

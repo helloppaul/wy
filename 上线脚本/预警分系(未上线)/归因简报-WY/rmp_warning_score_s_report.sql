@@ -177,6 +177,7 @@ warn_adj_rule_cfg as --Ô¤¾¯·Ö-Ä£ĞÍÍâ¹Ò¹æÔòÅäÖÃ±í   È¡×îĞÂetl_dateµÄÊı¾İ (¸üĞÂÆµÂ
 warn_dim_risk_level_cfg_ as  -- Î¬¶È¹±Ï×¶ÈÕ¼±È¶ÔÓ¦·çÏÕË®Æ½-ÅäÖÃ±í
 (
 	select
+        dimension,
 		low_contribution_percent,   --60 ...
 		high_contribution_percent,  --100  ...
 		risk_lv,   -- -3 ...
@@ -252,7 +253,7 @@ mid_RMP_WARNING_SCORE_DETAIL_HIS as
 	select main.*,cfg.risk_lv_desc as dim_warn_level_desc
 	from RMP_WARNING_SCORE_DETAIL_HIS_Batch main
 	join warn_dim_risk_level_cfg_ cfg 
-		on main.dim_warn_level=cast(cfg.risk_lv as string)
+		on main.dim_warn_level=cast(cfg.risk_lv as string) and main.dimension=cfg.dimension
 ),
 -- µÚ¶ş¶ÎÊı¾İ --
 Second_Part_Data_Prepare as 
@@ -284,7 +285,7 @@ Second_Part_Data_Prepare as
 	left join RMP_WARNING_SCORE_MODEL_Batch a
 		on main.corp_id=a.corp_id and main.batch_dt=a.batch_dt
 	join warn_dim_risk_level_cfg_ cfg 
-		on main.dim_warn_level=cast(cfg.risk_lv as string)
+		on main.dim_warn_level=cast(cfg.risk_lv as string) and main.dimension=cfg.dimension
 ),
 Second_Part_Data as 
 (

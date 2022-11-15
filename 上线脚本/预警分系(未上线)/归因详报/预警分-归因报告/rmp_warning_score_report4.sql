@@ -194,6 +194,7 @@ warn_level_ratio_cfg_ as -- 综合预警等级等级划分档位-配置表
 warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
 (
 	select
+        dimension,
 		low_contribution_percent,   --60 ...
 		high_contribution_percent,  --100  ...
 		risk_lv,   -- -3 ...
@@ -284,7 +285,7 @@ mid_RMP_WARNING_SCORE_DETAIL_HIS as
 	select main.*,cfg.risk_lv_desc as dim_warn_level_desc
 	from RMP_WARNING_SCORE_DETAIL_HIS_Batch main
 	join warn_dim_risk_level_cfg_ cfg 
-		on main.dim_warn_level=cast(cfg.risk_lv as string)
+		on main.dim_warn_level=cast(cfg.risk_lv as string) and main.dimension=cfg.dimension
 ),
 Second_Part_Data_Prepare as 
 (
@@ -315,7 +316,7 @@ Second_Part_Data_Prepare as
 	left join RMP_WARNING_SCORE_MODEL_Batch a
 		on main.corp_id=a.corp_id and main.batch_dt=a.batch_dt
 	join warn_dim_risk_level_cfg_ cfg 
-		on main.dim_warn_level=cast(cfg.risk_lv as string)
+		on main.dim_warn_level=cast(cfg.risk_lv as string) and main.dimension=cfg.dimension
 ),
 Second_Part_Data as   --因子层数据
 (
