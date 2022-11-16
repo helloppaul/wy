@@ -782,6 +782,18 @@ mid_sf_ktts_ as
 		msg_title
 	from sf_ktts_inft_
 	where cr0169_002='10'  --当事人
+	union all
+	--近6个月_法院诉讼_数量(last6M_lawsuit_num)
+	select distinct
+		'last6M_lawsuit_num' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title
+	from sf_ktts_inft_
+	where 1=1
+	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-180))
+	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 ),
 mid_sf_ktts as --去除司法_开庭庭审数据里面重复性的msg_id
 (
