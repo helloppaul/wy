@@ -2,6 +2,12 @@
 --入参：${ETL_DATE}(20220818 int)，用于筛选score_dt
 --PS:不依赖 舆情风险信息整合表，直接依赖上游hds表为主
 -- /*2022-9-19 不剔除快讯和政府预警，将 快讯和政府预警 纳入统计范围*/
+-- /*2022-11-15 舆情统计日表 效率优化 */
+
+set hive.exec.parallel=true;
+set hive.auto.convert.join = true;
+set hive.ignore.mapjoin.hint = false;  
+
 with 
 corp_chg as 
 (
@@ -29,8 +35,9 @@ rmp_company_info_main_ as
 		sw_industry_l1 as sw_tag,
 		wind_industry_l1 as wind_tag
 	from pth_rmp.rmp_company_info_main a 
-	join (select max(etl_date) as max_etl_date from pth_rmp.rmp_company_info_main where delete_flag=0) b
-		on a.etl_date=b.max_etl_date 
+	where a.etl_date in  (select max(etl_date) as max_etl_date from pth_rmp.rmp_company_info_main)
+	  and a.delete_flag=0 
+		-- on a.etl_date=b.max_etl_date 
 	group by corp_id,credit_code,is_list,is_bond,list_board,bond_type,regorg_prov,industryphy_name,zjh_industry_l1,sw_industry_l1,wind_industry_l1
 ),
 rmp_company_info_main_union_ as 
@@ -107,7 +114,7 @@ main_news_without_kxun_region as
 		a.newscode as news_id,
 		cast(a.CRNW0003_006 as int) as news_importance,
 		cast(a.CRNW0003_006 as int) as importance
-	from hds.tr_ods_rmp_fi_x_news_tcrnw0003_all_v2 a 
+	from (select itcode2,newsdate,newscode,CRNW0003_006,flag from hds.tr_ods_rmp_fi_x_news_tcrnw0003_all_v2 where etl_date=${ETL_DATE}) a 
 	join corp_chg chg 
 		on a.itcode2=chg.source_id and chg.source_code='FI'
 	where a.flag<>'1'
