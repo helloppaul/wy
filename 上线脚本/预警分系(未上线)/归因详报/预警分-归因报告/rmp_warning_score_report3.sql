@@ -168,9 +168,9 @@ Third_Part_Data_CY_Prepare as   -- 主体为产业的数据
 		b.corp_id as same_property_corp_id,   --主体为产业债性质 的 同行业且综合预警等级相等 的 企业
 		b.corp_nm as same_property_corp_nm
 	from Third_Part_Data_Prepare a
-	join (select * from Third_Part_Data_Prepare where bond_type = 1) b 
+	join (select * from Third_Part_Data_Prepare where bond_type <>2 ) b 
 		on  a.zjh_industry_l1= b.zjh_industry_l1 and a.synth_warnlevel=b.synth_warnlevel  --综合预警等级相同的企业
-	where a.bond_type = 1  --产业债
+	where a.bond_type <>2  --产业债
 	  and a.corp_id<>b.corp_id
 ),
 Third_Part_Data_CY as    -- 和产业主体相同属性的 其他企业数量 计算
@@ -262,14 +262,14 @@ Third_Part_Data_SUMM as
 	from 
 	(
 		select 
-			*,
-			row_number() over(partition by batch_dt,corp_id,score_dt,synth_warnlevel order by 1) as rm_rep_data
+			*
+			--row_number() over(partition by batch_dt,corp_id,score_dt,synth_warnlevel order by 1) as rm_rep_data
 		from 
 		(
 			select
 				*,
 				row_number() over(partition by batch_dt,corp_id,score_dt,synth_warnlevel,bond_type,corp_property order by 1) as rm,
-				count(corp_id) over(partition by batch_dt,corp_id,score_dt,synth_warnlevel,bond_type,corp_property) as corp_id_cnt
+				count(same_property_corp_id) over(partition by batch_dt,corp_id,score_dt,synth_warnlevel,bond_type,corp_property) as corp_id_cnt
 			from 
 			(
 				select *
@@ -279,7 +279,7 @@ Third_Part_Data_SUMM as
 				from Third_Part_Data_CT
 			) A --where rm<=5
 		) B where rm<=5
-	) C where rm_rep_data=1
+	) C --where rm_rep_data=1
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 -- 第三段信息 --
@@ -302,12 +302,12 @@ Third_Msg as
 		a.corp_nm,
 		a.score_dt,
 		concat(
-			if(a.bond_type_desc <>'','中',''),a.corp_property_desc,
+			if(a.bond_type_desc <>'',concat(bond_type_desc,'中'),''),a.corp_property_desc,
 			'总体风险水平表现一致的企业还包括：',b.same_property_corp_nm_in_one_row,if(a.corp_id_cnt>5,'等',''),
 			cast(corp_id_cnt as string),'家企业。'
 		) as msg_no_color,
 		concat(
-			if(a.bond_type_desc <>'','中',''),a.corp_property_desc,
+			if(a.bond_type_desc <>'',concat(bond_type_desc,'中'),''),a.corp_property_desc,
 			'总体风险水平表现一致的企业还包括：','<span class="WEIGHT">',b.same_property_corp_nm_in_one_row,if(a.corp_id_cnt>5,'等',''),'</span>',
 			cast(corp_id_cnt as string),'家企业。'
 		) as msg3
@@ -315,9 +315,19 @@ Third_Msg as
 	join Third_Msg_Corp b 
 		on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id
 )
-select distinct
-	* 
-from Third_Msg
+select 
+	batch_dt,
+	corp_id,
+	corp_nm,
+	score_dt,
+	msg_no_color,
+	msg3
+from
+(
+	select 
+		*,row_number() over(partition by batch_dt,corp_id,score_dt order by 1) as rm
+	from Third_Msg
+) A where rm=1  --去重重复数据（以免出现脏数据）
 ;
 
 
