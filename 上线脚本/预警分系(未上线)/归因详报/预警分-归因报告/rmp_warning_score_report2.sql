@@ -570,7 +570,7 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 (
 	--近6个月比近12个月_法院诉讼_案由明细_买卖合同纠纷_占比(last6Mto12M_lawsuit_detailedreason_4_rate)
 	select distinct
-		'last6Mto12M_honesty_secclass_22000078_rate' as feature_cd,
+		'last6Mto12M_lawsuit_detailedreason_4_rate' as feature_cd,
 		corp_id,
 		notice_date,
 		source_id as msg_id,
@@ -1113,24 +1113,55 @@ Second_Msg_Dimension_Type as
 Second_Msg_Dim as 
 (
 	select 
-		a.batch_dt,
-		a.corp_id,
-		a.corp_nm,
-		a.score_dt,
-		a.dimension,
-		lpad(cast(a.dim_contrib_ratio_rank as string),3,'0') as dim_rank,  --维度显示顺序排名，001 002 003 004 005
+		batch_dt,
+		corp_id,
+		corp_nm,
+		score_dt,
+		dimension,
+		dim_rank,
 		case 	
 			when a.dim_factorEvalu_factor_cnt=0 then  --无异常指标时，话术直接输出维度层即可，结束语为'无显著异常指标及事件'
-				a.dim_msg
-			else
-				concat(
-					lpad(cast(a.dim_contrib_ratio_rank as string),3,'0'),'_',a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension
-				) 
+					a.dim_msg
+				else
+					concat(
+						case 
+							when dim_rank='001' then 
+								concat('<',dim_rank,'>','首先为',a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension )
+							when dim_rank='002' then 
+								concat('<',dim_rank,'>','其次为',a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension )
+							when dim_rank='003' then 
+								concat('<',dim_rank,'>','第三为',a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension )
+							when dim_rank='004' then 
+								concat('<',dim_rank,'>','第四为',a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension )	
+							when dim_rank='005' then  
+								concat('<',dim_rank,'>','最后为',a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension )	
+						end
+					) 
 		end as msg_dim
-	from Second_Msg_Dimension a
-	join Second_Msg_Dimension_Type b 
-		on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id and a.dimension=b.dimension
-	order by batch_dt,corp_id,score_dt,dim_rank
+	from 
+	(
+		select 
+			a.batch_dt,
+			a.corp_id,
+			a.corp_nm,
+			a.score_dt,
+			a.dimension,
+			a.dim_factorEvalu_factor_cnt,
+			b.idx_desc_risk_info_desc_in_one_dimension,
+			lpad(cast(a.dim_contrib_ratio_rank as string),3,'0') as dim_rank  --维度显示顺序排名，001 002 003 004 005
+			-- case 	
+			-- 	when a.dim_factorEvalu_factor_cnt=0 then  --无异常指标时，话术直接输出维度层即可，结束语为'无显著异常指标及事件'
+			-- 		a.dim_msg
+			-- 	else
+			-- 		concat(
+			-- 			lpad(cast(a.dim_contrib_ratio_rank as string),3,'0'),'_',a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension
+			-- 		) 
+			-- end as msg_dim
+		from Second_Msg_Dimension a
+		join Second_Msg_Dimension_Type b 
+			on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id and a.dimension=b.dimension
+		order by batch_dt,corp_id,score_dt,dim_rank
+	)A 
 ),
 Second_Msg as    --！！！还未对 贡献度占比 从大到小排序
 (
