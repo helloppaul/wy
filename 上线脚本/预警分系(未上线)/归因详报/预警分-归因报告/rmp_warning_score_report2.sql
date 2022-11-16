@@ -25,7 +25,7 @@ corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (
 		  	-- on b1.etl_date=b2.etl_date
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
-	where a.delete_flag=0 and b.delete_flag=0
+	where a.delete_flag=0 and b.delete_flag=0 and a.source_code='ZXZX'
 ),
 --—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 -- 时间限制开关 --
@@ -856,6 +856,8 @@ Second_Part_Data_Prepare as
 			end as dimension_ch,
 			sum(contribution_ratio) over(partition by main.corp_id,main.batch_dt,main.score_dt,main.dimension) as dim_contrib_ratio,
 			sum(contribution_ratio) over(partition by main.corp_id,main.batch_dt,main.score_dt,main.dimension,main.factor_evaluate) as dim_factorEvalu_contrib_ratio,
+			count(idx_name) over(partition by main.corp_id,main.batch_dt,main.score_dt,main.dimension)  as dim_factor_cnt,
+			count(idx_name) over(partition by main.corp_id,main.batch_dt,main.score_dt,main.dimension,main.factor_evaluate)  as dim_factorEvalu_factor_cnt,
 			-- f_cfg.dimension_ch as dimension_ch,  --维度名称
 			main.type,  	-- used
 			main.factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
@@ -917,9 +919,9 @@ Second_Part_Data as
 					concat(feature_name_target,'为',cast(cast(round(idx_value,2) as decimal(10,2))as string),idx_unit)
 				else 
 					concat(feature_name_target,'为',cast(idx_value as string),idx_unit)
-			end as idx_desc,				
-			count(idx_name) over(partition by corp_id,batch_dt,score_dt,dimension)  as dim_factor_cnt,
-			count(idx_name) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate)  as dim_factorEvalu_factor_cnt
+			end as idx_desc,	
+			dim_factor_cnt,			
+			dim_factorEvalu_factor_cnt
 		from Second_Part_Data_Prepare 
 		order by corp_id,score_dt desc,dim_contrib_ratio desc
 	) A
