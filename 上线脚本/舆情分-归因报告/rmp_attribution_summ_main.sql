@@ -168,6 +168,7 @@ sentiself_feapct_intf_newest_with_desc_cfg as
 	where B.index_min_val<>-1 
 	  and A.feature_name<>'importance_avg_abs' 
 	  --and A.feature_pct=B.index_min_val
+	  and A.feature_value=B.index_min_val
 	union all 
 	select  
 		A.*,
@@ -321,8 +322,8 @@ com_score_with_risk_info AS
 	join rmp_opinion_risk_info_ rsk
 		--on com.corp_id=rsk.corp_id and to_date(com.score_dt)=to_date(rsk.notice_dt) modify yangcan 20221115
 		 on com.corp_id=rsk.corp_id
-		where to_date(date_add(from_unixtime(unix_timestamp(cast(rsk.notice_dt as string),'yyyy-MM-dd HH:mm:ss')),0)) >= to_date(date_add(from_unixtime(unix_timestamp(cast(com.batch_dt as string),'yyyy-MM-dd HH:mm:ss')),-1))
-		  and to_date(date_add(from_unixtime(unix_timestamp(cast(rsk.notice_dt as string),'yyyy-MM-dd HH:mm:ss')),0)) <  to_date(date_add(from_unixtime(unix_timestamp(cast(com.batch_dt as string),'yyyy-MM-dd HH:mm:ss')),0))
+		where from_unixtime(unix_timestamp(cast(rsk.notice_dt as string),'yyyy-MM-dd HH:mm:ss')) >= from_unixtime(unix_timestamp(cast(com.batch_dt as string),'yyyy-MM-dd HH:mm:ss')-24*3600)
+		  and from_unixtime(unix_timestamp(cast(rsk.notice_dt as string),'yyyy-MM-dd HH:mm:ss')) <  from_unixtime(unix_timestamp(cast(com.batch_dt as string),'yyyy-MM-dd HH:mm:ss'))
 	group by com.corp_id,com.corp_nm,com.score_dt,com.score_hit,com.label_hit,rsk.msg_id,rsk.case_type,rsk.case_type_ii,rsk.signal_type
 ),
 second_three as 

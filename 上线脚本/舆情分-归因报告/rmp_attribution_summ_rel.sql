@@ -167,8 +167,8 @@ com_score_with_risk_info AS
 	join rmp_opinion_risk_info_ rsk
 		--on com.relation_id=rsk.corp_id and to_date(com.score_dt)=to_date(rsk.notice_dt)
 		on com.relation_id=rsk.corp_id
-		where to_date(date_add(from_unixtime(unix_timestamp(cast(rsk.notice_dt as string),'yyyy-MM-dd HH:mm:ss')),0)) >= to_date(date_add(from_unixtime(unix_timestamp(cast(com.batch_dt as string),'yyyy-MM-dd HH:mm:ss')),-1))
-		  and to_date(date_add(from_unixtime(unix_timestamp(cast(rsk.notice_dt as string),'yyyy-MM-dd HH:mm:ss')),0)) <  to_date(date_add(from_unixtime(unix_timestamp(cast(com.batch_dt as string),'yyyy-MM-dd HH:mm:ss')),0))
+		where from_unixtime(unix_timestamp(cast(rsk.notice_dt as string),'yyyy-MM-dd HH:mm:ss')) >= from_unixtime(unix_timestamp(cast(com.batch_dt as string),'yyyy-MM-dd HH:mm:ss')-24*3600)
+		  and from_unixtime(unix_timestamp(cast(rsk.notice_dt as string),'yyyy-MM-dd HH:mm:ss')) <  from_unixtime(unix_timestamp(cast(com.batch_dt as string),'yyyy-MM-dd HH:mm:ss'))
 	group by com.corp_id,com.corp_nm,com.score_dt,com.label_hit,com.relation_id,com.relation_nm, rsk.msg_id,rsk.case_type,rsk.case_type_ii,rsk.signal_type
 ),
 Third_two as  --风险事件的描述(仅新闻)
