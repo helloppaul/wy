@@ -67,16 +67,20 @@ rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接
 	select a.*
     from 
     (
-		-- 时间限制部分 --
-		select * 
-		from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-		where 1 in (select max(flag) from timeLimit_switch) 
-		and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
-		union all
-		-- 非时间限制部分 --
-		select * 
-		from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-		where 1 in (select not max(flag) from timeLimit_switch) 
+		select m.*
+		from 
+		(
+			-- 时间限制部分 --
+			select *,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
+			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+			where 1 in (select max(flag) from timeLimit_switch) 
+			and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
+			union all
+			-- 非时间限制部分 --
+			select *,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
+			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+			where 1 in (select not max(flag) from timeLimit_switch) 
+		) m where rm=1
 	) a join model_version_intf_ b
 		on a.model_version = b.model_version and a.model_name=b.model_name
 ),
@@ -169,16 +173,25 @@ RMP_WARNING_SCORE_CHG_ as
 -- 特征贡献度 --
 rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as --特征贡献度_综合预警等级(用于限制当日特征名称)
 (
-	-- 时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
-    where 1 in (select max(flag) from timeLimit_switch) 
-      and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
-    where 1 in (select not max(flag) from timeLimit_switch) 
+	select a.*
+    from 
+    (
+		select m.*
+		from
+		(
+			-- 时间限制部分 --
+			select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
+			where 1 in (select max(flag) from timeLimit_switch) 
+			and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+			union all 
+			-- 非时间限制部分 --
+			select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
+			where 1 in (select not max(flag) from timeLimit_switch) 
+		)m where rm=1
+	) a join model_version_intf_ b
+		on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
 warn_level_ratio_cfg_ as -- 综合预警等级等级划分档位-配置表
