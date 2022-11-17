@@ -111,16 +111,21 @@ rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_ as  --ÌØÕ÷Ô­Ê¼Öµ_¸ßÆµ Ô­Ê¼½Ó¿Ú
     from 
     (
         -- Ê±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
-        and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        select m.* 
+        from 
+        (
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf
+            where 1 in (select max(flag) from timeLimit_switch) 
+            and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
+            and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+            -- group by to_date(end_dt) 
         union all 
         -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
-        select *
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf
-        where 1 in (select not max(flag) from timeLimit_switch) 
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf
+            where 1 in (select not max(flag) from timeLimit_switch) 
+        ) m  where rm=1
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
 ),
@@ -130,16 +135,20 @@ rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf_ as  --ÌØÕ÷Ô­Ê¼Öµ_µÍÆµ Ô­Ê¼½Ó¿
     from 
     (
         -- Ê±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
-        and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        select m.* 
+        from 
+        (
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
+            where 1 in (select max(flag) from timeLimit_switch) 
+            and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
+            and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
         union all 
-        -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
-        where 1 in (select not max(flag) from timeLimit_switch) 
+            -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_lfreqconcat_val_intf
+            where 1 in (select not max(flag) from timeLimit_switch) 
+        ) m where rm=1
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
 ),
@@ -149,16 +158,20 @@ rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf_ as  --ÌØÕ÷Ô­Ê¼Öµ_ÖÐÆµ_³ÇÍ¶ Ô
     from 
     (
         -- Ê±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
-        and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        select m.* 
+        from 
+        (
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf
+            where 1 in (select max(flag) from timeLimit_switch) 
+            and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
+            and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
         union all 
-        -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf
-        where 1 in (select not max(flag) from timeLimit_switch) 
+            -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqcityinv_val_intf
+            where 1 in (select not max(flag) from timeLimit_switch) 
+        ) m  where rm=1   
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
 ),
@@ -168,16 +181,20 @@ rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf_ as  --ÌØÕ÷Ô­Ê¼Öµ_ÖÐÆµ_²úÒµÕ® Ô­Ê
     from 
     (
         -- Ê±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
-        and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        select m.* 
+        from 
+        (
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf
+            where 1 in (select max(flag) from timeLimit_switch) 
+            and to_date(end_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
+            and to_date(end_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
         union all 
-        -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf
-        where 1 in (select not max(flag) from timeLimit_switch) 
+            -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_feat_mfreqgen_val_intf
+            where 1 in (select not max(flag) from timeLimit_switch) 
+        ) m  where rm=1   
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
 ),
@@ -188,15 +205,19 @@ rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as  --ÌØÕ÷¹±Ï×¶È_ÈÚºÏµ÷Õûºó×ÛºÏ
     from 
     (
         -- Ê±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        select m.* 
+        from 
+        (
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
+            where 1 in (select max(flag) from timeLimit_switch) 
+            and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
         union all 
-        -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
-        where 1 in (select not max(flag) from timeLimit_switch) 
+            -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
+            where 1 in (select not max(flag) from timeLimit_switch) 
+        ) m  where rm=1   
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
 ),
@@ -206,15 +227,19 @@ rsk_rmp_warncntr_dftwrn_intp_hfreqscard_pct_intf_ as --ÌØÕ÷¹±Ï×¶È_¸ßÆµ
     from 
     (
         -- Ê±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        select m.* 
+        from 
+        (
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf
+            where 1 in (select max(flag) from timeLimit_switch) 
+            and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
         union all 
-        -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf
-        where 1 in (select not max(flag) from timeLimit_switch) 
+            -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_hfreqscard_fp_intf
+            where 1 in (select not max(flag) from timeLimit_switch) 
+        ) m  where rm=1   
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
 ),
@@ -224,15 +249,19 @@ rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_pct_intf_ as  --ÌØÕ÷¹±Ï×¶È_µÍÆµ
     from 
     (
         -- Ê±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        select m.* 
+        from 
+        (
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf
+            where 1 in (select max(flag) from timeLimit_switch) 
+            and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
         union all 
-        -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf
-        where 1 in (select not max(flag) from timeLimit_switch) 
+            -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_lfreqconcat_fp_intf
+            where 1 in (select not max(flag) from timeLimit_switch) 
+        ) m  where rm=1   
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
 ),
@@ -242,15 +271,19 @@ rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_pct_intf_ as  --ÌØÕ÷¹±Ï×¶È_ÖÐÆµ³ÇÍ¶
     from 
     (
         -- Ê±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        select m.* 
+        from 
+        (
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf
+            where 1 in (select max(flag) from timeLimit_switch) 
+            and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
         union all 
-        -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf
-        where 1 in (select not max(flag) from timeLimit_switch) 
+            -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqcityinv_fp_intf
+            where 1 in (select not max(flag) from timeLimit_switch) 
+        ) m  where rm=1              
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
 ),
@@ -260,15 +293,19 @@ rsk_rmp_warncntr_dftwrn_intp_mfreqgen_featpct_intf_ as  --ÌØÕ÷¹±Ï×¶È_ÖÐÆµ²úÒµ
     from 
     (
         -- Ê±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        select m.* 
+        from 
+        (
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf
+            where 1 in (select max(flag) from timeLimit_switch) 
+            and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
         union all 
-        -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf
-        where 1 in (select not max(flag) from timeLimit_switch) 
+            -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_mfreqgen_fp_intf
+            where 1 in (select not max(flag) from timeLimit_switch) 
+         ) m  where rm=1 
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
 ),
@@ -279,15 +316,19 @@ rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf_ as  --ÌØÕ÷µÃ·Ö_¸ßÆµ Ô­Ê¼½Ó¿Ú
     from 
     (
         -- Ê±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        select m.* 
+        from 
+        (
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf
+            where 1 in (select max(flag) from timeLimit_switch) 
+            and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))  
         union all 
-        -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf
-        where 1 in (select not max(flag) from timeLimit_switch) 
+            -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_hfreqscard_fsc_intf
+            where 1 in (select not max(flag) from timeLimit_switch) 
+         ) m  where rm=1  
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
     
@@ -298,15 +339,19 @@ rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf_ as  --ÌØÕ÷µÃ·Ö_µÍÆµ Ô­Ê¼½Ó¿Ú
     from 
     (
         -- Ê±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        select m.* 
+        from 
+        (
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf
+            where 1 in (select max(flag) from timeLimit_switch) 
+            and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))   
         union all 
-        -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf
-        where 1 in (select not max(flag) from timeLimit_switch) 
+            -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_lfreqconcat_fsc_intf
+            where 1 in (select not max(flag) from timeLimit_switch) 
+         ) m  where rm=1 
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
 ),
@@ -316,15 +361,19 @@ rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf_ as  --ÌØÕ÷µÃ·Ö_ÖÐÆµ_³ÇÍ¶ Ô­Ê
     from 
     (
         -- Ê±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        select m.* 
+        from 
+        (
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf
+            where 1 in (select max(flag) from timeLimit_switch) 
+            and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))     
         union all 
-        -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf
-        where 1 in (select not max(flag) from timeLimit_switch)
+            -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqcityinv_fsc_intf
+            where 1 in (select not max(flag) from timeLimit_switch)
+         ) m  where rm=1 
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name 
 ),
@@ -334,15 +383,19 @@ rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf_ as  --ÌØÕ÷µÃ·Ö_ÖÐÆµ_²úÒµÕ® Ô­Ê¼½
     from 
     (
         -- Ê±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        select m.* 
+        from 
+        (
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf
+            where 1 in (select max(flag) from timeLimit_switch) 
+            and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
         union all 
-        -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
-        select * 
-        from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf
-        where 1 in (select not max(flag) from timeLimit_switch) 
+            -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
+            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+            from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf
+            where 1 in (select not max(flag) from timeLimit_switch) 
+         ) m  where rm=1 
     ) a join model_version_intf_ b
     on a.model_version = b.model_version and a.model_name=b.model_name 
 ),
@@ -1029,7 +1082,7 @@ res0 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖÐµÄÌØÕ÷
     -- join  warn_union_adj_sync_score main --Ô¤¾¯·Ö
     --     on main.batch_dt=c.batch_dt and main.corp_id=c.corp_id
     left join warn_feature_value_with_median_res b  --ÈýÆµºÏ²¢µÄÌØÕ÷Ô­Ê¼Öµ
-        on c.corp_id=b.corp_id and c.batch_dt=b.batch_dt and c.feature_name=b.idx_name
+        on c.corp_id=b.corp_id and c.batch_dt=b.batch_dt and c.feature_name=b.idx_name and c.sub_model_name=b.sub_model_name
 ),
 res1 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖÐµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖÐµÄÌØÕ÷Ãû³ÆÎª×¼)+×ÛºÏÌØÕ÷¹±Ï×¶È(ÎÞ¼à¶½) 
 (
