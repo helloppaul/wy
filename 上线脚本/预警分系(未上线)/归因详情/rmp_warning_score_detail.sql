@@ -15,6 +15,11 @@
 -- /* 2022-11-12 ĞŞ¸´ Ö¸±êÖĞÎ»Êı¼ÆËãµÄÎÊÌâ */
 -- /* 2022-11-12 ĞŞ¸´ ÆóÒµÊıÁ¿ÓëÉÏÓÎ×ÛºÏÔ¤¾¯µÈ¼¶Ä£ĞÍ½á¹û±íÆóÒµÊıÁ¿²»Ò»ÖÂµÄÎÊÌâ */
 -- /* 2022-11-13 ĞÂÔö ori_idx_nameºÍdim_submodel_contribution_ratio(¸÷Î¬¶ÈÒì³£Ö¸±êÕ¼±È) ÓÃÓÚ¹éÒòÏê±¨µÚËÄ¶ÎºÍ¹éÒò¼ò±¨wy¿ª·¢ */
+-- /* 2022-11-16 ĞÂÔö Òò×ÓÆÀ¼Û×Ö¶Î È¡ÖµÓÉ×ÛºÏÌØÕ÷¹±Ï×¶È±í ¸ÄÎª ¸ßÖĞµÍÆµºÍ²¢µÄÌØÕ÷¹±Ï×¶È±í */
+-- /* 2022-11-16 ĞÂÔö ÖĞÎ»ÊıºÍ×òÈÕÖ¸±êÖµ ¸ù¾İÔ­Ê¼µ¥Î»ºÍÄ¿±êµ¥Î»½øĞĞµ¥Î»×ª»»  */
+-- /* 2022-11-16 µ÷Õû Î¬¶È·çÏÕµÈ¼¶Âß¼­£¬²»×öÔ¤¾¯µÈ¼¶ºÍÎ¬¶È·çÏÕµÈ¼¶µÄÓ³Éä£¬Ö±½Ó°´ÕÕ»®µµºóµÄÖµÊä³ö £¡£¡£¡ */
+-- /* 2022-11-16 ĞŞ¸´ ÖĞÎ»Êı¼ÆËãÎÊÌâ£¬µ±Îª³ÇÍ¶ÊÇ zjh_cal='³ÇÍ¶'£¬±ÜÃâ½«Ô­Êô³ÇÍ¶µÄ¹éÈëµ½²úÒµ */
+
 -- ÒÀÀµ Ä£ĞÍ ×ÛºÏÔ¤¾¯·Ö£¬ÌØÕ÷Ô­Ê¼Öµ¸ßÖĞµÍ£¬ÌØÕ÷¹±Ï×¶È¸ßÖĞµÍÎŞ¼à¶½ÒÔ¼°×ÛºÏ£¬ÆÀ·Ö¿¨¸ßÖĞµÍ£¬¹éÒòÏêÇé¼°ÆäÀúÊ· PS:²»ÒÀÀµpth_rmp.Ä£ĞÍ½á¹û±í
 --q1£ºÎ¬¶È·çÏÕµÈ¼¶µÄ¼ÆËãÒÀ¿¿¹±Ï×¶ÈÕ¼±È£¬¹±Ï×¶ÈÕ¼±ÈÌØÕ÷»áÉÙÓÚÌØÕ÷Ô­Ê¼Öµ£¬´ËÊ±×îºó¹ØÁª½«»á²úÉúÄ³Ğ©Î¬¶È¹ØÁª²¹ÉÏÎ¬¶È·çÏÕµÈ¼¶£¬µ¼ÖÂÎªNULL(ÔİÊ±¾ö¶¨Ìßµô)
 --q2£ºÌØÕ÷ÖµÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÎª»ù×¼£¬Ö÷±íÓĞÌØÕ÷Ô­Ê¼ÖµÇĞ»»Îª¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±í
@@ -670,7 +675,7 @@ warn_feature_value_with_median as --Ô­Ê¼ÌØÕ÷Öµ_ºÏ²¢¸ßÖĞµÍÆµ+ÖĞÎ»Êı¼ÆËã
         nvl(b.bond_type,0) as bond_type,  --0£º·Ç²úÒµºÍ³ÇÍ¶ 1£º²úÒµÕ® 2£º³ÇÍ¶Õ®
         case 
             when nvl(b.bond_type,0)=2 then 
-                ''
+                '³ÇÍ¶'
             when nvl(b.bond_type,0)<>2 then 
                 nvl(b.industryphy_name,'')
         end as zjh_cal   --¼ÆËãÓÃÖ¤¼à»áÒ»¼¶ĞĞÒµ·ÖÀà
@@ -891,7 +896,8 @@ warn_feature_contrib_res2 as  -- ´øÓĞ Î¬¶È·çÏÕµÈ¼¶ µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
         )C 
     )D
 ),
-warn_feature_contrib_res3_tmp as 
+-- warn_feature_contrib_res3_tmp as 
+warn_feature_contrib_res3 as
 (
     select distinct
         main.batch_dt,
@@ -902,68 +908,47 @@ warn_feature_contrib_res3_tmp as
         main.dim_submodel_contribution_ratio,
         main.dim_risk_lv,
         main.dim_risk_lv_desc,  --Î¬¶È·çÏÕµÈ¼¶ ¸ß·çÏÕ£¬ÖĞ·çÏÕ£¬µÍ·çÏÕ
-        nvl(b.adj_synth_level,'') as adj_synth_level,  --×ÛºÏÔ¤¾¯µÈ¼¶
-        nvl(b.adjust_warnlevel,'') as adjust_warnlevel --µ÷ÕûºóµÈ¼¶
+        cast(main.dim_risk_lv as string) as dim_warn_level
+        -- nvl(b.adj_synth_level,'') as adj_synth_level,  --×ÛºÏÔ¤¾¯µÈ¼¶
+        -- nvl(b.adjust_warnlevel,'') as adjust_warnlevel --µ÷ÕûºóµÈ¼¶
     from warn_feature_contrib_res2 main
-    left join warn_union_adj_sync_score b --Ô¤¾¯·Ö-Ä£ĞÍ½á¹û±í
-        on main.batch_dt=b.batch_dt and main.corp_id=b.corp_id
+    -- left join warn_union_adj_sync_score b --Ô¤¾¯·Ö-Ä£ĞÍ½á¹û±í
+    --     on main.batch_dt=b.batch_dt and main.corp_id=b.corp_id
 ),
-warn_feature_contrib_res3 as  -- ¸ù¾İ×ÛºÏÔ¤¾¯µÈ¼¶µ÷ÕûºóµÄÎ¬¶È·çÏÕË®Æ½ µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
-(
-    select 
-        batch_dt,
-        corp_id,
-        corp_nm,
-        score_dt,
-        dimension,
-        dim_submodel_contribution_ratio,
-        dim_warn_level  --×îÖÕµ÷ÕûºóµÄÎ¬¶È·çÏÕµÈ¼¶
-    from 
-    (
-        select 
-            a.*,
-            case 
-                when cast(a.dim_risk_lv as string)<>a.adjust_warnlevel then 
-                    a.adjust_warnlevel
-                else 
-                    cast(a.dim_risk_lv as string)
-            end as dim_warn_level  --¸ù¾İ×ÛºÏÔ¤¾¯µÈ¼¶µ÷ÕûºóµÄÎ¬¶È·çÏÕË®Æ½
-        from warn_feature_contrib_res3_tmp a 
-        where a.dim_risk_lv in (select min(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp)  --·çÏÕ×î¸ßµÄ
-        -- join (select max(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp) b  --»ñÈ¡×î¸ß·çÏÕË®Æ½¶ÔÓ¦µÄÎ¬¶È
-        --     on a.dim_risk_lv=b.max_dim_risk_lv
-        union all 
-        select 
-            a.*,
-            cast(a.dim_risk_lv as string) as dim_warn_level
-        from warn_feature_contrib_res3_tmp a 
-        where a.dim_risk_lv not in (select min(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp)  --·Ç·çÏÕ×î¸ßµÄ
-        -- join (select max(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp) b  --»ñÈ¡³ı×î¸ß·çÏÕË®Æ½¶ÔÓ¦µÄÎ¬¶È
-        -- where a.dim_risk_lv <> b.max_dim_risk_lv
-    )C group by batch_dt,corp_id,corp_nm,score_dt,dimension,dim_submodel_contribution_ratio,dim_warn_level  --È¥ÖØ
-),
-warn_contribution_ratio_with_factor_evl as  --´øÒò×ÓÆÀ¼ÛµÄÌØÕ÷¹±Ï×¶ÈÓ¦ÓÃ²ãÊı¾İ(²»°üº¬ÎŞ¼à¶½)
-(
-    SELECT distinct
-        a.batch_dt,
-        a.corp_id,
-        a.corp_nm,
-        a.score_dt,
-        a.feature_name,
-        a.contribution_ratio,
-        case 
-            when a.abnormal_flag = 1 and b.idx_value is not null then 
-                0  --Òì³£ 
-            else 1 --Õı³£ 
-        end as factor_evaluate,
-        a.sub_model_name
-    from (select * from warn_contribution_ratio where feature_name <> 'creditrisk_highfreq_unsupervised') a 
-    left join (select * from warn_feature_value where idx_value is not null) b 
-        on  a.corp_id=b.corp_id 
-            and a.batch_dt=b.batch_dt 
-            and a.sub_model_name=b.sub_model_name 
-            and a.feature_name=b.idx_name
-),
+-- warn_feature_contrib_res3 as  -- ¸ù¾İ×ÛºÏÔ¤¾¯µÈ¼¶µ÷ÕûºóµÄÎ¬¶È·çÏÕË®Æ½ µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
+-- (
+--     select 
+--         batch_dt,
+--         corp_id,
+--         corp_nm,
+--         score_dt,
+--         dimension,
+--         dim_submodel_contribution_ratio,
+--         dim_warn_level  --×îÖÕµ÷ÕûºóµÄÎ¬¶È·çÏÕµÈ¼¶
+--     from 
+--     (
+--         select 
+--             a.*,
+--             case 
+--                 when cast(a.dim_risk_lv as string)<>a.adjust_warnlevel then 
+--                     a.adjust_warnlevel
+--                 else 
+--                     cast(a.dim_risk_lv as string)
+--             end as dim_warn_level  --¸ù¾İ×ÛºÏÔ¤¾¯µÈ¼¶µ÷ÕûºóµÄÎ¬¶È·çÏÕË®Æ½
+--         from warn_feature_contrib_res3_tmp a 
+--         where a.dim_risk_lv in (select min(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp)  --·çÏÕ×î¸ßµÄ
+--         -- join (select max(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp) b  --»ñÈ¡×î¸ß·çÏÕË®Æ½¶ÔÓ¦µÄÎ¬¶È
+--         --     on a.dim_risk_lv=b.max_dim_risk_lv
+--         union all 
+--         select 
+--             a.*,
+--             cast(a.dim_risk_lv as string) as dim_warn_level
+--         from warn_feature_contrib_res3_tmp a 
+--         where a.dim_risk_lv not in (select min(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp)  --·Ç·çÏÕ×î¸ßµÄ
+--         -- join (select max(dim_risk_lv) as max_dim_risk_lv from warn_feature_contrib_res3_tmp) b  --»ñÈ¡³ı×î¸ß·çÏÕË®Æ½¶ÔÓ¦µÄÎ¬¶È
+--         -- where a.dim_risk_lv <> b.max_dim_risk_lv
+--     )C group by batch_dt,corp_id,corp_nm,score_dt,dimension,dim_submodel_contribution_ratio,dim_warn_level  --È¥ÖØ
+-- ),
 -- ÆÀ·Ö¿¨ --
 warn_score_card as 
 (
@@ -1028,9 +1013,15 @@ res0 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷
         main.corp_nm,
         main.score_dt,
         c.feature_name as idx_name,
+        c.feature_risk_interval,  --¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íµÄ Òì³£Ö¸±ê±êÊ¶(Ä£ĞÍÖ±½ÓÌá¹©)
+        case 
+            when c.feature_risk_interval=1 and b.idx_value is not null then 
+                0  --Òì³£ 
+            else 1 --Õı³£
+        end as factor_evaluate,
         b.idx_value,   --½ñÈÕÖ¸±êÖµ  ps:ÈôÎª¿Õ£¬Ö±½Ó±£ÁôNULL£¬²»ËæÒâ¶ÔÌØÕ÷Ô­Ê¼Öµ¸³Ä¬ÈÏÖµ
         b.lst_idx_value as last_idx_value,  --×òÈÕÖ¸±êÖµ
-        '' as idx_unit,   --£¡£¡£¡´ıÅäÖÃ±í²¹³äÍêÕû
+        '' as idx_unit,   
         c.model_freq_type,   --¸ÄÓÃ¸ßÖĞµÍÆµºÏ²¢ÌØÕ÷¹±Ï×¶ÈµÄ ´úÂëÊÖ¹¤Î¬»¤µÄÖĞÎÄÃû³ÆµÄÄ£ĞÍ·ÖÀà 2022-11-12
         c.sub_model_name,   --¸ÄÓÃ¸ßÖĞµÍÆµºÏ²¢ÌØÕ÷¹±Ï×¶ÈµÄ ÉÏÓÎÄ£ĞÍ×Ô´øµÄ×ÓÄ£ĞÍÓ¢ÎÄÃû³Æ 2022-11-12
         b.median  
@@ -1054,11 +1045,11 @@ res1 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷
         main.model_freq_type,
         main.sub_model_name,
         main.median,
-        b.contribution_ratio,  --¹±Ï×¶ÈÕ¼±È
-        b.factor_evaluate,  --Òò×ÓÆÀ¼Û
-        b.sub_model_name as sub_model_name_zhgxd   --×ÛºÏ¹±Ï×¶ÈµÄ×ÓÄ£ĞÍÃû³Æ
+        b.contribution_ratio,  --×ÛºÏÔ¤¾¯µÈ¼¶-ÌØÕ÷¹±Ï×¶È µÄ¹±Ï×¶ÈÕ¼±È
+        main.factor_evaluate,  --Òò×ÓÆÀ¼Û
+        b.sub_model_name as sub_model_name_zhgxd   --×ÛºÏÔ¤¾¯µÈ¼¶-ÌØÕ÷¹±Ï×¶ÈµÄ×ÓÄ£ĞÍÃû³Æ
     from res0 main
-    left join warn_contribution_ratio_with_factor_evl b  
+    left join (select * from warn_contribution_ratio where feature_name <> 'creditrisk_highfreq_unsupervised') b
         on  main.corp_id=b.corp_id 
             and main.batch_dt=b.batch_dt 
             and main.sub_model_name=b.sub_model_name 
@@ -1082,9 +1073,6 @@ res1 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷
         '' as sub_model_name_zhgxd 
     from ( select  a1.* FROM warn_contribution_ratio a1
             where a1.feature_name = 'creditrisk_highfreq_unsupervised'
-        --    where a1.batch_dt in (select max(batch_dt) as max_batch_dt from warn_contribution_ratio_with_factor_evl)
-                -- on a1.batch_dt and a2.batch_dt   --a1±íµÄbatch_dtºÍa2±íĞè±£³ÖÒ»ÖÂ
-            -- and a1.feature_name = 'creditrisk_highfreq_unsupervised'
         ) A 
 ),
 res2 as --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷Ãû³ÆÎª×¼)+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨ Âı:1min20s  67ÍòÌõ
@@ -1170,7 +1158,18 @@ res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ
         main.idx_unit,
         main.model_freq_type,
         main.sub_model_name,
-        main.median,
+        case 
+            when main.unit_origin='Ôª' and main.unit_target='ÒÚÔª' then 
+                main.median/100000000
+            when main.unit_origin='Ôª' and main.unit_target='ÍòÔª' then 
+                main.median/10000
+            when main.unit_origin='ÊıÖµ' and main.unit_target='%' then 
+                main.median*100
+            when main.unit_origin='ÈË' and main.unit_target='ÍòÈË' then 
+                main.median/10000
+            else 
+                main.median
+        end as median, 
         main.contribution_ratio,  --¹±Ï×¶ÈÕ¼±È
         main.factor_evaluate,  --Òò×ÓÆÀ¼Û
         main.sub_model_name_zhgxd,  --×ÛºÏ¹±Ï×¶ÈµÄ×ÓÄ£ĞÍÃû³Æ
@@ -1183,7 +1182,18 @@ res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ
         main.type,
         main.idx_cal_explain,
         main.idx_explain,
-        main.last_idx_value,
+        case 
+            when main.unit_origin='Ôª' and main.unit_target='ÒÚÔª' then 
+                main.last_idx_value/100000000
+            when main.unit_origin='Ôª' and main.unit_target='ÍòÔª' then 
+                main.last_idx_value/10000
+            when main.unit_origin='ÊıÖµ' and main.unit_target='%' then 
+                main.last_idx_value*100
+            when main.unit_origin='ÈË' and main.unit_target='ÍòÈË' then 
+                main.last_idx_value/10000
+            else 
+                main.last_idx_value
+        end as last_idx_value,
         main.unit_origin,
         main.unit_target,
         main.contribution_cnt,  --¹éÒò¸öÊı
