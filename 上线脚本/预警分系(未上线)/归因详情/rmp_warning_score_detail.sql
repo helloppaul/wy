@@ -78,32 +78,32 @@ model_version_intf_ as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_v
     --   and status='active'
     -- group by notes,model_name,model_version,status,etl_date
 ),
--- 预警分 --
-rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接口
-( 
-    select a.*
-    from 
-    (
-        -- 时间限制部分 --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-        where 1 in (select max(flag) from timeLimit_switch) 
-        and to_date(rating_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-        union all
-        -- 非时间限制部分 --
-        select * 
-        from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-        where 1 in (select not max(flag) from timeLimit_switch) 
-    ) a join model_version_intf_ b
-        on a.model_version = b.model_version and a.model_name=b.model_name
-),
-rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_batch as 
-(
-    select a.*
-	from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a 
-	join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
-		on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
-),
+-- -- 预警分 --
+-- rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接口
+-- ( 
+--     select a.*
+--     from 
+--     (
+--         -- 时间限制部分 --
+--         select * 
+--         from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+--         where 1 in (select max(flag) from timeLimit_switch) 
+--         and to_date(rating_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+--         union all
+--         -- 非时间限制部分 --
+--         select * 
+--         from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+--         where 1 in (select not max(flag) from timeLimit_switch) 
+--     ) a join model_version_intf_ b
+--         on a.model_version = b.model_version and a.model_name=b.model_name
+-- ),
+-- rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_batch as 
+-- (
+--     select a.*
+-- 	from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a 
+-- 	join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
+-- 		on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
+-- ),
 -- 特征原始值(取今昨两天数据) --
 rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_ as  --特征原始值_高频 原始接口
 (
@@ -429,41 +429,41 @@ warn_feat_corp_property_CFG as  --通过低频分类数据的sub_model_type获取对应敞口的
     group by b.corp_id,b.source_id,a.sub_model_type,a.feature_cd,a.feature_name   --去除重复数据
 ),
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
--- 预警分 --
-RMP_WARNING_SCORE_MODEL_ as  --预警分-模型结果表（已是最新批次）
-(
-    select distinct
-        cast(a.rating_dt as string) as batch_dt,
-        chg.corp_id,
-        chg.corp_name as corp_nm,
-		chg.credit_code as credit_cd,
-        to_date(a.rating_dt) as score_date,
-        a.total_score_adjusted as synth_score,  -- 预警分
-		case a.interval_text_adjusted
-			when '绿色预警' then '-1' 
-			when '黄色预警' then '-2'
-			when '橙色预警' then '-3'
-			when '红色预警' then '-4'
-			when '风险已暴露' then '-5'
-		end as synth_warnlevel,  -- 综合预警等级,
-		case
-			when a.interval_text_adjusted in ('绿色预警','黄色预警') then 
-				'-1'   --低风险
-			when a.interval_text_adjusted  = '橙色预警' then 
-				'-2'  --中风险
-			when a.interval_text_adjusted  in ('红色预警','风险已暴露') then 
-				'-3'  --高风险
-			-- when a.interval_text_adjusted  ='风险已暴露' then 
-			-- 	'-4'   --风险已暴露
-		end as adjust_warnlevel,
-		a.model_name,
-		a.model_version
-    from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_batch a 
-    join corp_chg chg
-        on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
-	-- where score_dt=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
-    -- from app_ehzh.RMP_WARNING_SCORE_MODEL  --@pth_rmp.RMP_WARNING_SCORE_MODEL
-),
+-- -- 预警分 --
+-- RMP_WARNING_SCORE_MODEL_ as  --预警分-模型结果表（已是最新批次）
+-- (
+--     select distinct
+--         cast(a.rating_dt as string) as batch_dt,
+--         chg.corp_id,
+--         chg.corp_name as corp_nm,
+-- 		chg.credit_code as credit_cd,
+--         to_date(a.rating_dt) as score_date,
+--         a.total_score_adjusted as synth_score,  -- 预警分
+-- 		case a.interval_text_adjusted
+-- 			when '绿色预警' then '-1' 
+-- 			when '黄色预警' then '-2'
+-- 			when '橙色预警' then '-3'
+-- 			when '红色预警' then '-4'
+-- 			when '风险已暴露' then '-5'
+-- 		end as synth_warnlevel,  -- 综合预警等级,
+-- 		case
+-- 			when a.interval_text_adjusted in ('绿色预警','黄色预警') then 
+-- 				'-1'   --低风险
+-- 			when a.interval_text_adjusted  = '橙色预警' then 
+-- 				'-2'  --中风险
+-- 			when a.interval_text_adjusted  in ('红色预警','风险已暴露') then 
+-- 				'-3'  --高风险
+-- 			-- when a.interval_text_adjusted  ='风险已暴露' then 
+-- 			-- 	'-4'   --风险已暴露
+-- 		end as adjust_warnlevel,
+-- 		a.model_name,
+-- 		a.model_version
+--     from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_batch a 
+--     join corp_chg chg
+--         on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
+-- 	-- where score_dt=to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
+--     -- from app_ehzh.RMP_WARNING_SCORE_MODEL  --@pth_rmp.RMP_WARNING_SCORE_MODEL
+-- ),
 -- 特征原始值(取今昨两天数据) --
 rsk_rmp_warncntr_dftwrn_feat_hfreqscard_val_intf_batch as  --特征原始值_高频 原始接口
 (
@@ -559,20 +559,20 @@ rsk_rmp_warncntr_dftwrn_modl_mfreqgen_fsc_intf_batch as  --特征得分_中频_产业债 
 		on a.end_dt=b.max_end_dt and to_date(a.end_dt)=b.score_dt
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
--- 预警分 --
-warn_union_adj_sync_score as --取最新批次的预警分-模型结果表
-(
-    select distinct
-        a.batch_dt,
-        a.corp_id,
-        a.corp_nm,
-        a.score_date as score_dt,
-        a.synth_score as adj_score,
-        a.synth_warnlevel as adj_synth_level,
-        a.adjust_warnlevel,
-        a.model_version
-    from RMP_WARNING_SCORE_MODEL_ a
-),
+-- -- 预警分 --
+-- warn_union_adj_sync_score as --取最新批次的预警分-模型结果表
+-- (
+--     select distinct
+--         a.batch_dt,
+--         a.corp_id,
+--         a.corp_nm,
+--         a.score_date as score_dt,
+--         a.synth_score as adj_score,
+--         a.synth_warnlevel as adj_synth_level,
+--         a.adjust_warnlevel,
+--         a.model_version
+--     from RMP_WARNING_SCORE_MODEL_ a
+-- ),
 -- 特征原始值 --
 warn_feature_value_two_days as --原始特征值_合并高中低频(包含今昨两天数据，行形式)
 (
@@ -1008,10 +1008,10 @@ warn_score_card as
 res0 as   --预警分+特征原始值(特征原始值名称以高中低频合并的特征贡献度表中的特征名称为准)  慢:1min  67万条
 (
     select distinct
-        main.batch_dt,
-        main.corp_id,
-        main.corp_nm,
-        main.score_dt,
+        c.batch_dt,
+        c.corp_id,
+        c.corp_nm,
+        c.score_dt,
         c.feature_name as idx_name,
         c.feature_risk_interval,  --高中低频合并的特征贡献度表的 异常指标标识(模型直接提供)
         case 
@@ -1026,8 +1026,8 @@ res0 as   --预警分+特征原始值(特征原始值名称以高中低频合并的特征贡献度表中的特征
         c.sub_model_name,   --改用高中低频合并特征贡献度的 上游模型自带的子模型英文名称 2022-11-12
         b.median  
     from warn_feature_contrib c   --三频合并的特征贡献度  
-    join  warn_union_adj_sync_score main --预警分
-        on main.batch_dt=c.batch_dt and main.corp_id=c.corp_id
+    -- join  warn_union_adj_sync_score main --预警分
+    --     on main.batch_dt=c.batch_dt and main.corp_id=c.corp_id
     left join warn_feature_value_with_median_res b  --三频合并的特征原始值
         on c.corp_id=b.corp_id and c.batch_dt=b.batch_dt and c.feature_name=b.idx_name
 ),
