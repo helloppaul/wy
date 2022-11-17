@@ -19,6 +19,7 @@
 -- /* 2022-11-16 新增 中位数和昨日指标值 根据原始单位和目标单位进行单位转换  */
 -- /* 2022-11-16 调整 维度风险等级逻辑，不做预警等级和维度风险等级的映射，直接按照划档后的值输出 ！！！ */
 -- /* 2022-11-16 修复 中位数计算问题，当为城投是 zjh_cal='城投'，避免将原属城投的归入到产业 */
+-- /* 2022-11-17 新增 企业敞口corp_exposure的临时表，解决模型指标没有变更敞口变更匹配不上的问题 */
 
 -- 依赖 模型 综合预警分，特征原始值高中低，特征贡献度高中低无监督以及综合，评分卡高中低，归因详情及其历史 PS:不依赖pth_rmp.模型结果表
 --q1：维度风险等级的计算依靠贡献度占比，贡献度占比特征会少于特征原始值，此时最后关联将会产生某些维度关联补上维度风险等级，导致为NULL(暂时决定踢掉)
@@ -45,6 +46,17 @@ corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
       and a.source_code='ZXZX'   --控制项
+),
+corp_exposure as 
+(
+    select b.source_id,a.exposure
+    from  pth_rmp.rmp_company_info_main a 
+    join (
+            select source_id,corp_id from pth_rmp.rmp_company_id_relevance c
+            where c.etl_date in (select max(etl_date)  from pth_rmp.rmp_company_id_relevance)
+              and c.source_code='ZXZX' 
+        )b on a.corp_id=b.corp_id
+    group by b.source_id,a.exposure
 ),
 --—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 -- 时间限制开关 --
@@ -468,18 +480,18 @@ warn_feat_CFG as
 warn_feat_corp_property_CFG as  --通过低频分类数据的sub_model_type获取对应敞口的企业    使用范围:高中低频合并的特征贡献度表
 (
     select 
-        b.corp_id,
+        -- b.corp_id,
         b.source_id as corp_code,
-        max(b.corp_name) as corp_nm,
+        -- max(b.corp_name) as corp_nm,
         '低频' as big_sub_model_type,
         a.sub_model_type,
         a.feature_cd,
         a.feature_name
     from warn_feat_CFG a 
-    join corp_chg b 
-        on substr(a.sub_model_type,8) = b.exposure and b.source_code='ZXZX'
+    join corp_exposure b 
+        on substr(a.sub_model_type,8) = b.exposure --and b.source_code='ZXZX'
     where substr(a.sub_model_type,1,6) = '低频'
-    group by b.corp_id,b.source_id,a.sub_model_type,a.feature_cd,a.feature_name   --去除重复数据
+    group by b.source_id,a.sub_model_type,a.feature_cd,a.feature_name   --去除重复数据
 ),
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
 -- -- 预警分 --
