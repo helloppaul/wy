@@ -164,7 +164,7 @@ Third_Part_Data_CY_Prepare as   -- 主体为产业的数据
 		a.bond_type,   -- 属性1：产业
 		'' as bond_type_desc,
 		a.zjh_industry_l1 as corp_property,  -- 属性2：行业
-		a.zjh_industry_l1 as corp_property_desc,
+		concat(a.zjh_industry_l1,'中') as corp_property_desc,
 		b.corp_id as same_property_corp_id,   --主体为产业债性质 的 同行业且综合预警等级相等 的 企业
 		b.corp_nm as same_property_corp_nm
 	from Third_Part_Data_Prepare a
