@@ -435,7 +435,7 @@ s_msg as
 		b.batch_dt,b.corp_id,b.corp_nm,b.score_dt,
 		concat('该主体需关注排查风险点包括：\\r\\n',
 			case 
-				when ru.reason is null and b.report_msg_='' then
+				when ru.reason is null and (b.report_msg_='' or b.report_msg_ is null) then
 					'该主体当前无显著风险点。'
 				when ru.reason is not null and b.report_msg_='' then 
 					concat('该主体触发','<span class="WEIGHT">',nvl(ru.reason,''),'</span>\\r\\n')
