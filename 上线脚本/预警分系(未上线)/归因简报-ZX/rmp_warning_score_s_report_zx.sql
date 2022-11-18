@@ -280,7 +280,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where case_type_ii_cd='6008001' --问询关注
@@ -292,7 +292,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where case_type_ii_cd='6002012'  --其他财务预警
@@ -304,7 +304,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where case_type_ii_cd='6002012'  --其他财务预警
@@ -316,7 +316,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -330,7 +330,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -344,7 +344,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -359,7 +359,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -374,7 +374,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -389,7 +389,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -404,7 +404,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -417,7 +417,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -430,7 +430,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -442,7 +442,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -455,7 +455,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -468,7 +468,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -481,7 +481,7 @@ mid_news as
 		-- corp_nm,
 		notice_date,
 		msg_id,
-		msg_title
+		case_type_ii as msg_title
 		-- msg
 	from news_intf_
 	where 1=1
@@ -495,7 +495,7 @@ mid_cx_ as
 		'last3Mto12M_honesty_penaltystatus_2_num' as feature_cd,
 		corp_id,
 		notice_date,
-		tit0026_1id  as msg_id,
+		tit0026_1id as msg_id,
 		msg_title
 	from cx_intf_
 	where 1=1
@@ -506,7 +506,7 @@ mid_cx_ as
 		'last6Mto12M_honesty_secclass_22000078_rate' as feature_cd,
 		corp_id,
 		notice_date,
-		tit0026_1id  as msg_id,
+		tit0026_1id as msg_id,
 		msg_title
 	from cx_intf_
 	where 1=1
@@ -517,11 +517,11 @@ mid_cx_ as
 		'last6M_honesty_num' as feature_cd,
 		corp_id,
 		notice_date,
-		tit0026_1id  as msg_id,
+		tit0026_1id as msg_id,
 		msg_title
 	from cx_intf_
 	where 1=1
-	  and tit0026_typelevel6='22000078'  --tIT0026_TypeLevel7='纳入被执行人'
+	--   and tit0026_typelevel6='22000078'  --tIT0026_TypeLevel7='纳入被执行人'
 	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-180))
 	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 ),
@@ -545,7 +545,7 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 (
 	--近6个月比近12个月_法院诉讼_案由明细_买卖合同纠纷_占比(last6Mto12M_lawsuit_detailedreason_4_rate)
 	select distinct
-		'last6Mto12M_honesty_secclass_22000078_rate' as feature_cd,
+		'last6Mto12M_lawsuit_detailedreason_4_rate' as feature_cd,
 		corp_id,
 		notice_date,
 		source_id as msg_id,
@@ -613,9 +613,9 @@ mid_sf_cpws_ as  --裁判文书/法院诉讼/cr0055
 	from sf_cpws_inft_ 
 	where cr0055_030='合同纠纷' 
 	union all 
-	--近12个月_法院诉讼_案由明细_合同纠纷_占比(last12M_lawsuit_lawsuitamt_mean)
+	--近12个月_法院诉讼_涉案金额_平均值(last12M_lawsuit_lawsuitamt_mean)
 	select distinct
-		'近12个月_法院诉讼_涉案金额_平均值' as feature_cd,
+		'last12M_lawsuit_lawsuitamt_mean' as feature_cd,
 		corp_id,
 		notice_date,
 		source_id as msg_id,
@@ -757,6 +757,18 @@ mid_sf_ktts_ as
 		msg_title
 	from sf_ktts_inft_
 	where cr0169_002='10'  --当事人
+	union all
+	--近6个月_法院诉讼_数量(last6M_lawsuit_num)
+	select distinct
+		'last6M_lawsuit_num' as feature_cd,
+		corp_id,
+		notice_date,
+		source_id as msg_id,
+		msg_title
+	from sf_ktts_inft_
+	where 1=1
+	  and notice_date>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-180))
+	  and notice_date<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 ),
 mid_sf_ktts as --去除司法_开庭庭审数据里面重复性的msg_id
 (
