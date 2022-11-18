@@ -65,16 +65,19 @@ rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接
 	select a.*
     from 
     (
-		-- 时间限制部分 --
-		select * 
-		from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-		where 1 in (select max(flag) from timeLimit_switch) 
-		and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
-		union all
-		-- 非时间限制部分 --
-		select * 
-		from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-		where 1 in (select not max(flag) from timeLimit_switch) 
+		select m.*
+		(
+			-- 时间限制部分 --
+			select *,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
+			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+			where 1 in (select max(flag) from timeLimit_switch) 
+			and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
+			union all
+			-- 非时间限制部分 --
+			select * ,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
+			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+			where 1 in (select not max(flag) from timeLimit_switch) 
+		) m where rm=1
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
 ),
@@ -126,17 +129,23 @@ warn_level_ratio_cfg_ as -- 综合预警等级等级划分档位-配置表
 ),
 warn_adj_rule_cfg as --预警分-模型外挂规则配置表   取最新etl_date的数据 (更新频率:日度更新)
 (
-	select distinct
-		a.etl_date,
-		b.corp_id, 
-		b.corp_name as corp_nm,
-		a.category,
-		a.reason
-	from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf a  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
-	join corp_chg b 
-		on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
-	where operator = '自动-风险已暴露规则'
-	  and ETL_DATE in (select max(etl_date) from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf)  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
+	select m.*
+	from 
+	(
+		select 
+			a.etl_date,
+			b.corp_id, 
+			b.corp_name as corp_nm,
+			a.category,
+			a.reason,
+			rank() over(partition by b.corp_id order by a.create_dt desc ,a.etl_date desc,a.reason desc) rm
+		from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf a  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
+		join corp_chg b 
+			on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
+		where a.operator = '自动-风险已暴露规则'
+		  and to_date(a.create_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	)m where rm=1 
+	  --and ETL_DATE in (select max(etl_date) from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf)  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
 ),
 warn_color_cfg as --预警报告系列专用-颜色配置（仅供参考，不作为代码引用）
 (

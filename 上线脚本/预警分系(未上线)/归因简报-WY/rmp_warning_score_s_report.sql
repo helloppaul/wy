@@ -161,17 +161,23 @@ rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as --特征贡献度_综合预警等级(用
 -- 模型外挂规则 --
 warn_adj_rule_cfg as --预警分-模型外挂规则配置表   取最新etl_date的数据 (更新频率:日度更新)
 (
-	select distinct
-		a.etl_date,
-		b.corp_id, 
-		b.corp_name as corp_nm,
-		a.category,
-		a.reason
-	from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf a  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
-	join corp_chg b 
-		on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
-	where a.operator = '自动-风险已暴露规则'
-	  and a.ETL_DATE in (select max(etl_date) from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf)  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
+	select m.*
+	from 
+	(
+		select 
+			a.etl_date,
+			b.corp_id, 
+			b.corp_name as corp_nm,
+			a.category,
+			a.reason,
+			rank() over(partition by b.corp_id order by a.create_dt desc ,a.etl_date desc,a.reason desc) rm
+		from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf a  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
+		join corp_chg b 
+			on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
+		where a.operator = '自动-风险已暴露规则'
+		  and to_date(a.create_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	)m where rm=1 
+	  --and ETL_DATE in (select max(etl_date) from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf)  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
 ),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
 warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
