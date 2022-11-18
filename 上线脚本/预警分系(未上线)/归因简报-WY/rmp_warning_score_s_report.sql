@@ -271,7 +271,7 @@ Basic_data as 	-- 综合预警等级变动+当日归因详情+昨日归因详情 （指标层最细粒度）
 		b.idx_unit,
 		b.idx_score,
 		c.idx_score as last_idx_score,
-		-- b.contribution_ratio,
+		b.contribution_ratio,
 		b.factor_evaluate,
 		b.dim_submodel_contribution_ratio,   --异常指标贡献度占比
 		c.dim_submodel_contribution_ratio as last_dim_submodel_contribution_ratio  --昨日异常指标贡献度占比
@@ -285,7 +285,6 @@ Basic_data as 	-- 综合预警等级变动+当日归因详情+昨日归因详情 （指标层最细粒度）
 			and b.type=c.type 
 			and b.sub_model_name=c.sub_model_name
 			and b.ori_idx_name=c.ori_idx_name
-	where b.contribution_ratio > 0 and c.contribution_ratio>0
 	-- where a.chg_direction='1'    --综合预警等级须发生恶化必须要的话，才展示第四段，否则整段不展示
 ),
 Basic_data_I as  -- 生成 是否维度恶化 + 是否维度异常指标占比恶化 + 是否指标恶化 数据
@@ -358,7 +357,8 @@ Basic_data_I as  -- 生成 是否维度恶化 + 是否维度异常指标占比恶化 + 是否指标恶化 
 			else 	
 				cast(last_idx_value as string)
 		end as last_idx_value_str,
-		idx_unit
+		idx_unit,
+		contribution_ratio
 	from Basic_data 
 ),
 Basic_data_II as 
@@ -372,11 +372,11 @@ Basic_data_II as
 		count(a.idx_name) over(partition by a.corp_id,a.score_dt,a.dimension,a.idx_score_worsen_flag) as worsen_dim_idx_cnt, --恶化指标数量
 		count(a.idx_name) over(partition by a.corp_id,a.score_dt,a.dimension) as dim_idx_cnt, --维度指标数量
 		case 
-			when a.factor_evaluate = 0 and (a.chg_direction='1' and (a.dim_warn_level_worsen_flag=1 or  dim_submodel_contribution_ratio_worsen_flag=1) and a.idx_score_worsen_flag=1) then --指标异常 且 指标恶化
+			when (a.factor_evaluate = 0 and a.contribution_ratio>0) and (a.chg_direction='1' and (a.dim_warn_level_worsen_flag=1 or  dim_submodel_contribution_ratio_worsen_flag=1) and a.idx_score_worsen_flag=1) then --指标异常 且 指标恶化
 				concat(a.idx_name,'为','<span class="RED">',a.idx_value_str,a.idx_unit,'</span>','，且发生恶化，','由','<span class="RED">',a.last_idx_value_str,a.idx_unit,'变化至',a.idx_value_str,a.idx_unit,'</span>')
-			when a.factor_evaluate = 0 and  idx_score_worsen_flag=0 then --指标异常 但 指标未恶化
+			when (a.factor_evaluate = 0 and a.contribution_ratio>0) and  idx_score_worsen_flag=0 then --指标异常 但 指标未恶化
 				concat(a.idx_name,'为','<span class="RED">',a.idx_value_str,a.idx_unit,'</span>')
-			when a.factor_evaluate = 1 and (a.chg_direction='1' and (a.dim_warn_level_worsen_flag=1 or  dim_submodel_contribution_ratio_worsen_flag=1) and a.idx_score_worsen_flag=1) then --指标正常 但 指标恶化
+			when (a.factor_evaluate = 1 or a.factor_evaluate=0 and a.contribution_ratio is null)  and (a.chg_direction='1' and (a.dim_warn_level_worsen_flag=1 or  dim_submodel_contribution_ratio_worsen_flag=1) and a.idx_score_worsen_flag=1) then --指标正常 但 指标恶化
 				concat(a.idx_name,'由','<span class="RED">',a.last_idx_value_str,a.idx_unit,'</span>','变化至','<span class="RED">',a.idx_value_str,a.idx_unit,'</span>')
 			else 
 				NULL
