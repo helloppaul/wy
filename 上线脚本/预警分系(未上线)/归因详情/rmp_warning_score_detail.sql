@@ -20,6 +20,7 @@
 -- /* 2022-11-16 µ÷Õû Î¬¶È·çÏÕµÈ¼¶Âß¼­£¬²»×öÔ¤¾¯µÈ¼¶ºÍÎ¬¶È·çÏÕµÈ¼¶µÄÓ³Éä£¬Ö±½Ó°´ÕÕ»®µµºóµÄÖµÊä³ö £¡£¡£¡ */
 -- /* 2022-11-16 ĞŞ¸´ ÖĞÎ»Êı¼ÆËãÎÊÌâ£¬µ±Îª³ÇÍ¶ÊÇ zjh_cal='³ÇÍ¶'£¬±ÜÃâ½«Ô­Êô³ÇÍ¶µÄ¹éÈëµ½²úÒµ */
 -- /* 2022-11-17 ĞÂÔö ÆóÒµ³¨¿Úcorp_exposureµÄÁÙÊ±±í£¬½â¾öÄ£ĞÍÖ¸±êÃ»ÓĞ±ä¸ü³¨¿Ú±ä¸üÆ¥Åä²»ÉÏµÄÎÊÌâ */
+-- /* 2022-11-18 ĞŞ¸´ Î¬¶ÈÒì³£Õ¼±ÈÍ³¼ÆµÄÎÊÌâ£¬ÏŞÖÆÁË Òò×ÓÆÀ¼Û=1£¬µ¼ÖÂÈ±Ê§Òì³£Î¬¶ÈµÄÖ¸±êÊı¾İ */
 
 -- ÒÀÀµ Ä£ĞÍ ×ÛºÏÔ¤¾¯·Ö£¬ÌØÕ÷Ô­Ê¼Öµ¸ßÖĞµÍ£¬ÌØÕ÷¹±Ï×¶È¸ßÖĞµÍÎŞ¼à¶½ÒÔ¼°×ÛºÏ£¬ÆÀ·Ö¿¨¸ßÖĞµÍ£¬¹éÒòÏêÇé¼°ÆäÀúÊ· PS:²»ÒÀÀµpth_rmp.Ä£ĞÍ½á¹û±í
 --q1£ºÎ¬¶È·çÏÕµÈ¼¶µÄ¼ÆËãÒÀ¿¿¹±Ï×¶ÈÕ¼±È£¬¹±Ï×¶ÈÕ¼±ÈÌØÕ÷»áÉÙÓÚÌØÕ÷Ô­Ê¼Öµ£¬´ËÊ±×îºó¹ØÁª½«»á²úÉúÄ³Ğ©Î¬¶È¹ØÁª²¹ÉÏÎ¬¶È·çÏÕµÈ¼¶£¬µ¼ÖÂÎªNULL(ÔİÊ±¾ö¶¨Ìßµô)
@@ -47,17 +48,17 @@ corp_chg as  --´øÓĞ ³ÇÍ¶/²úÒµÅĞ¶ÏºÍ¹ú±êÒ»¼¶ĞĞÒµ µÄÌØÊâcorp_chg
 	where a.delete_flag=0 and b.delete_flag=0
       and a.source_code='ZXZX'   --¿ØÖÆÏî
 ),
-corp_exposure as 
-(
-    select b.source_id,a.exposure
-    from  pth_rmp.rmp_company_info_main a 
-    join (
-            select source_id,corp_id from pth_rmp.rmp_company_id_relevance c
-            where c.etl_date in (select max(etl_date)  from pth_rmp.rmp_company_id_relevance)
-              and c.source_code='ZXZX' 
-        )b on a.corp_id=b.corp_id
-    group by b.source_id,a.exposure
-),
+-- corp_exposure as 
+-- (
+--     select b.source_id,a.exposure,a.etl_date
+--     from  pth_rmp.rmp_company_info_main a 
+--     join (
+--             select source_id,corp_id from pth_rmp.rmp_company_id_relevance c
+--             where c.etl_date in (select max(etl_date)  from pth_rmp.rmp_company_id_relevance)
+--               and c.source_code='ZXZX' 
+--         )b on a.corp_id=b.corp_id
+--     group by b.source_id,a.exposure,a.etl_date
+-- ),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª ½Ó¿Ú²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 -- Ê±¼äÏŞÖÆ¿ª¹Ø --
 timeLimit_switch as 
@@ -480,18 +481,35 @@ warn_feat_CFG as
 warn_feat_corp_property_CFG as  --Í¨¹ıµÍÆµ·ÖÀàÊı¾İµÄsub_model_type»ñÈ¡¶ÔÓ¦³¨¿ÚµÄÆóÒµ    Ê¹ÓÃ·¶Î§:¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±í
 (
     select 
-        -- b.corp_id,
         b.source_id as corp_code,
-        -- max(b.corp_name) as corp_nm,
         'µÍÆµ' as big_sub_model_type,
         a.sub_model_type,
         a.feature_cd,
         a.feature_name
     from warn_feat_CFG a 
-    join corp_exposure b 
-        on substr(a.sub_model_type,8) = b.exposure --and b.source_code='ZXZX'
+    join corp_chg b 
+        on substr(a.sub_model_type,8) = b.exposure --and b.source_code='ZXZX' 
     where substr(a.sub_model_type,1,6) = 'µÍÆµ'
-    group by b.source_id,a.sub_model_type,a.feature_cd,a.feature_name   --È¥³ıÖØ¸´Êı¾İ
+    group by b.source_id,a.sub_model_type,a.feature_cd,a.feature_name
+    -- select m.*
+    -- from
+    -- (
+    --     select 
+    --         -- b.corp_id,
+    --         b.source_id as corp_code,
+    --         b.etl_date,
+    --         -- max(b.corp_name) as corp_nm,
+    --         'µÍÆµ' as big_sub_model_type,
+    --         a.sub_model_type,
+    --         a.feature_cd,
+    --         a.feature_name,
+    --         rank() over(partition by b.source_id,a.feature_cd,a.feature_name order by b.etl_date desc) as rm
+    --     from warn_feat_CFG a 
+    --     join corp_exposure b 
+    --         on substr(a.sub_model_type,8) = b.exposure --and b.source_code='ZXZX'
+    --     where substr(a.sub_model_type,1,6) = 'µÍÆµ'
+    -- ) m where rm=1
+    -- group by b.source_id,a.sub_model_type,a.feature_cd,a.feature_name,b.etl_date   --È¥³ıÖØ¸´Êı¾İ
 ),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª ÖĞ¼ä²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 -- -- Ô¤¾¯·Ö --
@@ -898,9 +916,11 @@ warn_feature_contrib_res1 as  --´øÓĞ Î¬¶ÈÒì³£Ö¸±êÕ¼±È µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
         corp_nm,
         score_dt,
         dimension,
+        -- feature_risk_interval,
         -- model_freq_type,  ----ÌØÕ÷ËùÊô×ÓÄ£ĞÍ·ÖÀà/Ä£ĞÍÆµÂÊ·ÖÀà
         -- sum(feature_pct) as dim_submodel_contribution_ratio  --Î¬¶È¹±Ï×¶ÈÕ¼±È
-       total_idx_is_abnormal_cnt/total_idx_cnt*100 as dim_submodel_contribution_ratio   --¸÷Î¬¶È Òì³£Ö¸±êÕ¼±È (dim_submodel_contribution_ratio×Ö¶ÎÃûÑØÓÃÖ®Ç°Î¬¶È¹±Ï×¶ÈÕ¼±È)
+        nvl(total_idx_is_abnormal_cnt/total_idx_cnt*100,0) as dim_submodel_contribution_ratio
+    --    nvl(total_idx_is_abnormal_cnt/total_idx_cnt*100,0) as dim_submodel_contribution_ratio   --¸÷Î¬¶È Òì³£Ö¸±êÕ¼±È (dim_submodel_contribution_ratio×Ö¶ÎÃûÑØÓÃÖ®Ç°Î¬¶È¹±Ï×¶ÈÕ¼±È)
     from
     (
         select 
@@ -913,8 +933,9 @@ warn_feature_contrib_res1 as  --´øÓĞ Î¬¶ÈÒì³£Ö¸±êÕ¼±È µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
             a.feature_pct,  --¹±Ï×¶ÈÕ¼±È %
             -- a.model_freq_type,
             a.feature_risk_interval,   --Òì³£Ö¸±ê
+            sum(feature_risk_interval) over(partition by a.corp_id,a.score_dt,a.batch_dt,f_cfg.dimension ) as total_idx_is_abnormal_cnt,
 
-            count(a.feature_name) over(partition by a.corp_id,a.score_dt,a.batch_dt,f_cfg.dimension,a.feature_risk_interval) as total_idx_is_abnormal_cnt,   --¶ÔÓÚÃ¿¼ÒÆóÒµÃ¿¸öÊ±µã¸÷Î¬¶ÈÏÂµÄÒì³£Ö¸±ê ÒÔ¼° ·ÇÒì³£Ö¸±êÖ®ºÍ  2022-11-12 ĞÂÔö
+            -- count(a.feature_name) over(partition by a.corp_id,a.score_dt,a.batch_dt,f_cfg.dimension,a.feature_risk_interval) as total_idx_is_abnormal_cnt,   --¶ÔÓÚÃ¿¼ÒÆóÒµÃ¿¸öÊ±µã¸÷Î¬¶ÈÏÂµÄÒì³£Ö¸±ê ÒÔ¼° ·ÇÒì³£Ö¸±êÖ®ºÍ  2022-11-12 ĞÂÔö
             count(a.feature_name) over(partition by a.corp_id,a.score_dt,a.batch_dt,f_cfg.dimension) as total_idx_cnt,          --¶ÔÓÚÃ¿¼ÒÆóÒµÃ¿¸öÊ±µã¸÷Î¬¶ÈÏÂµÄÖ¸±êÖ®ºÍ 2022-11-12 ĞÂÔö
             -- a.model_name,
             a.sub_model_name
@@ -922,7 +943,7 @@ warn_feature_contrib_res1 as  --´øÓĞ Î¬¶ÈÒì³£Ö¸±êÕ¼±È µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
         join warn_feat_CFG f_cfg    --ÌÖÂÛºó£¬Ö±½Ó²ÉÓÃjoin×ö¹ØÁª£¬ÌØÕ÷Ô­Ê¼ÖµÃ»ÓĞµÄ²»¿¼ÂÇÕ¹Ê¾
         -- left join warn_feat_CFG f_cfg 
             on a.feature_name=f_cfg.feature_cd and a.model_freq_type=f_cfg.sub_model_type --and a.model_freq_type=substr(f_cfg.sub_model_type,1,6)
-    )B where feature_risk_interval = 1 --Òì³£Ö¸±ê
+    )B --where feature_risk_interval = 1 --Òì³£Ö¸±ê
     group by batch_dt,corp_id,corp_nm,score_dt,dimension,total_idx_is_abnormal_cnt,total_idx_cnt   --Êı¾İÈ¥ÖØ    --,model_freq_type
 ),
 warn_feature_contrib_res2 as  -- ´øÓĞ Î¬¶È·çÏÕµÈ¼¶ µÄÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖĞµÍÆµ
@@ -1197,7 +1218,7 @@ res3 as   --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í  Âı:1min20s  40Íò
         -- f_cfg.contribution_cnt  --¹éÒò¸öÊı
     from res2 main
     join warn_feat_CFG f_cfg
-        on main.idx_name=f_cfg.feature_cd and main.model_freq_type=f_cfg.sub_model_type --and  main.model_freq_type=substr(f_cfg.sub_model_type,1,6)
+        on  main.idx_name=f_cfg.feature_cd and main.model_freq_type=f_cfg.sub_model_type --and  main.model_freq_type=substr(f_cfg.sub_model_type,1,6)
     -- left join warn_feat_CFG f_cfg
 ),
 res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ÷Ãû³ÆÎª×¼)+×ÛºÏ¹±Ï×¶È+Ö¸±êÆÀ·Ö¿¨+ÌØÕ÷ÅäÖÃ±í+¸÷Î¬¶È·çÏÕË®Æ½(¸ßÖĞµÍÆµ¹±Ï×¶ÈÇóµÃ)   Âı:1min20s  34ÍòÌõ
@@ -1210,30 +1231,30 @@ res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ
         main.feature_name_target as idx_name,  --×îºóÒ»²½½«idx_nameµ÷³ÉÎª×îÖÕÒ³ÃæÕ¹Ê¾ĞÎÊ½µÄÖ¸±êÃû³Æ
         case 
             when main.unit_origin='Ôª' and main.unit_target='ÒÚÔª' then 
-                main.idx_value/100000000
+                cast(round(main.idx_value/100000000,2) as decimal(10,2))
             when main.unit_origin='Ôª' and main.unit_target='ÍòÔª' then 
-                main.idx_value/10000
+                cast(round(main.idx_value/10000,2) as decimal(10,2))
             when main.unit_origin='ÊıÖµ' and main.unit_target='%' then 
-                main.idx_value*100
+                cast(round(main.idx_value*100,2) as decimal(10,2))
             when main.unit_origin='ÈË' and main.unit_target='ÍòÈË' then 
-                main.idx_value/10000
+                cast(round(main.idx_value/10000,2) as decimal(10,2))
             else 
-                main.idx_value
+                cast(round(main.idx_value,2) as decimal(10,2))
         end as idx_value,
         main.idx_unit,
         main.model_freq_type,
         main.sub_model_name,
         case 
             when main.unit_origin='Ôª' and main.unit_target='ÒÚÔª' then 
-                main.median/100000000
+                cast(round(main.median/100000000,2) as decimal(10,2))
             when main.unit_origin='Ôª' and main.unit_target='ÍòÔª' then 
-                main.median/10000
+                cast(round(main.median/10000,2) as decimal(10,2))
             when main.unit_origin='ÊıÖµ' and main.unit_target='%' then 
-                main.median*100
+                cast(round(main.median*100,2) as decimal(10,2))
             when main.unit_origin='ÈË' and main.unit_target='ÍòÈË' then 
-                main.median/10000
+                cast(round(main.median/10000,2) as decimal(10,2))
             else 
-                main.median
+                cast(round(main.median,2) as decimal(10,2))
         end as median, 
         main.contribution_ratio,  --¹±Ï×¶ÈÕ¼±È
         main.factor_evaluate,  --Òò×ÓÆÀ¼Û
@@ -1249,15 +1270,15 @@ res4 as -- --Ô¤¾¯·Ö+ÌØÕ÷Ô­Ê¼Öµ(ÌØÕ÷Ô­Ê¼ÖµÃû³ÆÒÔ¸ßÖĞµÍÆµºÏ²¢µÄÌØÕ÷¹±Ï×¶È±íÖĞµÄÌØÕ
         main.idx_explain,
         case 
             when main.unit_origin='Ôª' and main.unit_target='ÒÚÔª' then 
-                main.last_idx_value/100000000
+                cast(round(main.last_idx_value/100000000,2) as decimal(10,2))
             when main.unit_origin='Ôª' and main.unit_target='ÍòÔª' then 
-                main.last_idx_value/10000
+                cast(round(main.last_idx_value/10000,2) as decimal(10,2))
             when main.unit_origin='ÊıÖµ' and main.unit_target='%' then 
-                main.last_idx_value*100
+                cast(round(main.last_idx_value*100,2) as decimal(10,2))
             when main.unit_origin='ÈË' and main.unit_target='ÍòÈË' then 
-                main.last_idx_value/10000
+                cast(round(main.last_idx_value/10000,2) as decimal(10,2))
             else 
-                main.last_idx_value
+                cast(round(main.last_idx_value,2) as decimal(10,2))
         end as last_idx_value,
         main.unit_origin,
         main.unit_target,
