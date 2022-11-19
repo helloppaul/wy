@@ -51,6 +51,7 @@ rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综�
     from 
     (
 		select m.*
+		from
 		(
 			-- 时间限制部分 --
 			select *,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
