@@ -3,6 +3,8 @@
 --PS:不依赖 舆情风险信息整合表，直接依赖上游hds表为主
 -- /*2022-9-19 不剔除快讯和政府预警，将 快讯和政府预警 纳入统计范围*/
 -- /*2022-11-15 舆情统计日表 效率优化 */
+-- /*2022-11-18 修复 sid_kw重复的问题，增加importance作为业务主键 */
+
 
 set hive.exec.parallel=true;
 set hive.auto.convert.join = true;
@@ -162,7 +164,7 @@ region_class_yq as
 ------------------------------ temp_table above ---------------------------------------------------------
 insert overwrite table pth_rmp.RMP_OPINION_STATISTIC_DAY partition(etl_date=${ETL_DATE})
 select 
-	md5(concat(cast(score_dt as string),statistic_dim,cast(industry_class as string),level_type_list,level_type_ii,'0')) as sid_kw,
+	md5(concat(cast(score_dt as string),statistic_dim,cast(industry_class as string),level_type_list,level_type_ii,cast(importance as string),'0')) as sid_kw,
 	*
 from 
 (
