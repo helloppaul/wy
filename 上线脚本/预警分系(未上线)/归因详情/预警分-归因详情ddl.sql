@@ -1,4 +1,4 @@
--- �������� RMP_WARNING_SCORE_DETAIL --
+-- 归因详情 RMP_WARNING_SCORE_DETAIL --
 drop table if exists pth_rmp.RMP_WARNING_SCORE_DETAIL;
 create table pth_rmp.RMP_WARNING_SCORE_DETAIL
 (
@@ -28,7 +28,9 @@ create table pth_rmp.RMP_WARNING_SCORE_DETAIL
 	create_time	TIMESTAMP,
 	update_by	string,
 	update_time	TIMESTAMP,
-	version	int
+	version	int,
+    ori_idx_name string,
+    dim_submodel_contribution_ratio float
 )
 partitioned by (etl_date int)
 row format
