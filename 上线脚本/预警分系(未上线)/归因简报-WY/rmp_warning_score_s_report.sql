@@ -397,8 +397,8 @@ s_msg_type as
 (
 	select 
 		batch_dt,corp_id,corp_nm,score_dt,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt,type,
-		-- concat_ws('、',collect_set(idx_desc)) as worsen_idx_desc_in_one_type  --hive
-		group_concat(distinct idx_desc,'、') as worsen_idx_desc_in_one_type 
+		concat_ws('、',collect_set(idx_desc)) as worsen_idx_desc_in_one_type  --hive
+		-- group_concat(distinct idx_desc,'、') as worsen_idx_desc_in_one_type 
 	from 
 	(
 		select distinct
@@ -449,8 +449,8 @@ s_msg as
 	(
 		select 
 			batch_dt,corp_id,corp_nm,score_dt,  --,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt,
-			-- concat_ws('\\r\\n',collect_set(msg_type)) as msg
-			group_concat(distinct msg_type,'\\r\\n') as report_msg_
+			concat_ws('\\r\\n',collect_set(msg_type)) as report_msg_
+			-- group_concat(distinct msg_type,'\\r\\n') as report_msg_
 		from 
 		(
 			select 
@@ -467,6 +467,7 @@ s_msg as
 	)B left join warn_adj_rule_cfg ru
 			on b.corp_id = ru.corp_id 
 )
+insert into pth_rmp.rmp_warning_score_s_report partition(etl_date=${ETL_DATE})
 select 
 	md5(concat(batch_dt,corp_id)) as sid_kw,  -- hive
 	-- '' as sid_kw,  -- impala
