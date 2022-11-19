@@ -856,7 +856,7 @@ mid_risk_info as   --合并新闻、诚信、司法数据
 -- 第二段数据 --
 Second_Part_Data_Prepare as 
 (
-	select distinct
+	select 
 		T.*,rinfo.msg_title
 	from 
 	(
@@ -901,7 +901,8 @@ Second_Part_Data_Prepare as
 		join warn_dim_risk_level_cfg_ cfg 
 			on main.dim_warn_level=cast(cfg.risk_lv as string) and main.dimension=cfg.dimension
 	)T left join mid_risk_info rinfo 
-		on T.corp_id=rinfo.corp_id and T.score_dt>=rinfo.notice_date and T.ori_idx_name=rinfo.feature_cd
+		on T.corp_id=rinfo.corp_id and T.ori_idx_name=rinfo.feature_cd
+	where T.score_dt>=rinfo.notice_date 
 	-- 	on main.corp_id=rinfo.corp_id and main.score_dt>=rinfo.notice_date and main.ori_idx_name=rinfo.feature_cd
 ),
 Second_Part_Data as 
@@ -942,7 +943,7 @@ Second_Part_Data as
 			end as idx_desc,	
 			dim_factor_cnt,			
 			dim_factorEvalu_factor_cnt
-		from Second_Part_Data_Prepare 
+		from (select distinct * from Second_Part_Data_Prepare ) t
 		order by corp_id,score_dt desc,dim_contrib_ratio desc
 	) A
 ),
@@ -976,8 +977,8 @@ Second_Part_Data_Dimension_Type_idx as --按指标层汇总数据，用于汇总多个 风险事件
 		type,
 		idx_desc,
 		contribution_ratio,  --指标层的贡献度占比
-		-- concat_ws('、',collect_set(msg_title)) as risk_info_desc_in_one_idx   -- hive 
-		group_concat(distinct msg_title,'、') as risk_info_desc_in_one_idx    -- impala 
+		concat_ws('、',collect_set(msg_title)) as risk_info_desc_in_one_idx   -- hive 
+		-- group_concat(distinct msg_title,'、') as risk_info_desc_in_one_idx    -- impala 
 	from 
 	(
 		select 
@@ -1007,10 +1008,10 @@ Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
 		dimension,
 		dimension_ch,
 		type,
-		-- concat_ws('、',collect_set(risk_info_desc_in_one_idx)) as risk_info_desc_in_one_type,   -- hive 
-		nvl(group_concat( risk_info_desc_in_one_idx,'、'),'') as  risk_info_desc_in_one_type,   --impala  再将风险事件汇总到type层
-		-- concat_ws('、',collect_set(idx_desc)) as idx_desc_in_one_type   -- hive (拼接值为NULL，返回'')
-		nvl(group_concat(distinct idx_desc,'、'),'') as idx_desc_in_one_type    -- impala  (拼接值全部为NULL，返回NULL)
+		concat_ws('、',collect_set(risk_info_desc_in_one_idx)) as risk_info_desc_in_one_type,   -- hive 
+		-- nvl(group_concat( risk_info_desc_in_one_idx,'、'),'') as  risk_info_desc_in_one_type,   --impala  再将风险事件汇总到type层
+		concat_ws('、',collect_set(idx_desc)) as idx_desc_in_one_type   -- hive (拼接值为NULL，返回'')
+		-- nvl(group_concat(distinct idx_desc,'、'),'') as idx_desc_in_one_type    -- impala  (拼接值全部为NULL，返回NULL)
 	from 
 	(
 		select
@@ -1090,8 +1091,8 @@ Second_Msg_Dimension_Type as
 		score_dt,
 		dimension,
 		dimension_ch,
-		-- concat(concat_ws('；',collect_set(dim_type_msg)),'。') as idx_desc_risk_info_desc_in_one_dimension   -- hive 
-		concat(group_concat(distinct dim_type_msg,'；'),'。') as idx_desc_risk_info_desc_in_one_dimension  --impala
+		concat(concat_ws('；',collect_set(dim_type_msg)),'。') as idx_desc_risk_info_desc_in_one_dimension   -- hive 
+		-- concat(group_concat(distinct dim_type_msg,'；'),'。') as idx_desc_risk_info_desc_in_one_dimension  --impala
 	from
 	(
 		select 
@@ -1146,15 +1147,15 @@ Second_Msg_Dim as
 					concat(
 						case 
 							when dim_rank='001' then 
-								concat('<',dim_rank,'>','首先为',a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension )
+								concat('<',dim_rank,'>','首先为',dim_msg,'主要包括',idx_desc_risk_info_desc_in_one_dimension )
 							when dim_rank='002' then 
-								concat('<',dim_rank,'>','其次为',a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension )
+								concat('<',dim_rank,'>','其次为',dim_msg,'主要包括',idx_desc_risk_info_desc_in_one_dimension )
 							when dim_rank='003' then 
-								concat('<',dim_rank,'>','第三为',a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension )
+								concat('<',dim_rank,'>','第三为',dim_msg,'主要包括',idx_desc_risk_info_desc_in_one_dimension )
 							when dim_rank='004' then 
-								concat('<',dim_rank,'>','第四为',a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension )	
+								concat('<',dim_rank,'>','第四为',dim_msg,'主要包括',idx_desc_risk_info_desc_in_one_dimension )	
 							when dim_rank='005' then  
-								concat('<',dim_rank,'>','最后为',a.dim_msg,'主要包括',b.idx_desc_risk_info_desc_in_one_dimension )	
+								concat('<',dim_rank,'>','最后为',dim_msg,'主要包括',idx_desc_risk_info_desc_in_one_dimension )	
 						end
 					) 
 		end as msg_dim
@@ -1168,6 +1169,7 @@ Second_Msg_Dim as
 			a.dimension,
 			a.dim_factorEvalu_factor_cnt,
 			b.idx_desc_risk_info_desc_in_one_dimension,
+			a.dim_msg,
 			lpad(cast(a.dim_contrib_ratio_rank as string),3,'0') as dim_rank  --维度显示顺序排名，001 002 003 004 005
 			-- case 	
 			-- 	when a.dim_factorEvalu_factor_cnt=0 then  --无异常指标时，话术直接输出维度层即可，结束语为'无显著异常指标及事件'
@@ -1190,8 +1192,8 @@ Second_Msg as    --！！！还未对 贡献度占比 从大到小排序
 		corp_id,
 		corp_nm,
 		score_dt,
-		-- concat_ws('\\r\\n',sort_array(collect_set(msg_dim))) as msg
-		group_concat(distinct msg_dim,'\\r\\n') as msg
+		concat_ws('\\r\\n',sort_array(collect_set(msg_dim))) as msg
+		-- group_concat(distinct msg_dim,'\\r\\n') as msg
 	from Second_Msg_Dim
 	group by batch_dt,corp_id,corp_nm,score_dt
 ),
@@ -1202,8 +1204,8 @@ Fifth_Data as
 		corp_id,
 		corp_nm,
 		score_dt,
-		-- concat_ws('、',collect_set(dimension_ch)) as abnormal_dim_msg  -- hive
-		group_concat(dimension_ch,'、') as abnormal_dim_msg -- impala
+		concat_ws('、',collect_set(dimension_ch)) as abnormal_dim_msg  -- hive
+		-- group_concat(dimension_ch,'、') as abnormal_dim_msg -- impala
 	from 
 	(
 		select distinct
@@ -1213,7 +1215,7 @@ Fifth_Data as
 			score_dt,
 			dimension_ch as dimension_ch_no_color,
 			concat('<span class="RED"><span class="WEIGHT">',dimension_ch,'</span></span>') as dimension_ch
-		from Second_Part_Data_Prepare
+		from (select distinct * from Second_Part_Data_Prepare) t
 		where factor_evaluate = 0   --因子评价，因子是否异常的字段 0：异常 1：正常
 	)A 
 	group by batch_dt,corp_id,corp_nm,score_dt

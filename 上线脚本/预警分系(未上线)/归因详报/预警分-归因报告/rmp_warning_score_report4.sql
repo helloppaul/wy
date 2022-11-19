@@ -451,8 +451,8 @@ Fourth_msg_type as
 (
 	select 
 		batch_dt,corp_id,corp_nm,score_dt,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt,type,
-		-- concat_ws('、',collect_set(worsen_idx_desc)) as worsen_idx_desc_in_one_type  --hive
-		group_concat(distinct worsen_idx_desc,'、') as worsen_idx_desc_in_one_type 
+		concat_ws('、',collect_set(worsen_idx_desc)) as worsen_idx_desc_in_one_type  --hive
+		-- group_concat(distinct worsen_idx_desc,'、') as worsen_idx_desc_in_one_type 
 	from 
 	(
 		select distinct
@@ -553,7 +553,7 @@ Fourth_msg_corp_I as --肯定是维度发生变化 或者 是维度异常占比 满足条件的数据
 ),
 Fourth_msg_corp_II as 
 (
-	select distinct
+	select 
 		a.*,
 		ru.reason,
 		case 
@@ -572,14 +572,14 @@ Fourth_msg_corp_II as
 	(
 		select 
 			batch_dt,corp_id,corp_nm,synth_warnlevel_desc,last_synth_warnlevel_desc,corp_dim_msg,
-			-- concat_ws('',collect_set(corp_dim_msg)) as msg_corp_
-			group_concat(distinct corp_dim_msg,'') as msg_corp_   -- impala
+			concat_ws('',collect_set(corp_dim_msg)) as msg_corp_
+			-- group_concat(distinct corp_dim_msg,'') as msg_corp_   -- impala
 		from Fourth_msg_corp_I
 		group by batch_dt,corp_id,corp_nm,synth_warnlevel_desc,last_synth_warnlevel_desc,corp_dim_msg
 	)A left join warn_adj_rule_cfg ru
 		on a.corp_id = ru.corp_id 
 )
-select 
+select distinct
 	batch_dt,
 	corp_id,
 	corp_nm,

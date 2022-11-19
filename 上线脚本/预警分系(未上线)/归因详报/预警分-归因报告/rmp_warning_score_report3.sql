@@ -294,7 +294,8 @@ Third_Msg_Corp as --将 和主体相同属性的企业合并为一行
 		corp_id,
 		corp_nm,
 		score_dt,
-		group_concat(same_property_corp_nm,'、') as same_property_corp_nm_in_one_row
+		concat_ws('、',collect_set(same_property_corp_nm)) as same_property_corp_nm_in_one_row  --hive
+		-- group_concat(same_property_corp_nm,'、') as same_property_corp_nm_in_one_row  --impala
 	from Third_Part_Data_SUMM
 	group by batch_dt,corp_id,corp_nm,score_dt
 ),
