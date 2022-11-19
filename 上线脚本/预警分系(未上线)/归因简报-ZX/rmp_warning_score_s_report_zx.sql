@@ -823,9 +823,9 @@ mid_risk_info as   --合并新闻、诚信、司法数据
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 s_report_Data_Prepare_ as 
 (
-	select DISTINCT
+	select 
 		T.*,
-		rinfo.msg_title,   --一个指标对应多条风险事件
+		nvl(rinfo.msg_title,'') as msg_title,   --一个指标对应多条风险事件
 		nvl(ru.category,'') as category_nvl,   --一个企业一天一条外挂规则
 		nvl(ru.reason,'') as reason_nvl
 	from 
@@ -847,6 +847,7 @@ s_report_Data_Prepare_ as
 			main.last_idx_value, -- used in 简报wy
 			main.idx_unit,  -- used 
 			main.idx_score,  -- used
+			main.ori_idx_name,
 			nvl(f_cfg.feature_name_target,'') as feature_name_target,  --特征名称-目标(系统)  used
 			main.contribution_ratio,
 			main.factor_evaluate  --因子评价，因子是否异常的字段 0：异常 1：正常
@@ -859,7 +860,8 @@ s_report_Data_Prepare_ as
 	left join warn_adj_rule_cfg  ru
 		on T.corp_id = ru.corp_id
 	left join mid_risk_info rinfo 
-		on T.corp_id=rinfo.corp_id and T.score_dt>=rinfo.notice_date and T.idx_name=rinfo.feature_cd
+		on T.corp_id=rinfo.corp_id  and T.ori_idx_name=rinfo.feature_cd
+	where T.score_dt>=rinfo.notice_date
 ),
 s_report_Data_Prepare as 
 (
@@ -882,9 +884,10 @@ s_report_Data_Prepare as
 		idx_score,
 		feature_name_target,
 		contribution_ratio,
-		factor_evaluate,
-		concat_ws('、',collect_Set(msg_title)) as risk_info_dsec_in_one_idx  -- hive 
-		-- group_concat(distinct msg_title,'、') as risk_info_desc_in_one_idx  -- impala
+		factor_evaluate
+
+		-- concat_ws('、',collect_Set(msg_title)) as risk_info_desc_in_one_idx  -- hive 废弃
+		-- group_concat(distinct msg_title,'、') as risk_info_desc_in_one_idx  -- impala 废弃
 	from s_report_Data_Prepare_ 
 	group by batch_dt,corp_id,corp_nm,score_dt,category_nvl,reason_nvl,interval_text_adjusted,dimension,
 			 dimension_ch,dim_contrib_ratio,type,idx_name,idx_value,last_idx_value,idx_unit,idx_score,
@@ -903,12 +906,15 @@ s_report_Data_dim as
 		dimension,
 		dimension_ch,
 		dim_contrib_ratio,
-		concat_ws('、',collect_set(feature_name_target))  as abnormal_idx_desc, -- hive
-		-- group_concat(feature_name_target,'、')  as abnormal_idx_desc,  -- impala 
-		concat_ws('、',collect_set(risk_info_desc_in_one_idx))  as abnormal_risk_info_desc -- hive
-		-- group_concat(distinct risk_info_desc_in_one_idx,'、')  as abnormal_risk_info_desc
-	from s_report_Data_Prepare
-	where factor_evaluate = 0
+		concat_ws('、',collect_set(feature_name_target))  as abnormal_idx_desc -- hive
+		-- group_concat(feature_name_target,'、')  as abnormal_idx_desc  -- impala 
+
+
+
+		-- concat_ws('、',collect_set(risk_info_desc_in_one_idx))  as abnormal_risk_info_desc -- hive 废弃
+		-- group_concat(distinct risk_info_desc_in_one_idx,'、')  as abnormal_risk_info_desc 废弃
+	from (select *,row_number() over(partition by batch_dt,corp_id,score_dt,dimension order by 1) as rm from s_report_Data_Prepare ) A
+	where factor_evaluate = 0 and rm<=5
 	group by batch_dt,corp_id,corp_nm,score_dt,interval_text_adjusted,dimension,dimension_ch,dim_contrib_ratio
 	order by dim_contrib_ratio desc
 ),
@@ -919,35 +925,23 @@ s_report_msg as
 		corp_id,
 		corp_nm,
 		score_dt,
+		reason_nvl,
+		interval_text_adjusted,
 		dimension_ch,
-		concat(		
-			'最新信用违约预警处于',
-				case interval_text_adjusted 
-					when '绿色预警' then 
-						concat('<span class="GREEN"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
-					when '黄色预警' then 
-						concat('<span class="YELLO"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
-					when '橙色预警' then 
-						concat('<span class="ORANGE"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
-					when '红色预警' then 
-						concat('<span class="RED"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
-					when '风险已暴露' then 
-						concat('<span class="RED"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
-				end,'，',
-			if(reason_nvl<>'',concat('主要由于触发',reason_nvl,'同时'),''),
+		concat(
 			'风险涉及','<span class="WEIGHT">',dimension_ch,'维度','（','贡献度占比',cast(cast(round(dim_contrib_ratio,0) as decimal(10,0)) as string),'%','）','</span>','，',
 			case 
 				when  abnormal_idx_desc<>'' then 
 					concat('异常指标包括：',abnormal_idx_desc)
 				else 
 					''
-			end,
-			case 
-				when  abnormal_risk_info_desc<>'' and abnormal_risk_info_desc is not null then 
-					concat('，','异常事件包括：',abnormal_risk_info_desc)
-				else 
-					''
 			end
+			-- case 
+			-- 	when  abnormal_risk_info_desc<>'' and abnormal_risk_info_desc is not null then 
+			-- 		concat('，','异常事件包括：',abnormal_risk_info_desc)
+			-- 	else 
+			-- 		''
+			-- end
 		) as msg_in_one_dim
 	from s_report_Data_dim
 ),
@@ -958,10 +952,36 @@ s_report_msg_corp as
 		corp_id,
 		corp_nm,
 		score_dt,
-		concat_ws('；',collect_Set(msg_in_one_dim)) as s_msg  -- hive
-		-- group_concat(distinct msg_in_one_dim,'；') as s_msg  -- impala
-	from s_report_msg
-	group by batch_dt,corp_id,corp_nm,score_dt
+		concat(
+			'最新信用违约预警处于',
+			case interval_text_adjusted 
+				when '绿色预警' then 
+					concat('<span class="GREEN"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
+				when '黄色预警' then 
+					concat('<span class="YELLO"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
+				when '橙色预警' then 
+					concat('<span class="ORANGE"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
+				when '红色预警' then 
+					concat('<span class="RED"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
+				when '风险已暴露' then 
+					concat('<span class="RED"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
+			end,'，',
+			if(reason_nvl<>'',concat('主要由于触发',reason_nvl,'，同时'),''),s_msg_,'。'
+		) as s_msg
+	from 
+	(
+		select 
+			batch_dt,
+			corp_id,
+			corp_nm,
+			score_dt,
+			reason_nvl,
+			interval_text_adjusted,
+			concat_ws('；',collect_Set(msg_in_one_dim)) as s_msg_  -- hive
+			-- group_concat(distinct msg_in_one_dim,'；') as s_msg_  -- impala
+		from s_report_msg
+		group by batch_dt,corp_id,corp_nm,interval_text_adjusted,reason_nvl,score_dt
+	) A
 )
 ------------------------------------以上部分为临时表-------------------------------------------------------------------
 insert into pth_rmp.WARNING_SCORE_S_REPORT_ZX partition(etl_date=${ETL_DATE})
