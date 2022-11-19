@@ -482,7 +482,6 @@ Fourth_msg_type as
 			where idx_score_worsen_flag = 1  
 		)A where rm<=5  --取贡献度排名前5大的恶化指标作为展示
 	)B group by batch_dt,corp_id,corp_nm,score_dt,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt,type
-
 ),
 Fourth_msg_dim as 
 (
