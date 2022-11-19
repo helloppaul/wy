@@ -65,18 +65,22 @@ rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接
 	select a.*
     from 
     (
-		-- 时间限制部分 --
-		select * 
-		from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-		where 1 in (select max(flag) from timeLimit_switch) 
-		and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
-		union all
-		-- 非时间限制部分 --
-		select * 
-		from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-		where 1 in (select not max(flag) from timeLimit_switch) 
-	) a join model_version_intf_ b
-		on a.model_version = b.model_version and a.model_name=b.model_name
+		select m.*
+		from
+		(
+			-- 时间限制部分 --
+			select *,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
+			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+			where 1 in (select max(flag) from timeLimit_switch) 
+			and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
+			union all
+			-- 非时间限制部分 --
+			select * ,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
+			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+			where 1 in (select not max(flag) from timeLimit_switch) 
+		) m where rm=1
+    ) a join model_version_intf_ b
+        on a.model_version = b.model_version and a.model_name=b.model_name
 ),
 rmp_cs_compy_region_ as   -- 区域经营数据 (每日全量采集)
 (
