@@ -1,6 +1,10 @@
 -- RMP_WARNING_SCORE_MODEL (同步方式：一天多批次插入) --
 --/*2022-10-20 调整后预警等级 映射逻辑调整为R1-R6*/
 --/*2022-11-08 增加模型版本控制接口表 */
+
+set hive.exec.parallel=true;
+set hive.auto.convert.join = false;
+set hive.ignore.mapjoin.hint = false;  
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg
@@ -16,7 +20,7 @@ corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg
 		  	-- on b1.etl_date=b2.etl_date
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
-	where a.delete_flag=0 and b.delete_flag=0
+	where a.delete_flag=0 and b.delete_flag=0 and a.source_code='ZXZX'
 ),
 --—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 -- 模型版本控制 --
@@ -43,6 +47,12 @@ model_version_intf_ as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_v
     -- where a.etl_date in (select max(etl_date) from t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf)
     --   and status='active'
     -- group by notes,model_name,model_version,status,etl_date
+),
+-- 时间限制开关 --
+timeLimit_switch as 
+(
+    select True as flag   --TRUE:时间约束，FLASE:时间不做约束，通常用于初始化
+    -- select False as flag
 ),
 -- 预警分 --
 rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接口
@@ -98,8 +108,8 @@ warn_union_adj_sync_score as --取最新批次的融合调整后综合预警分
 		end as adjust_warnlevel,
 		a.model_name,
 		a.model_version
-    from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a   
-    join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from _rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
+    from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a   
+    join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
         on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
     join corp_chg chg
         on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
