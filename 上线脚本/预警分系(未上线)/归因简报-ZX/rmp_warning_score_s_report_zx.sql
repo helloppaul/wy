@@ -988,7 +988,7 @@ s_report_msg_corp as
 	) A
 )
 ------------------------------------以上部分为临时表-------------------------------------------------------------------
-insert into pth_rmp.WARNING_SCORE_S_REPORT_ZX partition(etl_date=${ETL_DATE})
+insert into pth_rmp.RMP_WARNING_SCORE_S_REPORT_ZX partition(etl_date=${ETL_DATE})
 select 
 	concat(corp_id,md5(concat(batch_dt,corp_id))) as sid_kw,  -- hive
 	-- '' as sid_kw,  -- impala
