@@ -88,13 +88,13 @@ from
 		Final.corp_nm,
 		Final.notice_dt,
 		Final.msg_id,  --impala
-		-- concat(Final.corp_id,'_',md5(concat(cast(Final.notice_dt as string),Final.msg_title,Final.case_type_ii,Final.msg))) as msg_id,   -- hive版本支持：MD5(corp_id,notice_dt,case_type_ii,RISK_DESC)*/
+		-- md5(concat(cid_chg.corp_id,cast(Final.notice_dt as string),Final.case_type_ii_cd)) as msg_id, 
 		Final.msg_title,
 		Final.case_type_cd,
 		Final.case_type,
 		Final.case_type_ii_cd,
 		Final.case_type_ii,
-		cast(Final.importance as tinyint) as importance,
+		Final.importance,
 		Final.signal_type,
 		Final.src_table,
 		Final.src_sid,
@@ -452,7 +452,7 @@ from
 								ITCODE2 as COMPANY_ID, -- 公司代码(企业库) as 公司代码
 								max(ITCODE) as COMPANY_ID2, -- 公司代码(金融库) AS 公司代码2
 								max(ITNAME) as company_nm,  --公司名称 as 公司名称(被执行人名称)
-								cast(CR0037_004 as timestamp) as NOTICE_DT,  -- 立案时间 as 发生时间
+								to_date(cast(CR0037_004 as timestamp)) as NOTICE_DT,  -- 立案时间 as 发生时间
 								CR0037_001 as case_no,  --案号 as 案号
 								--count(*) as case_no_cnt,  --当天某公司的案号数量
 								max(CR0037_002) as jud_organ, --执行法院 as 执法机构(法院)
@@ -1650,7 +1650,7 @@ from
 		Final.case_type,
 		Final.case_type_ii_cd,
 		Final.case_type_ii,
-		cast(Final.importance as tinyint) as importance,
+		Final.importance,
 		Final.signal_type,
 		Final.src_table,
 		Final.src_sid,
@@ -1679,7 +1679,7 @@ from
 			msg_title,
 			case_type_cd,case_type,
 			case_type_ii_cd,case_type_ii,
-			importance,
+			cast(importance as tinyint) as importance,
 			signal_type,
 			src_table,
 			src_sid,
@@ -1753,7 +1753,8 @@ from
 						o.crnw0001_007 as news_from,
 						o3.CRNW0002_001 as msg,
 						o1.CRNW0003_010
-					from (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0001 where flag<>'1') o,
+					from (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0001 where flag<>'1' 
+					) o,
 						(select * from hds.tr_ods_rmp_fi_x_news_tcrnw0003_all_v2 where flag<>'1') o1,
 						(select * from hds.tr_ods_rmp_fi_x_news_tcrnwitcode where flag<>'1' ) o2,
 						(select * from 
@@ -1769,7 +1770,7 @@ from
 						-- where   a.flag<>'1'  and a.indexlevel in ('3','4')
 						) idx,
 						 (select distinct newscode,NEWSDATE,CRNW0002_001 --正文数据
-						  from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') o3
+						  from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1' ) o3
 					where o.newscode=o1.newscode and o1.itcode2=o2.itcode2 and idx.indexcode=o1.crnw0003_001 and o.newscode=o3.newscode 
 					and cast(o1.crnw0003_006 as int)<0
 				)t0
@@ -1783,16 +1784,15 @@ where to_date(notice_dt)>=to_date(date_add(from_unixtime(unix_timestamp(cast(${b
 
 
 
-
 -- 初始化sql hive执行 --
 -- drop table if exists pth_rmp.rmp_opinion_risk_info;
-insert into pth_rmp.rmp_opinion_risk_info_init partition(etl_date=19900101)
+insert into pth_rmp.rmp_opinion_risk_info_init partition(etl_date=19900102)
 select 
-	concat(corp_id,'_',md5(concat(cast(notice_dt as string),msg_title,case_type_ii,msg))) as sid_kw, 
+	md5(concat(corp_id,cast(notice_dt as string),case_type_ii_cd)) as sid_kw, 
 	corp_id,
 	corp_nm,
 	notice_dt,
-	concat(md5(concat(cast(notice_dt as string),msg))) as msg_id,
+	md5(concat(corp_id,cast(notice_dt as string),case_type_ii_cd)) as msg_id, 
 	msg_title,
 	case_type_cd,
 	case_type,
@@ -1818,7 +1818,7 @@ from pth_rmp.rmp_opinion_risk_info_init_impala
 where signal_type<>0
 union all 
 select 
-	concat(corp_id,'_',msg_id,'_',cast(case_type_ii_cd as string)) as sid_kw,
+	concat(corp_id,'_',msg_id,'_',cast(case_type_ii_cd as string)) as sid_kw,  
 	corp_id,
 	corp_nm,
 	notice_dt,
