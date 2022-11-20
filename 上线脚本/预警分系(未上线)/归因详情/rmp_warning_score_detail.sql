@@ -770,8 +770,8 @@ warn_feature_value_with_median_cal as
 (
     select 
         a.corp_id,a.batch_dt,a.score_dt,a.zjh_cal,a.sub_model_name,a.idx_name
-        ,appx_median(b.idx_value) as median  --impala
-        -- ,percentile_approx(b.idx_value,0.5) as median  --hive
+        -- ,appx_median(b.idx_value) as median  --impala
+        ,percentile_approx(b.idx_value,0.5) as median  --hive
     from warn_feature_value_with_median a 
     join warn_feature_value_with_median b 
         on a.batch_dt=b.batch_dt and a.score_dt=b.score_dt and a.zjh_cal=b.zjh_cal and a.idx_name=b.idx_name  --获取 与当前行的企业 同时间点 同行业 同指标的指标中位数
