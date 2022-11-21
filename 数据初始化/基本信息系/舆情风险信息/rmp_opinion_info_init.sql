@@ -1786,9 +1786,9 @@ where to_date(notice_dt)>=to_date(date_add(from_unixtime(unix_timestamp(cast(${b
 
 -- 初始化sql hive执行 --
 -- drop table if exists pth_rmp.rmp_opinion_risk_info;
-insert into pth_rmp.rmp_opinion_risk_info_init partition(etl_date=19900102)
+insert into pth_rmp.rmp_opinion_risk_info_init partition(etl_date=19900101)
 select 
-	md5(concat(corp_id,cast(notice_dt as string),case_type_ii_cd)) as sid_kw, 
+	md5(concat(corp_id,cast(notice_dt as string),case_type_ii_cd,msg)) as sid_kw, 
 	corp_id,
 	corp_nm,
 	notice_dt,

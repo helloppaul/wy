@@ -70,7 +70,7 @@ company_core_rel_ as
 )
 select 
 	-- md5(concat(batch_dt,corp_id,relation_id)) as sid_kw,
-	-- batch_dt,
+	batch_dt,
 	corp_id,
 	corp_nm,
 	score_dt,
@@ -88,7 +88,7 @@ select
 	0 as version
 from
 (
-	select distinct
+	select 
 		com.batch_dt,
 		com.corp_id ,
 		com.corp_nm ,
@@ -108,8 +108,8 @@ from
 		on com.relation_id = sc.corp_id and to_date(com.score_dt)=to_date(sc.score_dt) --and nvl(com.batch_dt,'')=nvl(sc.batch_dt,'')
 	group by com.batch_dt,com.corp_id,com.corp_nm,com.corp_nm,com.score_dt,com.relation_id,com.relation_nm,com.r_score_cal,sc.alert
 )Final 
-where score_dt >= '2022-09-09'
-  and score_dt <= '2022-10-14'
+where score_dt >= '2021-11-20'
+  and score_dt <= '2022-11-19'
 ;
 
 --（3）sql初始化 RMP_COMPY_CONTRIB_DEGREE_INIT hive执行 --
