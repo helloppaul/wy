@@ -233,7 +233,7 @@ from
 			score_dt,
 			score,
 			yq_num,
-			mu + sqrt(sigma_tmp/(12-1)) as ci,  --置信区间下限
+			mu + sqrt(sigma_tmp/12-1) as ci,  --置信区间下限
 			--importance,
 			tmp_score_hit,
 			label_hit,  --风险预警
@@ -245,47 +245,41 @@ from
 			from 
 			(
 				select
-					batch_dt,
-					corp_id,
-					corp_nm,
-					credit_code,
-					score_dt,
-					score,
-					yq_num,
-					tmp_score_hit,  
-					label_hit,
-					mu,
-					model_version,
+					B.batch_dt,
+					B.corp_id,
+					B.corp_nm,
+					B.credit_code,
+					B.score_dt,
+					B.score,
+					B.yq_num,
+					B.tmp_score_hit,  
+					B.label_hit,
+					B.mu,
+					B.model_version,
 					--sum(power(b.score-b.mu,2)) over(partition by B.corp_id order by B.yq_num rows between 12 preceding and current row) as sigma_tmp,  --14天舆情分里面剔除舆情数量倒数少的两天，计算12天的舆情分标准差
-					case when cnt>=12 then sum(power(b_score-mu,2)) over(partition by corp_id,score_dt )
-                         else sum(power(b_score-mu,2)) over(partition by corp_id,score_dt )+(12-cnt)*power(0-mu,2)
+					case when cnt>=12 then sum(power(b.score-b.mu,2)) over(partition by B.corp_id )
+                         else sum(power(b.score-b.mu,2)) over(partition by B.corp_id )+(12-cnt)*power(0-b.mu,2)
 						 end as sigma_tmp,  --modify yangcan 20221116
-					round((nvl(mu,-0.1)-score)/greatest(abs(nvl(mu,-0.1)),0.1),6) as fluctuated
+					round((nvl(B.mu,-0.1)-score)/greatest(abs(nvl(B.mu,-0.1)),0.1),6) as fluctuated
 				from 
 				(
 					select 
-						a.batch_dt,
-						a.corp_id,
-						a.corp_nm,
-						a.credit_code,
-						a.score_dt,
-						--a.rating_dt,
-						a.score, 
-						a.yq_num,
-						a.tmp_score_hit,
-						a.label_hit,
-						a.model_version,
+						batch_dt,
+						corp_id,
+						corp_nm,
+						credit_code,
+						score_dt,
+						--rating_dt,
+						score, 
+						yq_num,
+						tmp_score_hit,
+						label_hit,
+						model_version,
 						--avg(score) over(partition by corp_id order by yq_num rows between 12 preceding and current row) as mu   --14天舆情分里面剔除舆情数量倒数少的两天,计算12天的舆情分均值
-						(sum(b.score) over(partition by a.corp_id,a.score_dt ))/12 as mu,
-						a.cnt,
-						b.score as b_score
+						(sum(score) over(partition by corp_id ))/12 as mu,
+						cnt
 					from  label_hit_tab A
-					left join label_hit_tab B          --新增逻辑(兼容跑一段时间舆情分 2022-11-23 hz)
-						on a.corp_id = b.corp_id 
-					where b.score_dt <= a.score_dt    
-					  and b.score_dt >= date_add(a.score_dt,-13)
-					--   and b.rn<=12
-					-- where rn<=12  
+					where rn<=12  
 				) B 
 			)C1
 		)C

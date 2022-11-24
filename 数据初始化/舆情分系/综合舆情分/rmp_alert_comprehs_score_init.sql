@@ -1,7 +1,7 @@
 
 --（1） DDL 综合舆情分temp hive执行-- 
-drop table if exists pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP_INIT;
-create table pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP_INIT
+drop table if exists pth_rmp.rmp_alert_comprehs_score_temp_init;
+create table pth_rmp.rmp_alert_comprehs_score_temp_init
 (	
 	sid_kw string,
 	batch_dt string,
@@ -104,7 +104,8 @@ RMP_COMPANY_CORE_REL_ as
 	from pth_rmp.RMP_COMPANY_CORE_REL a 
 	where 1 = 1
 	  -- 时间限制(自动取最大日期)
-	  and a.relation_dt in (select max(relation_dt) max_relation_dt from pth_rmp.RMP_COMPANY_CORE_REL)
+	  and a.relation_dt='2022-11-22'
+	--   and a.relation_dt in (select max(relation_dt) max_relation_dt from pth_rmp.RMP_COMPANY_CORE_REL)
 		-- on a.relation_dt=b.max_relation_dt
 ),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
@@ -459,6 +460,29 @@ label_hit_tab AS  --风险预警
 			)B_ where min_rm=1  --group by corp_id,score_dt,relation_id,r_importance
 		)B
 	)C
+),
+label_hit_tab_cal as   --初始化计算用  
+(
+	select c.*, row_number() over(partition by c.corp_id order by tot_yq_num desc) as RM,
+		count(1) over(partition by c.corp_id) as cal_score_dt_cnt
+	from( 
+			select distinct b.*
+		  	from (
+					select a.batch_dt,
+							a.corp_id,
+							a.score_dt,
+							a.Main_score_hit_yq,
+							a.main_score_hit_ci,
+							a.main_score_hit,
+							a.second_score,
+							a.third_score,
+							a.comprehensive_score,
+							a.model_version,
+							a.origin_comprehensive_score,
+							sum(rel_yq_num) over(partition by corp_id,score_dt)+avg(yq_num) over(partition by corp_id,score_dt) as tot_yq_num
+					from com_score_temp a 
+				) b
+		) c
 )
 insert into pth_rmp.rmp_alert_comprehs_score_temp_init  partition(etl_date=19900101)
 select distinct
@@ -525,69 +549,55 @@ from
 			comprehensive_score,
 			model_version,
 			mu,
-			sqrt(sigma_tmp/12-1) as sigma,
-			mu + sqrt(sigma_tmp/12-1) as ci,  --置信区间下限
+			sqrt(sigma_tmp/(12-1)) as sigma,
+			mu + sqrt(sigma_tmp/(12-1)) as ci,  --置信区间下限
 			fluctuated,
 			row_number() over(partition by corp_id,score_dt order by fluctuated desc) as fluctuated_rm
 		from 
 		(
 			select 
-				E.batch_dt,
-				E.corp_id,
-				E.score_dt,
-				E.Main_score_hit_yq,
-				E.main_score_hit_ci,
-				E.main_score_hit,
-				E.second_score,
-				E.third_score,
-				E.origin_comprehensive_score,
-				E.comprehensive_score,
-				E.model_version,
-				E.mu,
+				batch_dt,
+				corp_id,
+				score_dt,
+				Main_score_hit_yq,
+				main_score_hit_ci,
+				main_score_hit,
+				second_score,
+				third_score,
+				origin_comprehensive_score,
+				comprehensive_score,
+				model_version,
+				mu,
 				--E.cal_score_dt,
-				case when cal_score_dt_cnt >=12 then sum(power(E.comprehensive_score-E.mu,2)) over(partition by E.corp_id)
-				     else (sum(power(E.comprehensive_score-E.mu,2)) over(partition by E.corp_id))+(12-cal_score_dt_cnt)*power(0-E.mu,2) 
+				case when cal_score_dt_cnt >=12 then sum(power(d2_comprehensive_score-mu,2)) over(partition by corp_id,score_dt)
+				     else (sum(power(d2_comprehensive_score-mu,2)) over(partition by corp_id,score_dt))+(12-cal_score_dt_cnt)*power(0-mu,2) 
 			    end as sigma_tmp,
-				round((nvl(E.mu,-0.1)-E.comprehensive_score)/greatest(abs(nvl(E.mu,-0.1)),0.1),6) as fluctuated
+				round((nvl(mu,-0.1)-comprehensive_score)/greatest(abs(nvl(mu,-0.1)),0.1),6) as fluctuated
 			from 
 			(
 				select 
-					batch_dt,
-					corp_id,
-					score_dt,
-					Main_score_hit_yq, 
-					main_score_hit_ci,
-					main_score_hit,
-					second_score,
-					third_score,
-					comprehensive_score,
-					model_version,
+					d1.batch_dt,
+					d1.corp_id,
+					d1.score_dt,
+					d1.Main_score_hit_yq, 
+					d1.main_score_hit_ci,
+					d1.main_score_hit,
+					d1.second_score,
+					d1.third_score,
+					d1.comprehensive_score,
+					d1.model_version,
 					--yq_num,
 					--cal_score_dt,
-					origin_comprehensive_score,
-					cal_score_dt_cnt,  --查看近12天统计日期实际数量
-					(sum(comprehensive_score) over(partition by corp_id ))/12 as mu
-				from 
-				( select c.*, row_number() over(partition by c.corp_id order by tot_yq_num desc) as RM,
-					       count(1) over(partition by c.corp_id) as cal_score_dt_cnt
-					 from( select distinct b.*
-					         from (
-    				               select a.batch_dt,
-				                          a.corp_id,
-				                          a.score_dt,
-						                  a.Main_score_hit_yq,
-						                  a.main_score_hit_ci,
-						                  a.main_score_hit,
-						                  a.second_score,
-						                  a.third_score,
-						                  a.comprehensive_score,
-						                  a.model_version,
-						                  a.origin_comprehensive_score,
-						                  sum(rel_yq_num) over(partition by corp_id,score_dt)+avg(yq_num) over(partition by corp_id,score_dt) as tot_yq_num
-					from com_score_temp a 
-								  ) b
-					     ) c
-				)D where rm<=12
+					d1.origin_comprehensive_score,
+					d1.cal_score_dt_cnt,  --查看近12天统计日期实际数量
+					(sum(d2.comprehensive_score) over(partition by d1.corp_id,d2.score_dt ))/12 as mu,
+					d2.comprehensive_score as d2_comprehensive_score
+				from label_hit_tab_cal d1    --新增逻辑(兼容跑一段时间综合舆情分 2022-11-24 hz)
+				join label_hit_tab_cal d2 
+					on d1.corp_id=d2.corp_id 
+				where d2.score_dt <= d1.score_dt 
+				  and d2.score_dt >= date_add(d1.score_dt,-13) 
+				-- where rm<=12
 			)E
 		)F
 	)F1 where fluctuated_rm=1
@@ -630,7 +640,8 @@ stored as textfile
 ;
 
 
---（4） 初始化sql (pth_rmp.rmp_alert_comprehs_score_init) hive执行 -- 
+--（4） 初始化sql (pth_rmp.rmp_alert_comprehs_score_init) hive执行 --
+set hive.exec.parallel=true;
 with 
 --—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 RMP_ALERT_COMPREHS_SCORE_TEMP_BATCH as 
@@ -689,7 +700,7 @@ RMP_ALERT_COMPREHS_SCORE_TEMP_RESULT as
 )
 insert into pth_rmp.RMP_ALERT_COMPREHS_SCORE_INIT partition(etl_date=19900101)
 select 
-	md5(concat(to_date(a.batch_dt),nvl(a.corp_id,''),'0')) as sid_kw,
+	md5(concat(to_date(a.batch_dt),nvl(a.corp_id,''),cast(score_dt as string),'0')) as sid_kw,
 	corp_id,
 	corp_nm,
 	credit_code,
