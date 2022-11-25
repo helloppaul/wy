@@ -6,6 +6,8 @@
 -- /* 2022-10-26 效率优化，近14天数据，除最新一天需计算，其余直接取历史表  impala:35s*/
 -- /* 2022-10-27 hive层效率优化，采用mapjoin方式提升关联效率，同时调整单主体舆情分取最大批次的方法 hive:1h27min */
 -- /* 2022-11-05 修复model_version和adjust_warnlevel反了的问题 */
+-- /* 2022-11-23 取单主体舆情分接口的时，增加去除上游因追批导致数据的重复问题 */
+
 
 -- PS: 可以将综合舆情分发任务 拆解为：com_score_temp,label_hit_tab(这两部分并行)； insert部分(依赖前两部分完成后执行)
 --依赖 pth_rmp.rmp_calendar,pth_rmp.RMP_ALERT_SCORE_SUMM,pth_rmp.RMP_COMPANY_CORE_REL,pth_rmp.RMP_COMPY_CORE_REL_DEGREE_CFG
@@ -32,25 +34,23 @@ corp_chg as
 --—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 RMP_ALERT_SCORE_SUMM_ as --取距离当前ETL_date最近的14天单主体舆情分数据（单主体舆情分不一定每家企业每天都有数据）
 (	
-	select 
+	select distinct
 		0 as his_flag,
 		batch_dt,   
-		corp_id,corp_nm,credit_code,score_dt,score,yq_num,score_hit_ci,score_hit_yq,score_hit,label_hit,alert,fluctuated,model_version,delete_flag,update_time
+		corp_id,corp_nm,credit_code,score_dt,score,yq_num,score_hit_ci,score_hit_yq,score_hit,label_hit,alert,fluctuated,model_version--,delete_flag,update_time
 	from pth_rmp.RMP_ALERT_SCORE_SUMM a
 	where a.delete_flag=0
 	-- 取距离当前ETL_DATE最近一天的日期 --
-	and a.score_dt in (select max(score_dt) from pth_rmp.RMP_ALERT_SCORE_SUMM where score_dt <= from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd') )	  
+	and a.score_dt in (select max(score_dt) from pth_rmp.RMP_ALERT_SCORE_SUMM where to_date(score_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd') )	  
 	UNION ALL 
-	select 
+	select distinct
 		1 as his_flag,
 		score_dt as batch_dt,
-		corp_id,corp_nm,credit_code,score_dt,score,yq_num,score_hit_ci,score_hit_yq,score_hit,label_hit,alert,fluctuated,model_version,delete_flag,update_time
-	from 
-	(   --取除去距离当前ETL_DATE最近一天日期的近13的数据
-		select *,row_number() over(partition by corp_id order by score_dt desc) as rm
-		from pth_rmp.RMP_ALERT_SCORE_SUMM_HIS  
-		where delete_flag=0 and score_dt<=from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
-	)A where rm<=14
+		corp_id,corp_nm,credit_code,score_dt,score,yq_num,score_hit_ci,score_hit_yq,score_hit,label_hit,alert,fluctuated,model_version--,delete_flag,update_time
+     from pth_rmp.RMP_ALERT_SCORE_SUMM_HIS  
+    where delete_flag=0
+	  and to_date(score_dt)<to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	  and to_date(score_dt)>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-13))
 ),
 -- RMP_ALERT_COMPREHS_SCORE_HIS_ as --综合舆情分历史表（综合舆情分不一定每家企业每天都有数据）
 -- (
@@ -64,12 +64,20 @@ RMP_ALERT_SCORE_SUMM_ as --取距离当前ETL_date最近的14天单主体舆情�
 -- ),
 rmp_opinion_risk_info_ as 
 (
+   --当日数据
 	select * 
 	from pth_rmp.rmp_opinion_risk_info   --@pth_rmp.rmp_opinion_risk_info
 	where delete_flag=0
-	  -- 时间限制(近两天数据，保证新闻重复数占比统计)
-	  and to_date(notice_dt) >= from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' )-1,'yyyy-MM-dd')
-	  and to_date(notice_dt) <= from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+	  and notice_dt>= from_unixtime((unix_timestamp()-3600*24))
+	  and notice_dt< current_timestamp()
+	  and cast(${ETL_DATE} as string)=cast(from_unixtime(unix_timestamp(),'yyyyMMdd') as string)
+	union all
+	--历史数据
+	select * 
+	from pth_rmp.rmp_opinion_risk_info   --@pth_rmp.rmp_opinion_risk_info
+	where delete_flag=0
+	  and to_date(notice_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+	  and cast(${ETL_DATE} as string)<cast(from_unixtime(unix_timestamp(),'yyyyMMdd') as string)
 ),
 RMP_COMPANY_CORE_REL_ as 
 (
@@ -135,46 +143,22 @@ MID_RMP_ALERT_SCORE_SUMM as  -- 取每天最新批次的 单主体舆情分数�
 		a.score_hit_ci,
 		a.score_hit,
 		a.label_hit,
-		alert,
+		a.alert,
 		a.fluctuated,
 		a.model_version 
 	from RMP_ALERT_SCORE_SUMM_ a
 	where 1=1 
 	  and a.delete_flag=0
 	  and a.his_flag=1
-	-- where a.batch_dt in (select max(batch_dt) as max_batch_dt from RMP_ALERT_SCORE_SUMM_) 
-	-- join (select max(batch_dt) as max_batch_dt,score_dt as score_dt from RMP_ALERT_SCORE_SUMM_ group by score_dt) b  
-	-- 	on a.batch_dt=b.max_batch_dt and a.score_dt = b.score_dt
-	-- where a.delete_flag=0
 ),
--- MID_RMP_COMPANY_CORE_REL as 
--- (
--- 	select a.* 
--- 	from RMP_COMPANY_CORE_REL_ a 
--- 	join (select max(relation_dt) max_relation_dt from RMP_COMPANY_CORE_REL_) b 
--- 		on a.relation_dt=b.max_relation_dt
--- ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
--- RMP_ALERT_SCORE_SUMM_ as
--- (	select a.batch_dt,b.corp_id,b.corp_name as corp_nm,
--- 	to_date(score_dt) as score_dt,  --已转换为日期，不带时分秒（原始值为带批次时间的日期 '2022-01-02 02:00:00'）
--- 	score,
--- 	score_hit_yq,score_hit_ci,score_hit,
--- 	label_hit,alert,fluctuated,model_version
--- 	from pth_rmp.RMP_ALERT_SCORE_SUMM a --app_ehzh.RMP_ALERT_SCORE_SUMM a   --@RMP_ALERT_SCORE_SUMM ->pth_rmp.RMP_ALERT_SCORE_SUMM
--- 	join (select * from corp_chg where source_code='FI')b on a.corp_id=b.corp_id
--- 	where a.delete_flag=0
--- ),
 news as(   --！！！注意此处notice_dt 处理为日期型，当日数据需要实时处理  --
-	select distinct corp_id,corp_nm,to_date(notice_dt) as notice_dt,msg_id,0 as today_flag
-	from rmp_opinion_risk_info_   --etl_date 前一天数据 2022-11-08   2022-11-09
-	where signal_type=0
-	  and notice_dt<to_date(current_timestamp())  --2022-11-10
-	UNION ALL 
-	select distinct corp_id,corp_nm,to_date(current_timestamp()) as notice_dt,msg_id,1 as today_flag
-	from rmp_opinion_risk_info_  
-	where signal_type=0  --2022-11-09 21：00：00                              --2022-11-10 21：00：00
-	  and notice_dt>= from_unixtime((unix_timestamp()-3600*24)) and  notice_dt<= current_timestamp()  
+	--select distinct corp_id,corp_nm,to_date(current_timestamp()) as notice_dt,msg_id,1 as today_flag
+	--from rmp_opinion_risk_info_  
+	--where signal_type=0  --2022-11-09 21：00：00                              --2022-11-10 21：00：00
+	--  and notice_dt>= from_unixtime((unix_timestamp()-3600*24)) and  notice_dt<= current_timestamp()
+	select distinct corp_id,corp_nm,to_date(notice_dt) as notice_dt,msg_id
+	  from rmp_opinion_risk_info_	
 ),
 Single_news as (
 	select corp_id,corp_nm,notice_dt,count(*) as yq_num from news group by corp_id,corp_nm,notice_dt
@@ -259,7 +243,8 @@ core_relcompy_score as    --（考虑存中间表，数据量大）
 		r,
 		news_duplicates_ratio,
 		cast(r*r_score*(1-news_duplicates_ratio) as double) as r_score_cal,
-		model_version
+		model_version,
+		rel_yq_num
 	from
 	(
 		select 
@@ -275,7 +260,8 @@ core_relcompy_score as    --（考虑存中间表，数据量大）
 			a.importance as r_importance,    --每家企业对应关联方的关联方密切程度最高的密切程度，作为该关联方对主体的密切程度
 			a.r,    --关联方对主体影响力
 			nvl(ns.news_duplicates_ratio,0) as news_duplicates_ratio,  --新闻重复数占比
-			b.model_version
+			b.model_version,
+			b.yq_num as rel_yq_num
 		from MID_RMP_ALERT_SCORE_SUMM b   --效率优化：小表join大表
 		join relcompy_with_importance a 
 			on a.relation_id=b.corp_id   --已取最新一天的关联方数据  --and a.relation_dt=b.score_dt
@@ -302,7 +288,8 @@ core_relcompy_score_res as   --关联方的 综合舆情分结果 （考虑存�
 		--yangcan modify 20221110
 		round(0.3*sum(r_score_cal) over(partition by corp_id,score_dt),4) as second_score,
 		round(0.7*max(r_score_cal) over(partition by corp_id,score_dt),4) as third_score,
-		model_version
+		model_version,
+		rel_yq_num
 	from core_relcompy_score
 ),
 -- 综合舆情分 --
@@ -335,7 +322,8 @@ com_score_temp as  --计算得到综合舆情分
 				200 / 2
 			else  
 				comprehensive_score / 2
-		end as comprehensive_score  --！！！档位划分，未来可能还会调整
+		end as comprehensive_score,  --！！！档位划分，未来可能还会调整
+		rel_yq_num
 	from 
 	(
 		select 
@@ -371,7 +359,8 @@ com_score_temp as  --计算得到综合舆情分
 				rc.news_duplicates_ratio,
 				nvl(rc.second_score,0) as second_score,
 				nvl(rc.third_score,0) as third_score,
-				rc.model_version
+				rc.model_version,
+				rc.rel_yq_num
 			from  MID_RMP_ALERT_SCORE_SUMM sc    --效率优化：小表join大表
 			full join core_relcompy_score_res rc 
 				on rc.corp_id = sc.corp_id and rc.score_dt=sc.score_dt
@@ -566,8 +555,8 @@ from
 			comprehensive_score,
 			model_version,
 			mu,
-			sqrt(sigma_tmp/12-1) as sigma,
-			mu + sqrt(sigma_tmp/12-1) as ci,  --置信区间下限
+			sqrt(sigma_tmp/(12-1)) as sigma,
+			mu + sqrt(sigma_tmp/(12-1)) as ci,  --置信区间下限
 			fluctuated,
 			row_number() over(partition by corp_id,score_dt order by fluctuated desc) as fluctuated_rm
 		from 
@@ -585,8 +574,10 @@ from
 				E.comprehensive_score,
 				E.model_version,
 				E.mu,
-				E.cal_score_dt,
-				sum(power(E.comprehensive_score-E.mu,2)) over(partition by E.corp_id,E.score_dt) as sigma_tmp,
+				--E.cal_score_dt,
+				case when cal_score_dt_cnt >=12 then sum(power(E.comprehensive_score-E.mu,2)) over(partition by E.corp_id)
+				     else (sum(power(E.comprehensive_score-E.mu,2)) over(partition by E.corp_id))+(12-cal_score_dt_cnt)*power(0-E.mu,2) 
+			    end as sigma_tmp,
 				round((nvl(E.mu,-0.1)-E.comprehensive_score)/greatest(abs(nvl(E.mu,-0.1)),0.1),6) as fluctuated
 			from 
 			(
@@ -601,21 +592,31 @@ from
 					third_score,
 					comprehensive_score,
 					model_version,
-					yq_num,
-					cal_score_dt,
+					--yq_num,
+					--cal_score_dt,
 					origin_comprehensive_score,
-					count(*) over(partition by corp_id,score_dt) as cal_score_dt_cnt,  --查看近12天统计日期实际数量
-					avg(cal_comprehensive_score) over(partition by corp_id,score_dt order by yq_num desc) as mu
+					cal_score_dt_cnt,  --查看近12天统计日期实际数量
+					(sum(comprehensive_score) over(partition by corp_id ))/12 as mu
 				from 
-				( 	select a.batch_dt,a.corp_id,a.score_dt,
-						   a.Main_score_hit_yq,a.main_score_hit_ci,a.main_score_hit,
-						   a.second_score,a.third_score,
-						   a.comprehensive_score,a.model_version,a.origin_comprehensive_score,
-						   b.score_dt as cal_score_dt,b.yq_num,b.comprehensive_score as cal_comprehensive_score,b.RM
-					from com_score_temp a 
-					join (select *,row_number() over(partition by corp_id order by yq_num desc) as RM from com_score_temp) b 
-						on a.corp_id=b.corp_id 
-					where b.score_dt<=a.score_dt and b.score_dt>=date_add(a.score_dt,-13)
+				( select c.*, row_number() over(partition by c.corp_id order by tot_yq_num desc) as RM,
+					       count(1) over(partition by c.corp_id) as cal_score_dt_cnt
+					 from( select distinct b.*
+					         from (
+    				               select a.batch_dt,
+				                          a.corp_id,
+				                          a.score_dt,
+						                  a.Main_score_hit_yq,
+						                  a.main_score_hit_ci,
+						                  a.main_score_hit,
+						                  a.second_score,
+						                  a.third_score,
+						                  a.comprehensive_score,
+						                  a.model_version,
+						                  a.origin_comprehensive_score,
+						                  sum(rel_yq_num) over(partition by corp_id,score_dt)+avg(yq_num) over(partition by corp_id,score_dt) as tot_yq_num
+						             from com_score_temp a
+								  ) b
+					     ) c
 				)D where rm<=12
 			)E
 		)F
