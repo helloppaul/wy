@@ -21,6 +21,7 @@
 -- /* 2022-11-16 修复 中位数计算问题，当为城投是 zjh_cal='城投'，避免将原属城投的归入到产业 */
 -- /* 2022-11-17 新增 企业敞口corp_exposure的临时表，解决模型指标没有变更敞口变更匹配不上的问题 */
 -- /* 2022-11-18 修复 维度异常占比统计的问题，限制了 因子评价=1，导致缺失异常维度的指标数据 */
+--/* 2022-11-23 修复 特征原始值取两天，改为left join */
 
 -- 依赖 模型 综合预警分，特征原始值高中低，特征贡献度高中低无监督以及综合，评分卡高中低，归因详情及其历史 PS:不依赖pth_rmp.模型结果表
 --q1：维度风险等级的计算依靠贡献度占比，贡献度占比特征会少于特征原始值，此时最后关联将会产生某些维度关联补上维度风险等级，导致为NULL(暂时决定踢掉)
@@ -736,7 +737,7 @@ warn_feature_value as --原始特征值_合并高中低频(包含今昨两天数据，列形式 used)
         a.model_freq_type,
         a.sub_model_name
     from warn_feature_value_two_days a   --今
-    join warn_feature_value_two_days b   --昨
+    left join warn_feature_value_two_days b   --昨
         on  a.corp_id = b.corp_id 
             and date_add(a.score_dt,-1)=b.score_dt 
             and a.sub_model_name=b.sub_model_name  
