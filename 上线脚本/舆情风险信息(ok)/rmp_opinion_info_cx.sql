@@ -26,7 +26,7 @@ corp_chg as
 )
 insert overwrite table pth_rmp.rmp_opinion_risk_info partition(etl_date=${ETL_DATE},type_='cx')
 select 
-	msg_id as sid_kw, 
+	msg_id as sid_kw,
 	*
 from 
 (

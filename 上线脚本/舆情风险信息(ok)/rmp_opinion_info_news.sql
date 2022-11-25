@@ -1,12 +1,17 @@
 --新闻舆情 (同步方式：一天多批次覆盖)- --
---入参：${ETL_DATE}(20220818 int) -> to_date(notice_dt) 
+--入参：${ETL_DATE}(20220818 int) -> to_date(notice_dt)
+-- /*2022-11-15 舆情司法诚信整合-新闻 效率优化 */
+
 -- set hive.execution.engine=spark;  --编排很好mr
 -- set hive.exec.dynamic.partition=true;  --开启动态分区功能
 -- set hive.exec.dynamic.partition.mode=nostrick;  --允许全部分区都为动态
 
+set hive.exec.parallel=true;
+set hive.auto.convert.join = false;
+set hive.ignore.mapjoin.hint = false;  
 
 with 
-corp_chg_ as 
+corp_chg as 
 (
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
 	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
@@ -19,14 +24,6 @@ corp_chg_ as
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
-),
-corp_chg as 
-(
-	select * from 
-	(
-		select *,ROW_NUMBER() over(partition by source_id,source_code order by 1) as rm 
-		from corp_chg_ 
-	) A where rm=1 
 )
 insert overwrite table pth_rmp.rmp_opinion_risk_info partition(etl_date=${ETL_DATE},type_='news')
 select 
@@ -147,9 +144,9 @@ from
 						o.crnw0001_007 as news_from,
 						o3.CRNW0002_001 as msg,
 						o1.CRNW0003_010
-					from (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0001 where flag<>'1') o,
-						(select * from hds.tr_ods_rmp_fi_x_news_tcrnw0003_all_v2 where flag<>'1') o1,
-						(select * from hds.tr_ods_rmp_fi_x_news_tcrnwitcode where flag<>'1' ) o2,
+					from (select * from hds.tr_ods_rmp_fi_x_news_tcrnw0001 where flag<>'1' and etl_date=${ETL_DATE}) o,
+						(select * from hds.tr_ods_rmp_fi_x_news_tcrnw0003_all_v2 where flag<>'1' and etl_date=${ETL_DATE}) o1,
+						(select * from hds.tr_ods_rmp_fi_x_news_tcrnwitcode where flag<>'1' and etl_date=${ETL_DATE} ) o2,
 						(select * from 
 							(select v1.*,
 									--v2.index_f_code as f_indexcode,
@@ -163,7 +160,7 @@ from
 						-- where   a.flag<>'1'  and a.indexlevel in ('3','4')
 						) idx,
 						 (select distinct newscode,NEWSDATE,CRNW0002_001 --正文数据
-						  from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1') o3
+						  from hds.tr_ods_rmp_fi_x_news_tcrnw0002 where flag<>'1' and etl_date=${ETL_DATE}) o3
 					where o.newscode=o1.newscode and o1.itcode2=o2.itcode2 and idx.indexcode=o1.crnw0003_001 and o.newscode=o3.newscode 
 					and cast(o1.crnw0003_006 as int)<0
 				)t0
