@@ -27,26 +27,48 @@ rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf_ as  -- 模型_特征原始值  
 	select *
 	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf
 ),
+rmp_opinion_risk_info_ as   --modify yangcan 跑批日期为当天,取当前系统时间-24小时数据,跑批日期为历史日期,取跑批日期当天数据
+(
+   --当日数据
+	select * 
+	from pth_rmp.rmp_opinion_risk_info   --@pth_rmp.rmp_opinion_risk_info
+	where delete_flag=0
+	  and notice_dt>= from_unixtime((unix_timestamp()-3600*24))
+	  and notice_dt< current_timestamp()
+	  and cast(${ETL_DATE} as string)=cast(from_unixtime(unix_timestamp(),'yyyyMMdd') as string)
+	union all
+	--历史数据
+	select * 
+	from pth_rmp.rmp_opinion_risk_info   --@pth_rmp.rmp_opinion_risk_info
+	where delete_flag=0
+	  and to_date(notice_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
+	  and cast(${ETL_DATE} as string)<cast(from_unixtime(unix_timestamp(),'yyyyMMdd') as string)
+),
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
 mid_opinion_alert_score as   --单主体舆情分  取每天最新批次数据 (如果只有一天的数据，相当于取当天最大批次数据)
 (
 	select a.*,chg.corp_id,chg.corp_name as corp_nm,chg.credit_code
 	from rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj_intf_ a 
-	join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj_intf_ group by to_date(rating_dt)) b  
-		on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt) = b.score_dt
+	join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt,max(etl_date) as max_etl_date  from rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj_intf_ group by to_date(rating_dt)) b  
+		on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt) = b.score_dt and a.etl_date=b.max_etl_date
 	join corp_chg chg 
 		on chg.source_id = cast(a.corp_code as string)
-	where chg.source_code='FI' 
+	where chg.source_code='FI'
+	--只取最近14天单主体舆情分 yangcan modify 20221116
+      and to_date(a.rating_dt)<=	to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	  and to_date(a.rating_dt)>=	to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-13))
 ),
 mid_opinion_feat as   --特征原始值  取每天最新批次数据 (如果只有一天的数据，相当于取当天最大批次数据)
 (
 	select a.*,chg.corp_id,chg.corp_name as corp_nm 
 	from rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf_ a 
-	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt from rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf_ group by to_date(end_dt)) b  
-		on a.end_dt=b.max_end_dt and to_date(a.end_dt) = b.score_dt
+	join (select max(end_dt) as max_end_dt,to_date(end_dt) as score_dt,max(etl_date) as max_etl_date from rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf_ group by to_date(end_dt)) b  
+		on a.end_dt=b.max_end_dt and to_date(a.end_dt) = b.score_dt and a.etl_date=b.max_etl_date
 	join corp_chg chg 
 		on chg.source_id = cast(a.corp_code as string)
-	where chg.source_code='FI'  
+	where chg.source_code='FI' 
+	  and to_date(a.end_dt)<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	  and to_date(a.end_dt)>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-13))
 ),
 -- modelres_adjusted_senti_self_ as 
 -- (
@@ -67,7 +89,9 @@ label_hit_tab AS
 (
 	select 
 		batch_dt,corp_id,corp_nm,credit_code,score_dt,score,yq_num,tmp_score_hit,model_version,
-		if(tag_importance=-3,1,0) as label_hit  --风险预警
+		if(tag_importance=-3,1,0) as label_hit,  --风险预警
+		row_number() over(partition by k.corp_id order by k.yq_num desc) as rn,  --add yangcan 20221116
+		count(1) over(partition by k.corp_id) as cnt	
 	from 
 	(
 		select 
@@ -84,8 +108,15 @@ label_hit_tab AS
 		from mid_opinion_alert_score o --单主体舆情分
 		join
 		(
-			select distinct batch_dt,corp_id,corp_code,end_dt,nvl(feature_value,0) as yq_num,tmp_score_hit,model_version from
-			(
+			--select distinct batch_dt,corp_id,corp_code,end_dt,nvl(feature_value,0) as yq_num,tmp_score_hit,model_version from
+			select batch_dt,
+			       corp_id,
+				   corp_code,
+				   end_dt,
+				   max(case feature_name when 'total_num' then feature_value else 0 end) as yq_num,
+				   max(tmp_score_hit) as tmp_score_hit,
+				   model_version
+			from (
 				select 
 					nvl(batch_dt,'') batch_dt,
 					corp_id,
@@ -109,9 +140,9 @@ label_hit_tab AS
 						from mid_opinion_feat
 						where feature_name in ('total_num','importance_-3_num')
 					 )f0
-			)f where feature_name='total_num' 
+			)f group by batch_dt,corp_id,corp_code,end_dt,model_version
 		)o1 on o.corp_code=o1.corp_code and o.rating_dt=o1.end_dt
-		left join pth_rmp.RMP_OPINION_RISK_INFO o2 
+		left join rmp_opinion_risk_info_ o2 
 			on o.corp_id=o2.corp_id and to_date(o.rating_dt) = to_date(o2.notice_dt)
 		left join (select * from pth_rmp.RMP_OPINION_RISK_INFO_Tag where importance=-3) tag 
 			on tag.tag_ii_cd=o2.case_type_ii_cd
@@ -172,7 +203,7 @@ from
 			score_dt,
 			score,
 			yq_num,
-			mu + sqrt(sigma_tmp/12-1) as ci,  --置信区间下限
+			mu + sqrt(sigma_tmp/(12-1)) as ci,  --置信区间下限
 			--importance,
 			tmp_score_hit,
 			label_hit,  --风险预警
@@ -195,7 +226,10 @@ from
 					B.label_hit,
 					B.mu,
 					B.model_version,
-					sum(power(b.score-b.mu,2)) over(partition by B.corp_id order by B.yq_num rows between 12 preceding and current row) as sigma_tmp,  --14天舆情分里面剔除舆情数量倒数少的两天，计算12天的舆情分标准差
+					--sum(power(b.score-b.mu,2)) over(partition by B.corp_id order by B.yq_num rows between 12 preceding and current row) as sigma_tmp,  --14天舆情分里面剔除舆情数量倒数少的两天，计算12天的舆情分标准差
+					case when cnt>=12 then sum(power(b.score-b.mu,2)) over(partition by B.corp_id )
+                         else sum(power(b.score-b.mu,2)) over(partition by B.corp_id )+(12-cnt)*power(0-b.mu,2)
+						 end as sigma_tmp,  --modify yangcan 20221116
 					round((nvl(B.mu,-0.1)-score)/greatest(abs(nvl(B.mu,-0.1)),0.1),6) as fluctuated
 				from 
 				(
@@ -211,8 +245,11 @@ from
 						tmp_score_hit,
 						label_hit,
 						model_version,
-						avg(score) over(partition by corp_id order by yq_num rows between 12 preceding and current row) as mu   --14天舆情分里面剔除舆情数量倒数少的两天,计算12天的舆情分均值
-					from  label_hit_tab A 
+						--avg(score) over(partition by corp_id order by yq_num rows between 12 preceding and current row) as mu   --14天舆情分里面剔除舆情数量倒数少的两天,计算12天的舆情分均值
+						(sum(score) over(partition by corp_id ))/12 as mu,
+						cnt
+					from  label_hit_tab A
+					where rn<=12  
 				) B 
 			)C1
 		)C
