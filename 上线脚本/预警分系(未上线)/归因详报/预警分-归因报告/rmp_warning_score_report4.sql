@@ -527,6 +527,7 @@ Fourth_msg_corp_I as --肯定是维度发生变化 或者 是维度异常占比 满足条件的数据
 		a.batch_dt,
 		a.corp_id,
 		a.corp_nm,
+		a.score_dt,
 		a.synth_warnlevel_desc,
 		a.last_synth_warnlevel_desc,
 		a.dimension_ch,
@@ -571,11 +572,11 @@ Fourth_msg_corp_II as
 	from 
 	(
 		select 
-			batch_dt,corp_id,corp_nm,synth_warnlevel_desc,last_synth_warnlevel_desc,corp_dim_msg,
+			batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,last_synth_warnlevel_desc,corp_dim_msg,
 			concat_ws('',collect_set(corp_dim_msg)) as msg_corp_
 			-- group_concat(distinct corp_dim_msg,'') as msg_corp_   -- impala
 		from Fourth_msg_corp_I
-		group by batch_dt,corp_id,corp_nm,synth_warnlevel_desc,last_synth_warnlevel_desc,corp_dim_msg
+		group by batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,last_synth_warnlevel_desc,corp_dim_msg
 	)A left join warn_adj_rule_cfg ru
 		on a.corp_id = ru.corp_id 
 )
@@ -583,6 +584,7 @@ select distinct
 	batch_dt,
 	corp_id,
 	corp_nm,
+	score_dt,
 	msg4_with_no_color,
 	msg4
 from Fourth_msg_corp_II
