@@ -31,11 +31,11 @@ union all select 15 as sid_kw,'importance_avg_abs' as feature_name,'情感均值
 
 union all select 16 as sid_kw,'importance_avg_abs' as feature_name,'情感均值_绝对值' as feature_name_cn,3 as index_min_val,3.1 as index_max_val,'新闻集中于严重负面新闻' as index_desc,'' as index_unit
 
-union all select 17 as sid_kw,'importance_3to2' as feature_name,'情感-3/-2舆情数量比值' as feature_name_cn,-1 as index_min_val,-1 as index_max_val,'严重负面新闻较重点负面新闻的比值为' as index_desc,'p' as index_unit
+-- union all select 17 as sid_kw,'importance_3to2' as feature_name,'情感-3/-2舆情数量比值' as feature_name_cn,-1 as index_min_val,-1 as index_max_val,'严重负面新闻较重点负面新闻的比值为' as index_desc,'p' as index_unit
 
-union all select 18 as sid_kw,'importance_3to1' as feature_name,'情感-3/-1舆情数量比值' as feature_name_cn,-1 as index_min_val,-1 as index_max_val,'严重负面新闻较一般负面新闻的比值为' as index_desc,'p' as index_unit
+-- union all select 18 as sid_kw,'importance_3to1' as feature_name,'情感-3/-1舆情数量比值' as feature_name_cn,-1 as index_min_val,-1 as index_max_val,'严重负面新闻较一般负面新闻的比值为' as index_desc,'p' as index_unit
 
-union all select 19 as sid_kw,'importance_2to1' as feature_name,'情感-2/-1舆情数量比值' as feature_name_cn,-1 as index_min_val,-1 as index_max_val,'重点负面新闻较一般负面新闻的比值为' as index_desc,'p' as index_unit
+-- union all select 19 as sid_kw,'importance_2to1' as feature_name,'情感-2/-1舆情数量比值' as feature_name_cn,-1 as index_min_val,-1 as index_max_val,'重点负面新闻较一般负面新闻的比值为' as index_desc,'p' as index_unit
 
 union all select 20 as sid_kw,'latest17to24_rate' as feature_name,'近17-24小时舆情占比' as feature_name_cn,-1 as index_min_val,-1 as index_max_val,'近17-24小时负面新闻占比为' as index_desc,'%' as index_unit
 
