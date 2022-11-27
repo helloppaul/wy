@@ -23,6 +23,7 @@
 -- /* 2022-11-18 修复 维度异常占比统计的问题，限制了 因子评价=1，导致缺失异常维度的指标数据 */
 -- /* 2022-11-23 修复 特征原始值取两天，改为left join */
 -- /* 2022-11-25 修复 中位数计算优化 */
+-- /* 2022-11-27 修复 中位数计算导致重复数据，由于batch_dt存在0000和2205 */
 
 
 -- 依赖 模型 综合预警分，特征原始值高中低，特征贡献度高中低无监督以及综合，评分卡高中低，归因详情及其历史 PS:不依赖pth_rmp.模型结果表
@@ -771,11 +772,11 @@ warn_feature_value_with_median as --原始特征值_合并高中低频+中位数计算
 ),
 hy_median as --行业中位数
 (
-    select batch_dt,score_dt,zjh_cal,sub_model_name,idx_name
+    select score_dt,zjh_cal,sub_model_name,idx_name
     ,appx_median(idx_value) as median  --impala
     -- ,percentile_approx(b.idx_value,0.5) as median  --hive
     from warn_feature_value_with_median
-    group by batch_dt,score_dt,zjh_cal,sub_model_name,idx_name
+    group by score_dt,zjh_cal,sub_model_name,idx_name
 ), 
 warn_feature_value_with_median_cal as 
 (
