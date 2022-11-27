@@ -73,6 +73,11 @@ warn_contribution_ratio as
     select * 
     from pth_rmp.rmp_warn_contribution_ratio
 ),
+warn_feature_contrib_res3 as 
+(
+    select *
+    from pth_rmp.rmp_warn_feature_contrib_res3
+),
 -- 特征原始值 --
 warn_feature_value_with_median_res as 
 (
