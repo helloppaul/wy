@@ -1,5 +1,5 @@
 -- RMP_WARNING_SCORE_REPORT 第二段和第五段-当前等级归因和建议关注风险 
-
+-- /* 2022-11-25 首先为->主要为 */--
 
 set hive.exec.parallel=true;
 set hive.auto.convert.join = false;
@@ -1147,7 +1147,7 @@ Second_Msg_Dim as
 					concat(
 						case 
 							when dim_rank='001' then 
-								concat('<',dim_rank,'>','首先为',dim_msg,'主要包括',idx_desc_risk_info_desc_in_one_dimension )
+								concat('<',dim_rank,'>','主要为',dim_msg,'主要包括',idx_desc_risk_info_desc_in_one_dimension )
 							when dim_rank='002' then 
 								concat('<',dim_rank,'>','其次为',dim_msg,'主要包括',idx_desc_risk_info_desc_in_one_dimension )
 							when dim_rank='003' then 
