@@ -475,7 +475,7 @@ select
 	CASE
 		when score=0 THEN   --主体段落部分不显示
 			''
-		when score_hit=1 and score>0 and score>rel_score_summ then 
+		when score_hit=1 and score>0 and score>=rel_score_summ then 
 			concat('	其中，主要异常维度为',sentence_2)
 		when score_hit=1 and score>0 and score<rel_score_summ then 
 			concat('	其次为',sentence_2)
