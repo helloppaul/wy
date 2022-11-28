@@ -110,7 +110,7 @@ from
 	(
 		select DISTINCT
 			-- md5(concat(chg_main.corp_id,L.relation_id,cast(L.relation_type_l2_code as string),L.type6)) as sid_kw,
-			to_date(CURRENT_TIMESTAMP()) relation_dt,
+			from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd') as relation_dt,
 			chg_main.corp_id,
 			case 
 				when chg.corp_id is null then L.relation_id 

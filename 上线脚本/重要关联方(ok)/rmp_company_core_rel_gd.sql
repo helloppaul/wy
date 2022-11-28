@@ -214,7 +214,7 @@ from
 	(
 		select distinct
 			-- md5(concat(L.corp_id,L.relation_id,cast(L.relation_type_l2_code as string),L.type6)) as sid_kw,
-			to_date(CURRENT_TIMESTAMP()) relation_dt,
+			from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd') as relation_dt,
 			L.corp_id,
 			L.relation_id,
 			chg.corp_name as relation_nm,
