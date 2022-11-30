@@ -1,4 +1,4 @@
--- 债项基本信息 RMP_BOND_BASICINFO --
+-- 鍊洪」鍩烘湰淇℃伅 RMP_BOND_BASICINFO --
 drop table  if exists pth_rmp.RMP_BOND_BASICINFO ;
 create table pth_rmp.RMP_BOND_BASICINFO 
 (	
