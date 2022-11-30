@@ -27,15 +27,6 @@ corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg
 	where a.delete_flag=0 and b.delete_flag=0 and a.source_code='ZXZX'
 ),
 --—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
-t_ods_fic_hb_bond_issuer_subject_cr_ as  --债券发行人主体信用评级(全量更新)
-(
-    select issuer_corp_code,issuer_name,etl_date
-    from hds.t_ods_fic_hb_bond_issuer_subject_cr  
-    where isvalid=1 
-      and etl_date> cast(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')-(60*60*24)*365,'yyyyMMdd') as int)
-      and etl_date<=${ETL_DATE}
-    group by issuer_corp_code,issuer_name,etl_date
-),
 t_ods_fic_ic_tq_bd_basicinfo_ as  --债项基本要素(全量更新)
 (
     select issuecompcode,secode,`symbol`, bondname,maturitydate,leaduwer,etl_date
@@ -55,14 +46,6 @@ t_ods_fic_hb_tq_bd_stockchg_ as --债券存量变动表(增量更新)
     group by secode,changedate,changedamt,aftchangedamt,etl_date
 ),
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
-mid_bond_issuer_sub_cr as --债券发行人主体信用评级
-(
-    select
-        etl_date,
-        issuer_corp_code,  --债券发行人ID/主体ID
-        issuer_name   --发行人名称
-    from t_ods_fic_hb_bond_issuer_subject_cr_ 
-),
 mid_bond_basic_info as --债项基本要素
 (
     select 
@@ -92,36 +75,34 @@ mid_bond_stockchg as
 corp_bond as   --发行人和存量债券关系数据
 (   --发行人发行多只债，每一只债对应一条到期日，但每一只债会有多个主承销商。
     select 
-        a.etl_date,
-        a.issuer_corp_code,
-        a.issuer_name,
-        count(b.secode) over(partition by a.etl_date,a.issuer_corp_code,a.issuer_name) as  stock_bond_count,  --存续债券只数
+        b.etl_date,
+        b.issuecompcode,
+        count(b.secode) over(partition by b.etl_date,b.issuecompcode) as  stock_bond_count,  --存续债券只数
         b.secode,b.bondname,
         b.maturitydate,   --到期日
         b.leaduwer
-    from mid_bond_issuer_sub_cr a 
-    join mid_bond_basic_info b 
-        on cast(a.issuer_corp_code as string)=b.issuecompcode and a.etl_date=b.etl_date
-    where cast(b.maturitydate as int) >= a.etl_date
+    from mid_bond_basic_info b
+    -- from mid_bond_issuer_sub_cr 
+    -- join mid_bond_basic_info b 
+        -- on cast(a.issuecompcode as string)=b.issuecompcode and a.etl_date=b.etl_date
+    where cast(b.maturitydate as int) >= b.etl_date
 ),
 corp_bond_cal_all_lead_underwriter as 
 (
     select 
         etl_date,
-        issuer_corp_code,
-        issuer_name,
+        issuecompcode,
         -- group_concat(distinct leaduwer,',') as  lead_underwriter  --所有主承销商(主体层)  impala
         concat_ws(',',sort_array(collect_set(leaduwer_))) as  lead_underwriter   --所有主承销商(主体层)  hive
     from (select *,if(leaduwer='',NULL,leaduwer) as leaduwer_ from corp_bond) A  --统计完债券存量只数，排除掉为''的主承销商数据
-    group by etl_date,issuer_corp_code,issuer_name
+    group by etl_date,issuecompcode
 ),
 corp_bond_cal_recent_lead_underwriter as 
 (   --发行人对应一个最近到期日，最近到期日对应一个最近到期主承销商，最近到期日对应一个存续债券只数，最近到期日对应多个所有主承销商(所有债券对应的主承销商)
     
     select 
         etl_date,
-        issuer_corp_code,
-        max(issuer_name) as issuer_name,
+        issuecompcode,
         maturitydate as recent_maturity_date,  --最近到期日 
         stock_bond_count,
         max(leaduwer) as recent_lead_underwriter --最近到期日对应的那些主承销商
@@ -129,41 +110,38 @@ corp_bond_cal_recent_lead_underwriter as
     (
         select 
             etl_date,
-            issuer_corp_code,
-            issuer_name ,
+            issuecompcode,
             maturitydate,
             stock_bond_count,
             leaduwer_ as leaduwer,
-            rank() over(partition by etl_date,issuer_corp_code,issuer_name order by maturitydate asc,leaduwer desc) as rk_recent_maturitydate
+            rank() over(partition by etl_date,issuecompcode order by maturitydate asc,leaduwer desc) as rk_recent_maturitydate
         from (select *,if(leaduwer='',NULL,leaduwer) as leaduwer_ from corp_bond) A --统计完债券存量只数，排除掉为''的主承销商数据
     )B where rk_recent_maturitydate = 1  --取最近到期日对应的数据
-    group by etl_date,issuer_corp_code,maturitydate,stock_bond_count
+    group by etl_date,issuecompcode,maturitydate,stock_bond_count
 ),
 corp_bond_cal as 
 (
     select 
         b.etl_date,
-        b.issuer_corp_code,
-        b.issuer_name,
+        b.issuecompcode,
         b.recent_maturity_date,
         b.stock_bond_count,
         b.recent_lead_underwriter,
         a.lead_underwriter
     from corp_bond_cal_all_lead_underwriter a 
     join corp_bond_cal_recent_lead_underwriter b 
-        on a.etl_date=b.etl_date and a.issuer_corp_code=b.issuer_corp_code
+        on a.etl_date=b.etl_date and a.issuecompcode=b.issuecompcode
 ),
 -- 企业+债券变动 --
 corp_bond_chg as 
 (   --每只存量债券对应多个变动数据
     select
         b.etl_date,
-        b.issuer_corp_code,
-        b.issuer_name,
+        b.issuecompcode,
         b.secode,b.bondname,
         c.changedate,
         nvl(c.aftchangedamt,0)/10000 as chg_amt,
-        rank() over(partition by c.etl_date,b.issuer_corp_code,c.secode order by c.changedate desc) as rk
+        rank() over(partition by c.etl_date,b.issuecompcode,c.secode order by c.changedate desc) as rk
     from corp_bond b  
     left join (select * from mid_bond_stockchg where changedate <= from_unixtime(unix_timestamp(cast(etl_date as string),'yyyyMMdd'),'yyyy-MM-dd'))c 
         on b.secode=cast(c.secode as string) and b.etl_date=c.etl_date
@@ -173,15 +151,14 @@ corp_bond_chg_cal as
 (   --一家发行人主体对应多只债券,每只债券对应多个变动数据,取每只债券对应最大变动日期的数据
     select
         etl_date,
-        issuer_corp_code,
-        max(issuer_name) as issuer_name,
+        issuecompcode,
         -- secode,
         -- bondname,
         -- changedate,
         sum(chg_amt) as stock_bond_balance  --存续债金额
     from corp_bond_chg
     where rk=1   --取每只债券对应的最大变动日期数据
-    group by etl_date,issuer_corp_code
+    group by etl_date,issuecompcode
 ),
 -- 企业+债券只数+债券余额 结果集-- 
 corp_bond_chg_res as 
@@ -189,9 +166,6 @@ corp_bond_chg_res as
     select 
         from_unixtime(unix_timestamp(cast(b.etl_date as string),'yyyyMMdd' ),'yyyy-MM-dd') as natural_dt,
         chg.corp_id,
-        -- nvl(chg.corp_name,b.issuer_name) as corp_nm,
-        -- b.issuer_corp_code,
-        -- b.issuer_name,
         b.recent_maturity_date,
         b.recent_lead_underwriter,
         b.lead_underwriter,
@@ -200,9 +174,9 @@ corp_bond_chg_res as
         -- c.changedate
     from corp_bond_cal b
     join corp_bond_chg_cal c
-        on b.issuer_corp_code=c.issuer_corp_code and b.etl_date=c.etl_date
+        on b.issuecompcode=c.issuecompcode and b.etl_date=c.etl_date
     join corp_chg chg
-        on cast(b.issuer_corp_code as string)=chg.source_id
+        on cast(b.issuecompcode as string)=chg.source_id
     group by b.etl_date,chg.corp_id,b.recent_maturity_date,b.recent_lead_underwriter,b.lead_underwriter,b.stock_bond_count,c.stock_bond_balance
 )
 select * from corp_bond_chg_res
