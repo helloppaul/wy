@@ -197,7 +197,7 @@ select
     natural_dt,
     recent_maturity_date,
     recent_lead_underwriter,
-    concat_ws(','，collect_set(lead_underwriter_item)) as lead_underwriter,
+    concat_ws(',',collect_set(lead_underwriter_item)) as lead_underwriter,
     stock_bond_count,
     stock_bond_balance,
     0 as delete_flag,
