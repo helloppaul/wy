@@ -8,6 +8,7 @@
 -- /* 2022-11-05 修复model_version和adjust_warnlevel反了的问题 */
 -- /* 2022-11-23 取单主体舆情分接口的时，增加去除上游因追批导致数据的重复问题 */
 -- /* 2022-12-02 合并YC代码，r系数修复 */
+-- /* 2022-12-02 alert逻辑调整 综合舆情分>=20且alert=1，最终才异动 */
 
 -- PS: 可以将综合舆情分发任务 拆解为：com_score_temp,label_hit_tab(这两部分并行)； insert部分(依赖前两部分完成后执行)
 --依赖 pth_rmp.rmp_calendar,pth_rmp.RMP_ALERT_SCORE_SUMM,pth_rmp.RMP_COMPANY_CORE_REL,pth_rmp.RMP_COMPY_CORE_REL_DEGREE_CFG
@@ -528,7 +529,7 @@ select distinct
 	G.score_hit,
 	lb.label_hit,
 	--if(G.score_hit=1 or lb.label_hit=1,1,0) as alert, modify yangcan 20221110
-	if(G.score_hit=1 or lb.label_hit=1 or lb.label_hit=2,1,0) as alert,
+	if((((G.score_hit=1  or lb.label_hit=2) and G.comprehensive_score>=20 ) or lb.label_hit=1),1,0) as alert,  --20221202 增加在原有异动基础上，当综合舆情分>=20才异动
 	G.fluctuated,
 	G.model_version,
 	'' AS adjust_warnlevel,
