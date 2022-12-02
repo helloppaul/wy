@@ -166,9 +166,9 @@ corp_bond_chg_res as
     select 
         from_unixtime(unix_timestamp(cast(b.etl_date as string),'yyyyMMdd' ),'yyyy-MM-dd') as natural_dt,
         chg.corp_id,
-        b.recent_maturity_date,
-        b.recent_lead_underwriter,
+        from_unixtime(unix_timestamp(b.recent_maturity_date,'yyyyMMdd'),'yyyy-MM-dd') as recent_maturity_date,
         b.lead_underwriter,
+        b.recent_lead_underwriter,
         b.stock_bond_count,
         c.stock_bond_balance
         -- c.changedate
@@ -196,8 +196,8 @@ select
     corp_id,
     natural_dt,
     recent_maturity_date,
-    recent_lead_underwriter,
     concat_ws(',',collect_set(lead_underwriter_item)) as lead_underwriter,
+    nvl(recent_lead_underwriter,'') as recent_lead_underwriter,
     stock_bond_count,
     stock_bond_balance,
     0 as delete_flag,
