@@ -2,6 +2,7 @@
 -- /* 2022-11-25 首先为->主要为 */--
 
 set hive.exec.parallel=true;
+set hive.exec.parallel.thread.number=16; 
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
 

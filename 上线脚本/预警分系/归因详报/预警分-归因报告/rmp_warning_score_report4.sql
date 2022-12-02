@@ -5,6 +5,7 @@
 --（1）恶化指标判断错误 （2）维度和恶化指标没有挂上钩  （3）风险水平上升的主要维度，需要和昨天的异常占比对比，发生升高的才展示
 
 set hive.exec.parallel=true;
+set hive.exec.parallel.thread.number=12;
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
 

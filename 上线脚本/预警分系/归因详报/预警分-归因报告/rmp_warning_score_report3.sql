@@ -2,6 +2,7 @@
 
 
 set hive.exec.parallel=true;
+set hive.exec.parallel.thread.number=15; 
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
 
