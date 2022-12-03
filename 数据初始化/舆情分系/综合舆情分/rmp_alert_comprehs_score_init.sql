@@ -43,7 +43,12 @@ stored as textfile
 --（2） 初始化sql (pth_rmp.rmp_alert_comprehs_score_temp_init) hive执行 PS:约30min/天 -- 
 -- PS:上游单主体舆情分日期最早在2022-09-09 --
 set hive.exec.parallel=true;
-set hive.auto.convert.join=ture;
+set hive.exec.parallel.thread.number=15; 
+set hive.auto.convert.join = true;
+-- set hive.mapjoin.smalltable.filesize=500000000;  --默认25MB
+-- set hive.auto.convert.join.noconditionaltask=true;
+-- set hive.auto.convert.join.noconditionaltask.size=500000000;
+set hive.ignore.mapjoin.hint = false;  
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with 
 corp_chg as 
@@ -122,7 +127,7 @@ CFG_RMP_COMPY_CORE_REL_DEGREE as   --重要关联方强度配置表
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
 MID_RMP_ALERT_SCORE_SUMM as  -- 取每天最新批次的 单主体舆情分数据
 (
-	--当日数据
+	--当日数据&历史
 	select 
 		a.batch_dt,
 		a.corp_id,
@@ -139,33 +144,11 @@ MID_RMP_ALERT_SCORE_SUMM as  -- 取每天最新批次的 单主体舆情分数�
 		a.fluctuated,
 		a.model_version 
 	from RMP_ALERT_SCORE_SUMM_ a
+	join (select max(batch_dt) as max_batch_dt,score_dt as score_dt from RMP_ALERT_SCORE_SUMM_ group by score_dt) b  
+		on a.batch_dt=b.max_batch_dt and a.score_dt = b.score_dt
 	where 1=1 
 	  and a.delete_flag=0
-	  and a.his_flag=0
-	  and a.batch_dt in (select max(batch_dt) as max_batch_dt from RMP_ALERT_SCORE_SUMM_)
-	-- join (select max(batch_dt) as max_batch_dt,score_dt as score_dt from RMP_ALERT_SCORE_SUMM_ group by score_dt) b  
-	-- 	on a.batch_dt=b.max_batch_dt and a.score_dt = b.score_dt
-	--历史数据
-	UNION ALL 
-		select 
-		a.batch_dt,
-		a.corp_id,
-		a.corp_nm,
-		to_date(a.score_dt) as score_dt,  --已转换为日期，不带时分秒（原始值为带批次时间的日期 '2022-01-02 02:00:00'）
-		--modify yangcan 20221110
-		round(a.score,4) as score,
-		a.yq_num,
-		a.score_hit_yq,
-		a.score_hit_ci,
-		a.score_hit,
-		a.label_hit,
-		a.alert,
-		a.fluctuated,
-		a.model_version 
-	from RMP_ALERT_SCORE_SUMM_ a
-	where 1=1 
-	  and a.delete_flag=0
-	  and a.his_flag=1
+
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 news as(   --！！！注意此处notice_dt 处理为日期型，当日数据需要实时处理  --
@@ -200,23 +183,32 @@ relcompy_with_importance as
 	select distinct
 		relation_dt,corp_id,relation_id,relation_nm,compy_type,relation_type_l2_code,IMPORTANCE,
 		case
-			when importance = 3 and	compy_type in ('上市','发债') then 
+			--when importance = 3 and	compy_type in ('上市','发债') then 
+			when importance = 3 and	(instr(compy_type,'上市')>0 or instr(compy_type,'发债')>0) then 
 				1
-			when importance = 3 and compy_type in ('新三板','金融机构') then
+			--when importance = 3 and compy_type in ('新三板','金融机构') then
+			when importance = 3 and (instr(compy_type,'新三板')>0 or instr(compy_type,'金融机构')>0) then
 				0.9
-			when importance = 3 and (compy_type is NULL or compy_type = '其他') THEN
+			--when importance = 3 and (compy_type is NULL or compy_type = '其他') THEN
+			when importance = 3 and (compy_type is NULL or instr(compy_type,'其他')>0) THEN
 				0.8
-			when importance = 2 and compy_type in ('上市','发债') then 
+			--when importance = 2 and compy_type in ('上市','发债') then 
+			when importance = 2 and (instr(compy_type,'上市')>0 or instr(compy_type,'发债')>0) then 
 				0.7
-			when importance = 2 and compy_type in ('新三板','金融机构') then
+			--when importance = 2 and compy_type in ('新三板','金融机构') then
+			when importance = 2 and (instr(compy_type,'新三板')>0 or instr(compy_type,'金融机构')>0) then
 				0.6
-			when importance = 2 and (compy_type is NULL or compy_type = '其他') THEN
+			--when importance = 2 and (compy_type is NULL or compy_type = '其他') THEN
+			when importance = 2 and (compy_type is NULL or instr(compy_type,'其他')>0) THEN
 				0.5
-			when importance = 1 and compy_type in ('上市','发债') then 
+			--when importance = 1 and compy_type in ('上市','发债') then 
+			when importance = 1 and (instr(compy_type,'上市')>0 or instr(compy_type,'发债')>0) then 
 				0.4
-			when importance = 1 and compy_type in ('新三板','金融机构') then
+			--when importance = 1 and compy_type in ('新三板','金融机构') then
+			when importance = 1 and (instr(compy_type,'新三板')>0 or instr(compy_type,'金融机构')>0) then
 				0.3
-			when importance = 1 and (compy_type is NULL or compy_type = '其他') THEN  --compy_type is NULL -> compy_type = '其他'
+			--when importance = 1 and (compy_type is NULL or compy_type = '其他') THEN  --compy_type is NULL -> compy_type = '其他'
+			when importance = 1 and (compy_type is NULL or instr(compy_type,'其他')>0) THEN  --compy_type is NULL -> compy_type = '其他'
 				0.2
 			ELSE
 				0
@@ -460,29 +452,6 @@ label_hit_tab AS  --风险预警
 			)B_ where min_rm=1  --group by corp_id,score_dt,relation_id,r_importance
 		)B
 	)C
-),
-label_hit_tab_cal as   --初始化计算用  
-(
-	select c.*, row_number() over(partition by c.corp_id order by tot_yq_num desc) as RM,
-		count(1) over(partition by c.corp_id) as cal_score_dt_cnt
-	from( 
-			select distinct b.*
-		  	from (
-					select a.batch_dt,
-							a.corp_id,
-							a.score_dt,
-							a.Main_score_hit_yq,
-							a.main_score_hit_ci,
-							a.main_score_hit,
-							a.second_score,
-							a.third_score,
-							a.comprehensive_score,
-							a.model_version,
-							a.origin_comprehensive_score,
-							sum(rel_yq_num) over(partition by corp_id,score_dt)+avg(yq_num) over(partition by corp_id,score_dt) as tot_yq_num
-					from com_score_temp a 
-				) b
-		) c
 )
 insert into pth_rmp.rmp_alert_comprehs_score_temp_init  partition(etl_date=19900101)
 select distinct
@@ -509,7 +478,7 @@ select distinct
 	G.score_hit,
 	lb.label_hit,
 	--if(G.score_hit=1 or lb.label_hit=1,1,0) as alert, modify yangcan 20221110
-	if(G.score_hit=1 or lb.label_hit=1 or lb.label_hit=2,1,0) as alert,
+	if((((G.score_hit=1  or lb.label_hit=2) and G.comprehensive_score>=20 ) or lb.label_hit=1),1,0) as alert,  --20221202 增加在原有异动基础上，当综合舆情分>=20才异动
 	G.fluctuated,
 	G.model_version,
 	'' AS adjust_warnlevel,
@@ -549,8 +518,8 @@ from
 			comprehensive_score,
 			model_version,
 			mu,
-			sqrt(sigma_tmp/(12-1)) as sigma,
-			mu + sqrt(sigma_tmp/(12-1)) as ci,  --置信区间下限
+			sqrt(sigma_tmp/(14-1)) as sigma,
+			mu + sqrt(sigma_tmp/(14-1)) as ci,  --置信区间下限
 			fluctuated,
 			row_number() over(partition by corp_id,score_dt order by fluctuated desc) as fluctuated_rm
 		from 
@@ -569,8 +538,8 @@ from
 				model_version,
 				mu,
 				--E.cal_score_dt,
-				case when cal_score_dt_cnt >=12 then sum(power(d2_comprehensive_score-mu,2)) over(partition by corp_id,score_dt)
-				     else (sum(power(d2_comprehensive_score-mu,2)) over(partition by corp_id,score_dt))+(12-cal_score_dt_cnt)*power(0-mu,2) 
+				case when cal_score_dt_cnt >=14 then sum(power(d2_comprehensive_score-mu,2)) over(partition by corp_id,score_dt)
+				     else (sum(power(d2_comprehensive_score-mu,2)) over(partition by corp_id,score_dt))+(14-cal_score_dt_cnt)*power(0-mu,2) 
 			    end as sigma_tmp,
 				round((nvl(mu,-0.1)-comprehensive_score)/greatest(abs(nvl(mu,-0.1)),0.1),6) as fluctuated
 			from 
@@ -589,25 +558,24 @@ from
 					--yq_num,
 					--cal_score_dt,
 					d1.origin_comprehensive_score,
-					d1.cal_score_dt_cnt,  --查看近12天统计日期实际数量
-					(sum(d2.comprehensive_score) over(partition by d1.corp_id,d2.score_dt ))/12 as mu,
+					count(d2.score_dt) over(partition by d1.corp_id,d1.score_dt ) as cal_score_dt_cnt,  --查看近14天统计日期实际数量
+					(sum(d2.comprehensive_score) over(partition by d1.corp_id,d1.score_dt ))/14 as mu,
 					d2.comprehensive_score as d2_comprehensive_score
-				from label_hit_tab_cal d1    --新增逻辑(兼容跑一段时间综合舆情分 2022-11-24 hz)
-				join label_hit_tab_cal d2 
+				from com_score_temp d1    --新增逻辑(兼容跑一段时间综合舆情分 2022-11-24 hz)
+				join com_score_temp d2 
 					on d1.corp_id=d2.corp_id 
 				where d2.score_dt <= d1.score_dt 
 				  and d2.score_dt >= date_add(d1.score_dt,-13) 
-				-- where rm<=12
 			)E
 		)F
 	)F1 where fluctuated_rm=1
 )G join label_hit_tab lb on G.corp_id=lb.corp_id and G.score_dt = lb.score_dt
    join corp_chg chg on g.corp_id=chg.corp_id and chg.source_code='FI'
 where G.batch_dt is not null
-  and G.score_dt >= to_date('2021-11-20') 
-  and G.score_dt <= to_date('2022-11-19') 
+  and G.comprehensive_score<>0
+  and G.score_dt >= to_date(date_add(from_unixtime(unix_timestamp(cast(${BEG_DT} as string),'yyyyMMdd')),0))    
+  and G.score_dt <= to_date(date_add(from_unixtime(unix_timestamp(cast(${END_DT} as string),'yyyyMMdd')),0))  
 ;
-
 
 
 --（3） DDL 综合舆情分 hive执行-- 
@@ -615,6 +583,7 @@ drop table if exists pth_rmp.RMP_ALERT_COMPREHS_SCORE_INIT;
 create table pth_rmp.RMP_ALERT_COMPREHS_SCORE_INIT
 (	
 	sid_kw string,
+	batch_dt string,
 	corp_id	string,
 	corp_nm	string,
 	credit_code	string,
@@ -700,7 +669,8 @@ RMP_ALERT_COMPREHS_SCORE_TEMP_RESULT as
 )
 insert into pth_rmp.RMP_ALERT_COMPREHS_SCORE_INIT partition(etl_date=19900101)
 select 
-	md5(concat(to_date(a.batch_dt),nvl(a.corp_id,''),cast(score_dt as string),'0')) as sid_kw,
+	md5(concat(to_date(batch_dt),nvl(corp_id,''),cast(score_dt as string),'0')) as sid_kw,
+	batch_dt,
 	corp_id,
 	corp_nm,
 	credit_code,
@@ -718,5 +688,5 @@ select
 	update_by,
 	update_time,
 	version
-from RMP_ALERT_COMPREHS_SCORE_TEMP_RESULT a
+from RMP_ALERT_COMPREHS_SCORE_TEMP_RESULT
 ;
