@@ -34,7 +34,7 @@ row format
 delimited fields terminated by '\16' escaped by '\\'
 stored as textfile;
 
-
+--½Å±¾²ð·Ö warn_feature_contrib+warn_contribution_ratio+warn_feature_contrib_res3    warn_feature_value_with_median_res  warn_score_card  warn_feature_contrib_res3
 --£¨2£©sql³õÊ¼»¯ RMP_WARNING_SCORE_DETAIL_INIT_IMPALA impalaÖ´ÐÐ --
 create table pth_rmp.RMP_WARNING_SCORE_DETAIL_INIT_IMPALA as 
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª »ù±¾ÐÅÏ¢ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
