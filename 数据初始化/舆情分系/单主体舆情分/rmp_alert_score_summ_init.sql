@@ -3,6 +3,7 @@ drop table if exists pth_rmp.rmp_alert_score_summ_init;
 create table pth_rmp.rmp_alert_score_summ_init
 (	
 	sid_kw string,
+	batch_dt string,
 	corp_id string,
 	corp_nm  string,
 	credit_code  string,
@@ -118,11 +119,11 @@ mid_opinion_feat as   --特征原始值  取每天最新批次数据 (如果只�
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 label_hit_tab AS
 (
-	select 
+	select distinct
 		batch_dt,corp_id,corp_nm,credit_code,score_dt,score,yq_num,tmp_score_hit,model_version,
-		if(tag_importance=-3,1,0) as label_hit,  --风险预警
-		row_number() over(partition by k.corp_id order by k.yq_num desc) as rn,  --add yangcan 20221116
-		count(1) over(partition by k.corp_id) as cnt	
+		if(tag_importance=-3,1,0) as label_hit  --风险预警
+		-- row_number() over(partition by k.corp_id order by k.yq_num desc) as rn,  --add yangcan 20221116
+		-- count(1) over(partition by k.corp_id) as cnt	
 	from 
 	(
 		select 
@@ -233,7 +234,7 @@ from
 			score_dt,
 			score,
 			yq_num,
-			mu + sqrt(sigma_tmp/(12-1)) as ci,  --置信区间下限
+			mu + sqrt(sigma_tmp/(14-1)) as ci,  --置信区间下限
 			--importance,
 			tmp_score_hit,
 			label_hit,  --风险预警
@@ -256,9 +257,9 @@ from
 					label_hit,
 					mu,
 					model_version,
-					--sum(power(b.score-b.mu,2)) over(partition by B.corp_id order by B.yq_num rows between 12 preceding and current row) as sigma_tmp,  --14天舆情分里面剔除舆情数量倒数少的两天，计算12天的舆情分标准差
-					case when cnt>=12 then sum(power(b_score-mu,2)) over(partition by corp_id,score_dt )
-                         else sum(power(b_score-mu,2)) over(partition by corp_id,score_dt )+(12-cnt)*power(0-mu,2)
+					--sum(power(b.score-b.mu,2)) over(partition by B.corp_id order by B.yq_num rows between 14 preceding and current row) as sigma_tmp,  --14天舆情分里面剔除舆情数量倒数少的两天，计算12天的舆情分标准差
+					case when cnt>=14 then sum(power(b_score-mu,2)) over(partition by corp_id,score_dt )
+                         else sum(power(b_score-mu,2)) over(partition by corp_id,score_dt )+(14-cnt)*power(0-mu,2)
 						 end as sigma_tmp,  --modify yangcan 20221116
 					round((nvl(mu,-0.1)-score)/greatest(abs(nvl(mu,-0.1)),0.1),6) as fluctuated
 				from 
@@ -275,9 +276,10 @@ from
 						a.tmp_score_hit,
 						a.label_hit,
 						a.model_version,
-						--avg(score) over(partition by corp_id order by yq_num rows between 12 preceding and current row) as mu   --14天舆情分里面剔除舆情数量倒数少的两天,计算12天的舆情分均值
-						(sum(b.score) over(partition by a.corp_id,a.score_dt ))/12 as mu,
-						a.cnt,
+						--avg(score) over(partition by corp_id order by yq_num rows between 14 preceding and current row) as mu   --14天舆情分里面剔除舆情数量倒数少的两天,计算12天的舆情分均值
+						(sum(b.score) over(partition by a.corp_id,a.score_dt ))/14 as mu,
+						-- a.cnt,
+						count(b.score_dt) over(partition by a.corp_id,a.score_dt) as cnt,  --实际有数据天数 hz 2022-11-25
 						b.score as b_score
 					from  label_hit_tab A
 					left join label_hit_tab B          --新增逻辑(兼容跑一段时间舆情分 2022-11-23 hz)
@@ -301,6 +303,7 @@ where E.score_dt >= to_date(date_add(from_unixtime(unix_timestamp(cast(${beg_dt}
 insert into pth_rmp.rmp_alert_score_summ_init partition(etl_date=19900101)
 select 
 	MD5(concat(score_dt,corp_id,'0')) as sid_kw,
+	cast(score_dt as string) as batch_dt,
 	corp_id ,
 	corp_nm  ,
 	credit_code  ,
@@ -319,6 +322,7 @@ select
 	create_time	,
 	update_by	,
 	update_time	,
-	version	
+	version
 from (select distinct * from pth_rmp.rmp_alert_score_summ_init_impala) a
+
 ;
