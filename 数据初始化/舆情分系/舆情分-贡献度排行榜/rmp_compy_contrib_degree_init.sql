@@ -3,6 +3,7 @@ drop table if exists pth_rmp.RMP_COMPY_CONTRIB_DEGREE_INIT;
 create table pth_rmp.RMP_COMPY_CONTRIB_DEGREE_INIT
 (
 	sid_kw string,
+	batch_dt  string,
 	corp_id  string,
 	corp_nm  string,
 	score_dt  timestamp,
@@ -65,7 +66,8 @@ company_core_rel_ as
 	from pth_rmp.RMP_COMPANY_CORE_REL a 
 	where 1 = 1
 	  -- 时间限制(自动取最大日期)
-	  and a.relation_dt in (select max(relation_dt) max_relation_dt from pth_rmp.RMP_COMPANY_CORE_REL)
+	  and relation_dt='2022-11-22'
+	--   and a.relation_dt in (select max(relation_dt) max_relation_dt from pth_rmp.RMP_COMPANY_CORE_REL)
 
 )
 select 
@@ -108,14 +110,16 @@ from
 		on com.relation_id = sc.corp_id and to_date(com.score_dt)=to_date(sc.score_dt) --and nvl(com.batch_dt,'')=nvl(sc.batch_dt,'')
 	group by com.batch_dt,com.corp_id,com.corp_nm,com.corp_nm,com.score_dt,com.relation_id,com.relation_nm,com.r_score_cal,sc.alert
 )Final 
-where score_dt >= '2021-11-20'
-  and score_dt <= '2022-11-19'
+where 1=1
+  and score_dt >= to_date(date_add(from_unixtime(unix_timestamp(cast(${BEG_DT} as string),'yyyyMMdd')),0))    
+  and score_dt <= to_date(date_add(from_unixtime(unix_timestamp(cast(${END_DT} as string),'yyyyMMdd')),0))  
 ;
 
 --（3）sql初始化 RMP_COMPY_CONTRIB_DEGREE_INIT hive执行 --
 insert into pth_rmp.rmp_compy_contrib_degree_init partition(etl_date=19900101)
 select 
 	md5(concat(batch_dt,corp_id,relation_id)) as sid_kw ,
+	cast(score_dt as string) as batch_dt,
 	corp_id  ,
 	corp_nm  ,
 	score_dt  ,
