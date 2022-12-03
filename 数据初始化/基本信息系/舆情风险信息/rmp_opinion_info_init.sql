@@ -1784,6 +1784,7 @@ where to_date(notice_dt)>=to_date(date_add(from_unixtime(unix_timestamp(cast(${b
 
 
 
+
 -- 初始化sql hive执行 --
 -- drop table if exists pth_rmp.rmp_opinion_risk_info;
 insert into pth_rmp.rmp_opinion_risk_info_init partition(etl_date=19900101)
@@ -1814,7 +1815,7 @@ select
 	update_by,
 	update_time,
 	version
-from pth_rmp.rmp_opinion_risk_info_init_impala
+from  pth_rmp.rmp_opinion_risk_info_init_impala
 where signal_type<>0
 union all 
 select 
