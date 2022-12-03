@@ -51,28 +51,28 @@ warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
 	union all 
 	select 1 as dimension,'财务' as remark,35 as low_contribution_percent,50 as high_contribution_percent,-2 as risk_lv ,'中风险' as risk_lv_desc  
 	union all 
-	select 1 as dimension,'财务' as remark,0 as low_contribution_percent,35 as high_contribution_percent,-1 as risk_lv ,'低风险' as risk_lv_desc   
+	select 1 as dimension,'财务' as remark,-1 as low_contribution_percent,35 as high_contribution_percent,-1 as risk_lv ,'低风险' as risk_lv_desc   
 	
 	union all 
 	select 2 as dimension,'经营' as remark,50 as low_contribution_percent,101 as high_contribution_percent,-3 as risk_lv ,'高风险' as risk_lv_desc   
 	union all 
 	select 2 as dimension,'经营' as remark,35 as low_contribution_percent,50 as high_contribution_percent,-2 as risk_lv ,'中风险' as risk_lv_desc   
 	union all 
-	select 2 as dimension,'经营' as remark,0 as low_contribution_percent,35 as high_contribution_percent,-1 as risk_lv ,'低风险' as risk_lv_desc   
+	select 2 as dimension,'经营' as remark,-1 as low_contribution_percent,35 as high_contribution_percent,-1 as risk_lv ,'低风险' as risk_lv_desc   
 	
 	union all 
 	select 3 as dimension,'市场' as remark,15 as low_contribution_percent,101 as high_contribution_percent,-3 as risk_lv ,'高风险' as risk_lv_desc   
 	union all 
 	select 3 as dimension,'市场' as remark,8 as low_contribution_percent,15 as high_contribution_percent,-2 as risk_lv ,'中风险' as risk_lv_desc   
 	union all 
-	select 3 as dimension,'市场' as remark,0 as low_contribution_percent,8 as high_contribution_percent,-1 as risk_lv ,'低风险' as risk_lv_desc   
+	select 3 as dimension,'市场' as remark,-1 as low_contribution_percent,8 as high_contribution_percent,-1 as risk_lv ,'低风险' as risk_lv_desc   
 
 	union all 
 	select 4 as dimension,'舆情' as remark,15 as low_contribution_percent,101 as high_contribution_percent,-3 as risk_lv ,'高风险' as risk_lv_desc   
 	union all 
 	select 4 as dimension,'舆情' as remark,8 as low_contribution_percent,15 as high_contribution_percent,-2 as risk_lv ,'中风险' as risk_lv_desc   
 	union all 
-	select 4 as dimension,'舆情' as remark,0 as low_contribution_percent,8 as high_contribution_percent,-1 as risk_lv ,'低风险' as risk_lv_desc   
+	select 4 as dimension,'舆情' as remark,-1 as low_contribution_percent,8 as high_contribution_percent,-1 as risk_lv ,'低风险' as risk_lv_desc   
 
 
 	-- select 60 as low_contribution_percent,101 as high_contribution_percent,-3 as risk_lv ,'高风险' as risk_lv_desc   --(60,100]
