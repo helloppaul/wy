@@ -3,6 +3,8 @@
 --/* 2022-10-24 ĞÂÔöÍâ¹Ò¹æÔòÂß¼­ */
 --/* 2022-11-03 ¹éÒòÏêÇéÀúÊ·±í½Ó¿Ú¸ÄÓÃ¹éÒòÏêÇé±í£¬±£Ö¤¹éÒòÏêÇé±íÓĞÒ»ÌìµÄÀúÊ·Êı¾İ¼´¿É */
 --/* 2022-11-18 ¹éÒò¼ò±¨Wy ĞÂ°æ */
+--/* 2022-12-04 Íâ¹Ò¹æÔòÈ¡ÖµĞŞ¸´£¬È¡×îĞÂcreate_dtµÄÊı¾İ */
+
 
 
 
@@ -167,7 +169,7 @@ warn_adj_rule_cfg as --Ô¤¾¯·Ö-Ä£ĞÍÍâ¹Ò¹æÔòÅäÖÃ±í   È¡×îĞÂetl_dateµÄÊı¾İ (¸üĞÂÆµÂ
 			b.corp_name as corp_nm,
 			a.category,
 			a.reason,
-			rank() over(partition by b.corp_id order by a.create_dt desc ,a.etl_date desc,a.reason desc) rm
+			rank() over(order by a.create_dt desc ,a.etl_date desc,a.reason desc) rm
 		from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf a  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
 		join corp_chg b 
 			on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
