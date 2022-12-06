@@ -23,6 +23,8 @@
 -- /* 2022-11-18 修复 维度异常占比统计的问题，限制了 因子评价=1，导致缺失异常维度的指标数据 */
 -- /* 2022-11-23 修复 特征原始值取两天，改为left join */
 -- /* 2022-11-25 修复 中位数计算优化 */
+-- /* 2022-12-06 修复 hive中执行warn_feat_corp_property_CFG返回空数据的问题，hive对于中文字符长度识别和Impala标准不同 */
+
 
 
 -- 依赖 模型 综合预警分，特征原始值高中低，特征贡献度高中低无监督以及综合，评分卡高中低，归因详情及其历史 PS:不依赖pth_rmp.模型结果表
@@ -491,8 +493,10 @@ warn_feat_corp_property_CFG as  --通过低频分类数据的sub_model_type获取对应敞口的
         a.feature_name
     from warn_feat_CFG a 
     join corp_chg b 
-        on substr(a.sub_model_type,8) = b.exposure --and b.source_code='ZXZX' 
-    where substr(a.sub_model_type,1,6) = '低频'
+        on substr(a.sub_model_type,instr(a.sub_model_type,'-')+1) = b.exposure
+        -- on substr(a.sub_model_type,8) = b.exposure --and b.source_code='ZXZX' 
+    where instr(a.sub_model_type,'低频')>0
+    -- where substr(a.sub_model_type,1,6) = '低频'
     group by b.source_id,a.sub_model_type,a.feature_cd,a.feature_name
     -- select m.*
     -- from

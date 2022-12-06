@@ -1,4 +1,5 @@
 -- RMP_WARNING_SCORE_DETAIL_GXD (同步方式：一天多批次覆盖更新) --
+-- /* 2022-12-06 修复 hive中执行warn_feat_corp_property_CFG返回空数据的问题，hive对于中文字符长度识别和Impala标准不同 */
 
 -- part1 高中低频合并的 特征贡献度 --
 set hive.exec.parallel=true;
@@ -245,8 +246,10 @@ warn_feat_corp_property_CFG as  --通过低频分类数据的sub_model_type获取对应敞口的
         a.feature_name
     from warn_feat_CFG a 
     join corp_chg b 
-        on substr(a.sub_model_type,8) = b.exposure --and b.source_code='ZXZX' 
-    where substr(a.sub_model_type,1,6) = '低频'
+        on substr(a.sub_model_type,instr(a.sub_model_type,'-')+1) = b.exposure
+        -- on substr(a.sub_model_type,8) = b.exposure --and b.source_code='ZXZX' 
+    where instr(a.sub_model_type,'低频')>0
+    -- where substr(a.sub_model_type,1,6) = '低频'
     group by b.source_id,a.sub_model_type,a.feature_cd,a.feature_name
     -- select m.*
     -- from
