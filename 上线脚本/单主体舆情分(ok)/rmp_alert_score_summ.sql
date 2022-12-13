@@ -1,5 +1,23 @@
 -- 单主体舆情分 rmp_alert_score_summ (同步方式：一天多批次插入)--
 --入参：${ETL_DATE}(20220818 int) 
+--/*2022-12-12 增加pth_rmp.rmp_opinion_risk_info的副本表pth_rmp.rmp_opinion_risk_info_04，供下游04组加工任务使用*/
+
+set hive.exec.parallel=true;
+set hive.exec.parallel.thread.number=16;
+set hive.auto.convert.join=ture;
+set hive.mapjoin.smalltable.filesize=100000000;  --100MB
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
+
+
+--—————————————————————————————————————————————————————— 副本创建 ————————————————————————————————————————————————————————————————————————————————--
+-- 副本创建 供下游04组任务读取使用 --
+drop table if exists pth_rmp.rmp_opinion_risk_info_04;
+create table pth_rmp.rmp_opinion_risk_info_04 stored as parquet 
+as 
+	select * 
+	from pth_rmp.rmp_opinion_risk_info
+;
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with 
 corp_chg as 
@@ -31,7 +49,7 @@ rmp_opinion_risk_info_ as   --modify yangcan 跑批日期为当天,取当前系�
 (
    --当日数据
 	select * 
-	from pth_rmp.rmp_opinion_risk_info   --@pth_rmp.rmp_opinion_risk_info
+	from pth_rmp.rmp_opinion_risk_info_04   --@pth_rmp.rmp_opinion_risk_info_04
 	where delete_flag=0
 	  and notice_dt>= from_unixtime((unix_timestamp()-3600*24))
 	  and notice_dt< current_timestamp()
@@ -39,7 +57,7 @@ rmp_opinion_risk_info_ as   --modify yangcan 跑批日期为当天,取当前系�
 	union all
 	--历史数据
 	select * 
-	from pth_rmp.rmp_opinion_risk_info   --@pth_rmp.rmp_opinion_risk_info
+	from pth_rmp.rmp_opinion_risk_info_04   --@pth_rmp.rmp_opinion_risk_info_04
 	where delete_flag=0
 	  and to_date(notice_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
 	  and cast(${ETL_DATE} as string)<cast(from_unixtime(unix_timestamp(),'yyyyMMdd') as string)

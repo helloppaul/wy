@@ -7,11 +7,16 @@
 -- /*2022-10-31 效率优化 （1）接口层做时间限制 （2）增加调优参数 */
 -- /*2022-11-04 解决效率层面优化的带来的mapjoin过大导致的报错问题  */
 --依赖 pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP,hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_intp_sentiself_feapct_intf
+--/*2022-12-12 增加pth_rmp.rmp_opinion_risk_info的副本表pth_rmp.rmp_opinion_risk_info_04，供下游04组加工任务使用*/
+
 
 set hive.exec.parallel=true;
+set hive.exec.parallel.thread.number=16;
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
--- set hive.auto.convert.join=ture;
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
+
 
 drop table if exists pth_rmp.RMP_ATTRIBUTION_SUMM_MAIN_TEMP;
 create table if not exists pth_rmp.RMP_ATTRIBUTION_SUMM_MAIN_TEMP AS 
@@ -46,7 +51,7 @@ corp_chg as
 rmp_opinion_risk_info_ as 
 (
 	select *
-	from pth_rmp.rmp_opinion_risk_info --init   20221114000000
+	from pth_rmp.rmp_opinion_risk_info_04 --init   20221114000000
 	where notice_date <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 	--modify yangcan 20221115 取跑批日期当天及前一天数据
 	and notice_date >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))

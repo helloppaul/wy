@@ -9,16 +9,20 @@
 -- /* 2022-11-23 取单主体舆情分接口的时，增加去除上游因追批导致数据的重复问题 */
 -- /* 2022-12-02 合并YC代码，r系数修复 */
 -- /* 2022-12-02 alert逻辑调整 综合舆情分>=20且alert=1，最终才异动 */
+--/*2022-12-12 由读取pth_rmp.rmp_opinion_risk_info,改为读取更高效的副本表pth_rmp.rmp_opinion_risk_info_04*/
 
 -- PS: 可以将综合舆情分发任务 拆解为：com_score_temp,label_hit_tab(这两部分并行)； insert部分(依赖前两部分完成后执行)
 --依赖 pth_rmp.rmp_calendar,pth_rmp.RMP_ALERT_SCORE_SUMM,pth_rmp.RMP_COMPANY_CORE_REL,pth_rmp.RMP_COMPY_CORE_REL_DEGREE_CFG
 	-- pth_rmp.rmp_opinion_risk_info,hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf(特征原始值) 
 
 set hive.exec.parallel=true;
-set hive.exec.parallel.thread.number=12;
+set hive.exec.parallel.thread.number=16;
 set hive.auto.convert.join=ture;
-set hive.mapjoin.smalltable.filesize=500000000;  --500MB 
+set hive.mapjoin.smalltable.filesize=300000000;  --300MB 
 set hive.ignore.mapjoin.hint = false;
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
+
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with 
 corp_chg as 
@@ -70,7 +74,7 @@ rmp_opinion_risk_info_ as
 (
    --当日数据
 	select * 
-	from pth_rmp.rmp_opinion_risk_info   --@pth_rmp.rmp_opinion_risk_info
+	from pth_rmp.rmp_opinion_risk_info_04   --@pth_rmp.rmp_opinion_risk_info_04
 	where delete_flag=0
 	  and notice_dt>= from_unixtime((unix_timestamp()-3600*24))
 	  and notice_dt< current_timestamp()
@@ -78,7 +82,7 @@ rmp_opinion_risk_info_ as
 	union all
 	--历史数据
 	select * 
-	from pth_rmp.rmp_opinion_risk_info   --@pth_rmp.rmp_opinion_risk_info
+	from pth_rmp.rmp_opinion_risk_info_04   --@pth_rmp.rmp_opinion_risk_info_04
 	where delete_flag=0
 	  and to_date(notice_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd')
 	  and cast(${ETL_DATE} as string)<cast(from_unixtime(unix_timestamp(),'yyyyMMdd') as string)
@@ -485,14 +489,14 @@ label_hit_tab AS  --风险预警
 					 ) tag  
 					 right join 
 					(  select distinct corp_id,corp_nm,notice_dt,case_type_ii_cd,case_type_ii 
-							 from rmp_opinion_risk_info_  --@rmp_opinion_risk_info
+							 from rmp_opinion_risk_info_  --@rmp_opinion_risk_info_04
 					) rsk 
 						on rsk.case_type_ii_cd=tag.tag_ii_cd
 					right join com_score_temp A 
 						on A.relation_id=rsk.corp_id and A.score_dt=to_date(rsk.notice_dt)
 				
 				-- left join (  select distinct corp_id,corp_nm,notice_dt,case_type_ii_cd,case_type_ii 
-				-- 			 from rmp_opinion_risk_info_  --@rmp_opinion_risk_info
+				-- 			 from rmp_opinion_risk_info_  --@rmp_opinion_risk_info_04
 				-- 		   ) rsk 
 				-- 	on A.relation_id=rsk.corp_id and A.score_dt=to_date(rsk.notice_dt)
 				-- left join (  select * 

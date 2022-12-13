@@ -8,10 +8,16 @@
 --2.主体label_hit=1，则显示命中重大风险事件 ；关联方 label_hit=2，则显示命中重大风险事件 
 --3.排序问题，hive可使用sort_array()进行升序排序，解决impala无法排序拼接的问题
 --依赖 pth_rmp.RMP_COMPY_CONTRIB_DEGREE pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP  pth_rmp.rmp_opinion_risk_info
+--/*2022-12-12 增加pth_rmp.rmp_opinion_risk_info的副本表pth_rmp.rmp_opinion_risk_info_04，供下游04组加工任务使用*/
+
 
 set hive.exec.parallel=true;
+set hive.exec.parallel.thread.number=16;
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
+
 
 drop table if exists pth_rmp.RMP_ATTRIBUTION_SUMM_REL_TEMP;
 create table if not exists pth_rmp.RMP_ATTRIBUTION_SUMM_REL_TEMP AS 
@@ -34,7 +40,7 @@ RMP_COMPY_CONTRIB_DEGREE_ as
 rmp_opinion_risk_info_ as 
 (
 	select *
-	from pth_rmp.rmp_opinion_risk_info  --init
+	from pth_rmp.rmp_opinion_risk_info_04  --init
 	where notice_date <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 	  and notice_date >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-1))
 ),

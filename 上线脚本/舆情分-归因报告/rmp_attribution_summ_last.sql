@@ -4,11 +4,16 @@
 -- where corp_id='pz00e1c32133191ee1a9cc3556af92f8ea' and corp_nm='深圳比亚迪光电子有限公司'  
 -- and score_dt='2022-08-02'  and relation_nm in ('比亚迪股份有限公司','比亚迪汽车工业有限公司','上海比亚迪电动车有限公司')
 --依赖 pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP，pth_rmp.rmp_opinion_risk_info
+--/*2022-12-12 增加pth_rmp.rmp_opinion_risk_info的副本表pth_rmp.rmp_opinion_risk_info_04，供下游04组加工任务使用*/
 
 
 set hive.exec.parallel=true;
+set hive.exec.parallel.thread.number=12;
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false; 
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
+
 
 
 drop table if exists pth_rmp.RMP_ATTRIBUTION_SUMM_LAST_TEMP;
@@ -42,7 +47,7 @@ RMP_ALERT_COMPREHS_SCORE_TEMP_Batch_Rel as  --最新批次的综合舆情分数�
 rmp_opinion_risk_info_ as 
 (
 	select *
-	from pth_rmp.rmp_opinion_risk_info 
+	from pth_rmp.rmp_opinion_risk_info_04 
 	where notice_date = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 ),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
