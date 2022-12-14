@@ -202,8 +202,8 @@ from
 		select * from region_class_yq
 	)A 
 )Fi
-where score_dt >= to_date('2021-01-01')
-  and score_dt <= to_date('2022-10-30') 
+where score_dt >= to_date(date_add(from_unixtime(unix_timestamp(cast(${BEG_DT} as string),'yyyyMMdd')),0)) 
+  and score_dt <= to_date(date_add(from_unixtime(unix_timestamp(cast(${END_DT} as string),'yyyyMMdd')),0)) 
 ;
 
 
@@ -212,7 +212,8 @@ where score_dt >= to_date('2021-01-01')
 --（3） hive执行 --
 insert into pth_rmp.RMP_OPINION_STATISTIC_DAY_init partition(etl_date=19900101)
 select 
-	MD5(concat(cast(score_dt as string),statistic_dim,cast(industry_class as string),level_type_list,level_type_ii,'0')) as sid_kw,
+	MD5(concat(cast(score_dt as string),statistic_dim,cast(industry_class as string),level_type_list,level_type_ii,cast(importance as string),'0')) as sid_kw,
+	-- MD5(concat(cast(score_dt as string),statistic_dim,cast(industry_class as string),level_type_list,level_type_ii,'0')) as sid_kw,
 	score_dt ,  
 	statistic_dim ,  
 	industry_class ,  
