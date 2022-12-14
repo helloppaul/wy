@@ -3,11 +3,15 @@
 
 -- part1 互嶄詰撞栽旺議 蒙尢恒�弑� --
 set hive.exec.parallel=true;
+set hive.exec.parallel.thread.number=16; 
 set hive.auto.convert.join = true;
 set hive.ignore.mapjoin.hint = false;  
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
+
 
 drop table if exists pth_rmp.rmp_warn_feature_contrib;
-create table pth_rmp.rmp_warn_feature_contrib as 
+create table pth_rmp.rmp_warn_feature_contrib stored as parquet as  
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 児云佚連 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
 with
 corp_chg as  --揮嗤 廓誘/恢匍登僅才忽炎匯雫佩匍 議蒙歩corp_chg
@@ -392,7 +396,7 @@ set hive.auto.convert.join = true;
 set hive.ignore.mapjoin.hint = false;  
 
 drop table if exists pth_rmp.rmp_warn_contribution_ratio;
-create table pth_rmp.rmp_warn_contribution_ratio as 
+create table pth_rmp.rmp_warn_contribution_ratio stored as parquet as 
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 児云佚連 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
 with
 corp_chg as  --揮嗤 廓誘/恢匍登僅才忽炎匯雫佩匍 議蒙歩corp_chg
@@ -503,7 +507,7 @@ set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
 
 drop table if exists pth_rmp.rmp_warn_feature_contrib_res3;
-create table pth_rmp.rmp_warn_feature_contrib_res3 as 
+create table pth_rmp.rmp_warn_feature_contrib_res3 stored as parquet as  
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 児云佚連 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
 with
 corp_chg as  --揮嗤 廓誘/恢匍登僅才忽炎匯雫佩匍 議蒙歩corp_chg

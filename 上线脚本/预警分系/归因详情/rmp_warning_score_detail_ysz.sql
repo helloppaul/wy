@@ -2,13 +2,15 @@
 -- RMP_WARNING_SCORE_DETAIL_YSZ (同步方式：一天多批次覆盖更新) 50min--
 
 set hive.exec.parallel=true;
-set hive.exec.parallel.thread.number=12; 
+set hive.exec.parallel.thread.number=16; 
 set hive.auto.convert.join = true;
 set hive.ignore.mapjoin.hint = false;  
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
 
 -- 特征原始值+中位数计算 -- 
 drop table if exists pth_rmp.rmp_warn_feature_value_with_median_res;
-create table pth_rmp.rmp_warn_feature_value_with_median_res as 
+create table pth_rmp.rmp_warn_feature_value_with_median_res stored as parquet as 
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg
