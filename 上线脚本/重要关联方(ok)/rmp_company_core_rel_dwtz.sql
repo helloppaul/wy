@@ -1,21 +1,23 @@
 -- 对外投资 (同步方式：一天单批次插入) --
+-- /* 2022-12-10 创建corp_chg，hds.tr_ods_rmp_fi_x_news_tcrnwitcoded的副本，降低锁表几率*/
+-- /* 2022-12-12 one_1临时表的inv_type字段，逻辑调整 */
+
 -- 入参：${ETL_DATE}(20220818 int) 
 -- set hive.execution.engine=spark;  --编排很好mr
 -- set hive.exec.dynamic.partition=true;  --开启动态分区功能
 -- set hive.exec.dynamic.partition.mode=nostrick;  --允许全部分区都为动态
 
 
-with 
-compy_range as 
-(
-	select distinct c.corp_id,c.source_id
-	from hds.tr_ods_rmp_fi_x_news_tcrnwitcode o
-	join pth_rmp.rmp_company_id_relevance c 
-		on o.itcode2=c.source_id and c.source_code='FI'
-	where o.flag<>''
-),
-corp_chg as 
-(
+--Part1 副本 --
+drop table if exists pth_rmp.tr_ods_rmp_fi_x_news_tcrnwitcode_dwtz;
+create table pth_rmp.tr_ods_rmp_fi_x_news_tcrnwitcode_dwtz stored as parquet
+as 
+	select * from hds.tr_ods_rmp_fi_x_news_tcrnwitcode
+;
+
+drop table if exists pth_rmp.corp_chg_dwtz;
+create table pth_rmp.corp_chg_dwtz stored as parquet 
+as 
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
 	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
 		  where cid1.etl_date in (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
@@ -27,6 +29,23 @@ corp_chg as
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
 	where a.delete_flag=0 and b.delete_flag=0
+;
+
+
+-- Part2 --
+with 
+compy_range as 
+(
+	select distinct c.corp_id,c.source_id
+	from pth_rmp.tr_ods_rmp_fi_x_news_tcrnwitcode_dwtz o
+	join pth_rmp.rmp_company_id_relevance c 
+		on o.itcode2=c.source_id and c.source_code='FI'
+	where o.flag<>''
+),
+corp_chg as 
+(
+	select * 
+	from pth_rmp.corp_chg_dwtz
 ),
 cm_property as
 (	select 
@@ -86,11 +105,11 @@ one_1 as
 		a.eid as inv_id,   --主体企业对外投资企业ID
 		a.name as inv,   --主体企业对外投资企业
 		cast(a.percent as double) as inv_p,  --股东持股比例
-		b.entity_type as inv_type,  -- 主体对外投资企业的类型: 'P':个人 'E':企业  'o':产品
+		a.type as inv_type,  -- 主体对外投资企业的类型: 'P':个人 'E':企业  'o':产品
 		1 as lv        --层级标识(第一层)
 	from (select * from hds.t_ods_ckg_am_rel_shareholder where  etl_date=${ETL_DATE})a 
-	join (select * from hds.t_ods_ckg_am_rel_shareholder where etl_date=${ETL_DATE})b  
-		on a.eid = b.entity_eid
+	-- join (select * from hds.t_ods_ckg_am_rel_shareholder where etl_date=${ETL_DATE})b  
+		-- on a.eid = b.entity_eid
 	where cast(a.percent as double)<=1
 	 and a.entity_eid<>a.eid  --排除循环持有1
 ),
@@ -225,7 +244,7 @@ from
 (
 	select 
 		md5(concat(corp_id,relation_id,cast(relation_type_l2_code as string),type6,cast(relation_dt as string))) as sid_kw,
-		row_number() over(partition by corp_id,relation_id,relation_type_l2_code,type6,relation_dt) as rm,
+		row_number() over(partition by corp_id,relation_id,relation_type_l2_code,type6,relation_dt order by 1) as rm,
 		T.*
 	from 
 	(

@@ -1,56 +1,38 @@
--- 股东关系(直接股东+间接股东（3层穿透）) (同步方式：一天单批次插入) --
--- /* 2022-12-10 创建corp_chg，hds.tr_ods_rmp_fi_x_news_tcrnwitcoded的副本，降低锁表几率*/
-
+-- 对外投资 (同步方式：一天单批次插入) --
 -- 入参：${ETL_DATE}(20220818 int) 
 -- set hive.execution.engine=spark;  --编排很好mr
 -- set hive.exec.dynamic.partition=true;  --开启动态分区功能
 -- set hive.exec.dynamic.partition.mode=nostrick;  --允许全部分区都为动态
 
 
---Part1 副本 --
-drop table if exists pth_rmp.tr_ods_rmp_fi_x_news_tcrnwitcode_gd;
-create table pth_rmp.tr_ods_rmp_fi_x_news_tcrnwitcode_gd stored as parquet
-as 
-	select * from hds.tr_ods_rmp_fi_x_news_tcrnwitcode
-;
-
-drop table if exists pth_rmp.corp_chg_gd;
-create table pth_rmp.corp_chg_gd stored as parquet 
-as 
-	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
-		from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
-			where cid1.etl_date in (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
-				-- on cid1.etl_date=cid2.etl_date
-			)	a 
-		join (select b1.* from pth_rmp.rmp_company_info_main b1 
-			where b1.etl_date in (select max(etl_date) etl_date from pth_rmp.rmp_company_info_main )
-				-- on b1.etl_date=b2.etl_date
-			) b 
-			on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
-	where a.delete_flag=0 and b.delete_flag=0
-;
-
-
--- Part2 --
 with 
 compy_range as 
 (
 	select distinct c.corp_id,c.source_id
-	from pth_rmp.tr_ods_rmp_fi_x_news_tcrnwitcode_gd o
+	from hds.tr_ods_rmp_fi_x_news_tcrnwitcode o
 	join pth_rmp.rmp_company_id_relevance c 
 		on o.itcode2=c.source_id and c.source_code='FI'
 	where o.flag<>''
 ),
 corp_chg as 
 (
-	select * 
-	from pth_rmp.corp_chg_gd
+	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
+	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
+		  where cid1.etl_date in (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
+			-- on cid1.etl_date=cid2.etl_date
+		 )	a 
+	join (select b1.* from pth_rmp.rmp_company_info_main b1 
+		  where b1.etl_date in (select max(etl_date) etl_date from pth_rmp.rmp_company_info_main )
+		  	-- on b1.etl_date=b2.etl_date
+		) b 
+		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
+	where a.delete_flag=0 and b.delete_flag=0
 ),
 cm_property as
 (	select 
 		corp_id,
 		max(corp_name) as corp_name,
-		--group_concat(Compy_type,';') as Compy_type
+		--group_concat(Compy_type,'\;') as Compy_type
 		concat_ws('\;',collect_set(Compy_type)) as Compy_type
 	FROM
 	(
@@ -78,7 +60,7 @@ cm_property as
 				'发债' as Compy_Type
 				--sec_type as Compy_Type_detail
 			from hds.t_ods_fic_ic_sec_basic_info
-			where etl_date=${ETL_DATE} 
+			where etl_date=${ETL_DATE}
 			  and isvalid=1
 			  And sec_type_code like '002%'
 			UNION ALL
@@ -95,112 +77,128 @@ cm_property as
 			on cast(o.corp_code as string) = chg.source_id 
 	) A	group by corp_id
 ),
-one as 
+one_1 as 
 (
-	select 
-		eid as cm_id,
-		max(name) as cm,
-		entity_eid gd_id,
-		max(entity_name) gd,
-		max(cast(percent as double)) as gd_p,  --股东持股比例
-		entity_type as gd_type,  -- 股东类型
+	select distinct
+		a.entity_eid as cm_id,  
+		a.entity_name as cm,
+		
+		a.eid as inv_id,   --主体企业对外投资企业ID
+		a.name as inv,   --主体企业对外投资企业
+		cast(a.percent as double) as inv_p,  --股东持股比例
+		b.entity_type as inv_type,  -- 主体对外投资企业的类型: 'P':个人 'E':企业  'o':产品
 		1 as lv        --层级标识(第一层)
-	from hds.t_ods_ckg_am_rel_shareholder where cast(percent as double)<=1 
-	 and etl_date=${ETL_DATE}
-	 and eid<>entity_eid   --排除循环持有1
-	group by eid,entity_eid,entity_type
+	from (select * from hds.t_ods_ckg_am_rel_shareholder where  etl_date=${ETL_DATE})a 
+	join (select * from hds.t_ods_ckg_am_rel_shareholder where etl_date=${ETL_DATE})b  
+		on a.eid = b.entity_eid
+	where cast(a.percent as double)<=1
+	 and a.entity_eid<>a.eid  --排除循环持有1
 ),
-two AS
+one_ as 
+(
+	select *
+	from 
+	(
+		select 
+			cm_id,
+			cm,
+			inv_id,
+			inv,
+			inv_p,
+			inv_type,
+			lv,
+			row_number() over(partition by cm_id,inv_id order by 1) as rm
+		from one_1
+	)A where rm=1
+),
+two_ AS
 (
 	select distinct
 		a.cm_id,
 		a.cm,
 		
-		a.gd_id,
-		a.gd,
-		a.gd_p,
-		a.gd_type,
+		a.inv_id,
+		a.inv,
+		a.inv_p,
+		a.inv_type,
 		
-		b.gd_id as gd_gd_id,   --主体股东的股东
-		b.gd as gd_gd,
-		nvl(a.gd_p*b.gd_p,0) as gd_gd_p,  --股东的股东的持股比例
-		b.gd_type as gd_gd_type,  --股东的股东的类型
+		b.inv_id as inv_inv_id,   
+		b.inv as inv_inv,			--主体对外投资企业的对外投资企业
+		nvl(a.inv_p*b.inv_p,0) as inv_inv_p,  --主体对外投资企业的对外投资企业的持股比例
+		b.inv_type as inv_inv_type,  --对外投资企业的对外投资企业的类型
 		2 as lv
-	from one a join one b on a.gd_id=b.cm_id 
-	 where a.cm_id<>b.gd_id  --排除循环持有2
+	from one_ a join one_ b on a.inv_id=b.cm_id
+	 where a.cm_id<>b.inv_id  --排除循环持有2
 ),
-three AS
+three_ AS
 (
 	select distinct
 		a.cm_id,
 		a.cm,
 		
-		a.gd_id,
-		a.gd,
-		a.gd_p,
-		a.gd_type,
+		a.inv_id,
+		a.inv,
+		a.inv_type,
+		a.inv_p,
 		
-		a.gd_gd_id,
-		a.gd_gd,
-		a.gd_gd_p,
-		a.gd_gd_type,
+		a.inv_inv_id,
+		a.inv_inv,
+		a.inv_inv_p,
+		a.inv_inv_type,
 		
-		b.gd_id as gd_gd_gd_id,   --主体股东的股东的股东
-		b.gd as gd_gd_gd,
-		nvl(a.gd_gd_p*b.gd_p,0) as gd_gd_gd_p,  --股东的股东的股东的持股比例
-		b.gd_type as gd_gd_gd_type,  --股东的股东的类型
+		b.inv_id as inv_inv_inv_id,   
+		b.inv as inv_inv_inv,  
+		nvl(a.inv_inv_p*b.inv_p,0) as inv_inv_inv_p,  
+		b.inv_type as inv_inv_inv_type,  
 		3 as lv
-	from two a join one b on a.gd_gd_id=b.cm_id 
-	 where a.gd_id <> b.gd_id   --排除循环持有3
+	from two_ a join one_ b on a.inv_inv_id=b.cm_id
+	 where a.inv_id <> b.inv_id   --排除循环持有3
 ),
-three_cum AS
+three_cum_ as 
 (
 	select 
 		cm_id,
 		cm,
-		gd_id,
-		gd,
-		gd_type,
+		inv_id,
+		inv,
+		inv_type,
 		min(lv) as lv,
-		sum(gd_p) as cum_ratio
+		sum(inv_p) as cum_ratio
 	from
 	(
-		select DISTINCT * from
-		(
-			select distinct
-				cm_id,
-				cm,
-				gd_id,
-				gd,
-				gd_p,
-				gd_type,
-				lv
-			from one
-			union all
-			select distinct
-				cm_id,
-				cm,
-				gd_gd_id as gd_id,
-				gd_gd as gd,
-				gd_gd_p as gd_p,
-				gd_gd_type as gd_type,
-				lv
-			from two
-			union all
-			select distinct
-				cm_id,
-				cm,
-				gd_gd_gd_id as gd_id,
-				gd_gd_gd as gd,
-				gd_gd_gd_p as gd_p,
-				gd_gd_gd_type as gd_type,
-				lv
-			from three
-		)b
+		select distinct
+			cm_id,
+			cm,
+			inv_id,
+			inv,
+			inv_p,
+			inv_type,
+			lv
+		from one_
+		union all
+		select distinct
+			cm_id,
+			cm,
+			inv_inv_id as inv_id,
+			inv_inv as inv,
+			inv_inv_p as inv_p,
+			inv_inv_type as inv_type,
+			lv
+		from two_
+		union all
+		select distinct
+			cm_id,
+			cm,
+			inv_inv_inv_id as inv_id,
+			inv_inv_inv as inv,
+			inv_inv_inv_p as inv_p,
+			inv_inv_inv_type as inv_type,
+			lv
+		from three_
 	) A
-	group by cm_id,cm,gd_id,gd,gd_type
+	group by cm_id,cm,inv_id,inv,inv_type
 )
-insert into pth_rmp.rmp_COMPANY_CORE_REL partition(etl_date=${ETL_DATE},type_='gd')
+insert into pth_rmp.rmp_COMPANY_CORE_REL partition(etl_date=${ETL_DATE},type_='dwtz')
 ------------------------------ 以上部分为临时表 ---------------------------------------------------------
 select 
 	sid_kw,
@@ -227,12 +225,11 @@ from
 (
 	select 
 		md5(concat(corp_id,relation_id,cast(relation_type_l2_code as string),type6,cast(relation_dt as string))) as sid_kw,
-		row_number() over(partition by corp_id,relation_id,relation_type_l2_code,type6,relation_dt order by 1) as rm,
+		row_number() over(partition by corp_id,relation_id,relation_type_l2_code,type6,relation_dt) as rm,
 		T.*
 	from 
 	(
 		select distinct
-			-- md5(concat(L.corp_id,L.relation_id,cast(L.relation_type_l2_code as string),L.type6)) as sid_kw,
 			from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd') as relation_dt,
 			L.corp_id,
 			L.relation_id,
@@ -258,8 +255,8 @@ from
 			current_timestamp() update_time,
 			0 as version
 			-- to_date(CURRENT_TIMESTAMP()) as dt,
-			-- 'gd' as type_
-		from	
+			-- 'dwtz' as type_
+		FROM
 		(
 			select 
 				Final.corp_id,
@@ -274,56 +271,56 @@ from
 				if(max(Final.cum_ratio)>1,1,max(Final.cum_ratio)) as cum_ratio,
 				max(Final.type6) as type6,
 				max(Final.rel_remark1) as rel_remark1
-			from 
-			(	
+			FROM
+			(
 				select distinct
 					cm_id as corp_id,
-					gd_id as relation_id,
-					gd as relation_nm,
-					gd_type as rela_party_type,
-					2 as relation_type_l1_code,
-					'直接股东' as relation_type_l1,
+					inv_id as relation_id,
+					inv as relation_nm,
+					inv_type as rela_party_type,
+					4 as relation_type_l1_code,
+					'直接对外投资' as relation_type_l1,
 					CASE
-						when cum_ratio>=0.3 then 21
-						when cum_ratio>=0.1 then 22
-						else 23
+						when cum_ratio>=0.5 then 41
+						when cum_ratio>=0.3 then 42
+						else 43
 					END as relation_type_l2_code,
 					CASE
-						when cum_ratio>=0.3 then '累积持股30%以上'
-						when cum_ratio>=0.1 then '累计持股比例10%-30%'
-						else '累计持股比例5%-10%'
+						when cum_ratio>=0.5 then '累积持股50%以上'
+						when cum_ratio>=0.3 then '累计持股比例30%-50%'
+						else '累计持股比例20%-30%'
 					END as relation_type_l2,
 					'' as compy_type,  --关联方企业类型
-					cum_ratio,
+					cum_ratio as cum_ratio,
 					0 as type6,
 					'' as rel_remark1
-				from three_cum where cum_ratio>=0.05 and lv=1
+				from three_cum_ where cum_ratio>=0.2 and lv=1
 				UNION ALL 
 				select distinct 
 					cm_id as corp_id,
-					gd_id as relation_id,
-					gd as relation_nm,
-					gd_type as rela_party_type,
-					3 as relation_type_l1_code,
-					'间接股东（3层穿透）'  as relation_type_l1,
+					inv_id as relation_id,
+					inv as relation_nm,
+					inv_type as rela_party_type,
+					5 as relation_type_l1_code,
+					'间接对外投资（3层穿透）' as relation_type_l1,
 					CASE
-						when cum_ratio>=0.3 then 31
-						when cum_ratio>=0.1 then 32
-						when cum_ratio>=0.05 then 33
+						when cum_ratio>=0.5  THEN 51
+						when cum_ratio>=0.3  THEN 52
+						when cum_ratio>=0.2  THEN 53
 					END as relation_type_l2_code,
 					CASE
-						when cum_ratio>=0.3 then '累积持股30%以上'
-						when cum_ratio>=0.1 then '累计持股比例10%-30%'
-						else '累计持股比例5%-10%'
+						when cum_ratio>=0.5 then '累积持股50%以上'
+						when cum_ratio>=0.3 then '累计持股比例30%-50%'
+						else '累计持股比例20%-30%'
 					END as relation_type_l2,
 					'' as compy_type,  --关联方企业类型
 					cum_ratio,
 					0 as type6,
 					'' as rel_remark1
-				from three_cum 
-				where (gd_id is not null or gd_id<>'') --去重无效关联不到的数据 
-				and cum_ratio>=0.05 and lv>=2
-			)Final join compy_range cr on Final.corp_id=cr.corp_id
+				from three_cum_ 
+				where (inv_id is not null or inv_id<>'') and lv>=2 --去重无效关联不到的数据 
+				and cum_ratio>=0.2 and lv>=2
+			)Final
 			group by Final.corp_id,Final.relation_id,Final.rela_party_type,Final.relation_type_l1_code,Final.relation_type_l1,Final.relation_type_l2_code,Final.relation_type_l2--,Final.cum_ratio
 		) L join compy_range cr on cr.corp_id=L.corp_id
 			left join cm_property cmp on L.corp_id = cmp.corp_id

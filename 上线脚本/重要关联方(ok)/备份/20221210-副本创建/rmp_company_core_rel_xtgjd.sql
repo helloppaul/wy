@@ -1,35 +1,11 @@
--- 相同根节点 (同步方式：一天单批次插入) 可用来创建其余违约任务需要用到的临时表--
--- /* 2022-12-10 创建corp_chg，hds.tr_ods_rmp_fi_x_news_tcrnwitcoded的副本，降低锁表几率*/
-
+-- 相同根节点 (同步方式：一天单批次插入) --
 -- 入参：${ETL_DATE}(20220818 int) ; ${BATCH} ('20220818' string)
 -- set hive.execution.engine=spark;  --编排很好mr
 -- set hive.exec.dynamic.partition=true;  --开启动态分区功能
 -- set hive.exec.dynamic.partition.mode=nostrick;  --允许全部分区都为动态
 
-drop table if exists pth_rmp.tr_ods_rmp_fi_x_news_tcrnwitcode;
-create table pth_rmp.tr_ods_rmp_fi_x_news_tcrnwitcode stored as parquet
-as 
-	select * from hds.tr_ods_rmp_fi_x_news_tcrnwitcode
+select 1
 ;
-
-drop table if exists pth_rmp.corp_chg;
-create table pth_rmp.corp_chg stored as parquet 
-as 
-	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
-	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
-		  where cid1.etl_date in (select max(etl_date) as etl_date from pth_rmp.rmp_company_id_relevance)
-			-- on cid1.etl_date=cid2.etl_date
-		 )	a 
-	join (select b1.* from pth_rmp.rmp_company_info_main b1 
-		  where b1.etl_date in (select max(etl_date) etl_date from pth_rmp.rmp_company_info_main )
-		  	-- on b1.etl_date=b2.etl_date
-		) b 
-		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
-	where a.delete_flag=0 and b.delete_flag=0
-;
-
-
-
 -- with 
 -- compy_range as 
 -- (
