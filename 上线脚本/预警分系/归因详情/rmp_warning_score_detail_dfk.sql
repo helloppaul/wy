@@ -1,11 +1,27 @@
 -- RMP_WARNING_SCORE_DETAIL_DFK (同步方式：一天对批次插入) --
+--/* 2022-12-12 增加pth_rmp.rmp_opinion_risk_info的副本表pth_rmp.rmp_opinion_risk_info_07，供下游07组加工任务使用 */
 
 set hive.exec.parallel=true;
+set hive.exec.parallel.thread.number=12; 
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
+
+
+--—————————————————————————————————————————————————————— 副本创建 ————————————————————————————————————————————————————————————————————————————————--
+-- 副本创建 供下游07组任务读取使用 --
+drop table if exists pth_rmp.rmp_opinion_risk_info_07;
+create table pth_rmp.rmp_opinion_risk_info_07 stored as parquet 
+as 
+	select * 
+	from pth_rmp.rmp_opinion_risk_info
+;
+
+
 
 drop table if exists pth_rmp.rmp_warn_score_card;
-create table pth_rmp.rmp_warn_score_card as 
+create table pth_rmp.rmp_warn_score_card stored as parquet as 
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg

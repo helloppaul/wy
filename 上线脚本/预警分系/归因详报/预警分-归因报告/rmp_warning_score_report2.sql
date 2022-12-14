@@ -5,6 +5,9 @@ set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=16; 
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
+
 
 
 drop table if exists pth_rmp.rmp_warning_score_report2;    
@@ -132,7 +135,7 @@ news_intf_ as
 (
 	-- 时间限制部分 --
     select *
-    from pth_rmp.rmp_opinion_risk_info --@pth_rmp.rmp_opinion_risk_info
+    from pth_rmp.rmp_opinion_risk_info_07 --@pth_rmp.rmp_opinion_risk_info_07
     where 1 in (select max(flag) from timeLimit_switch) and crnw0003_010 in ('1','4') 
 	  -- 近12个月的新闻数据 --
       and to_date(notice_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-365))
@@ -140,7 +143,7 @@ news_intf_ as
     union all 
     -- 非时间限制部分 --
     select * 
-    from pth_rmp.rmp_opinion_risk_info --@pth_rmp.rmp_opinion_risk_info
+    from pth_rmp.rmp_opinion_risk_info_07 --@pth_rmp.rmp_opinion_risk_info_07
     where 1 in (select not max(flag) from timeLimit_switch) 
 ),
 -- 诚信 --

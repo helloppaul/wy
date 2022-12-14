@@ -3,8 +3,12 @@
 --/* 2022-12-04 Íâ¹Ò¹æÔòÈ¡ÖµÐÞ¸´£¬È¡×îÐÂcreate_dtµÄÊý¾Ý */
 
 set hive.exec.parallel=true;
+set hive.exec.parallel.thread.number=12; 
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
+
 
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª »ù±¾ÐÅÏ¢ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 with
@@ -99,7 +103,7 @@ news_intf_ as
 (
 	-- Ê±¼äÏÞÖÆ²¿·Ö --
     select *
-    from pth_rmp.rmp_opinion_risk_info --@pth_rmp.rmp_opinion_risk_info
+    from pth_rmp.rmp_opinion_risk_info_07 --@pth_rmp.rmp_opinion_risk_info_07
     where 1 in (select max(flag) from timeLimit_switch) and crnw0003_010 in ('1','4') 
 	  -- ½ü12¸öÔÂµÄÐÂÎÅÊý¾Ý --
       and to_date(notice_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-365))
@@ -107,7 +111,7 @@ news_intf_ as
     union all 
     -- ·ÇÊ±¼äÏÞÖÆ²¿·Ö --
     select * 
-    from pth_rmp.rmp_opinion_risk_info --@pth_rmp.rmp_opinion_risk_info
+    from pth_rmp.rmp_opinion_risk_info_07 --@pth_rmp.rmp_opinion_risk_info_07
     where 1 in (select not max(flag) from timeLimit_switch) 
 ),
 -- ³ÏÐÅ --
