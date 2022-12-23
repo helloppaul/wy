@@ -2,13 +2,14 @@
 --/**2022-10-22 首段，新增外挂规则逻辑/
 --/* 2022-10-22 首段，新增 提示颜色 */
 --/* 2022-12-04 外挂规则取值修复，取最新create_dt的数据 */
+-- /* 2022-12-20 drop+create table -> insert into overwrite table xxx */
 
 set hive.exec.parallel=true;
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
 
-drop table if exists pth_rmp.rmp_warning_score_report1;  
-create table pth_rmp.rmp_warning_score_report1 as    --@pth_rmp.rmp_warning_score_report1
+-- drop table if exists pth_rmp.rmp_warning_score_report1;  
+-- create table pth_rmp.rmp_warning_score_report1 as    --@pth_rmp.rmp_warning_score_report1
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (特殊2)
@@ -232,6 +233,7 @@ First_Msg as --
 		) as msg1  --带颜色第一句话
 	from First_Part_Data
 )
+insert overwrite table pth_rmp.rmp_warning_score_report1
 select distinct
 	* 
 from First_Msg

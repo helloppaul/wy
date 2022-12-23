@@ -1,5 +1,6 @@
 
 -- RMP_WARNING_SCORE_DETAIL_YSZ (同步方式：一天多批次覆盖更新) 50min--
+-- /* 2022-12-20 drop+create table -> insert into overwrite table xxx */
 
 set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=16; 
@@ -9,8 +10,8 @@ set hive.vectorized.execution.enabled = true;
 set hive.vectorized.execution.reduce.enabled = true;
 
 -- 特征原始值+中位数计算 -- 
-drop table if exists pth_rmp.rmp_warn_feature_value_with_median_res;
-create table pth_rmp.rmp_warn_feature_value_with_median_res stored as parquet as 
+-- drop table if exists pth_rmp.rmp_warn_feature_value_with_median_res;
+-- create table pth_rmp.rmp_warn_feature_value_with_median_res stored as parquet as 
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业 的特殊corp_chg
@@ -332,6 +333,7 @@ warn_feature_value_with_median_res as -- used
     -- join [SHUFFLE] warn_feature_value b 
         on cal.corp_id=b.corp_id and cal.score_dt=b.score_dt and cal.sub_model_name=b.sub_model_name and cal.idx_name=b.idx_name 
 )
+insert overwrite table pth_rmp.rmp_warn_feature_value_with_median_res
 select * 
 from warn_feature_value_with_median_res
 where score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))

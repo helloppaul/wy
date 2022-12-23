@@ -1,6 +1,7 @@
 -- RMP_WARNING_SCORE_REPORT 第四段-归因变动 --
 -- /*2022-11-13 归因详情历史接口层调整，用归因详情当日表的数据，归因详情当日表确保会存放连续两天的数据 */
 --/* 2022-12-04 外挂规则取值修复，取最新create_dt的数据 */
+-- /* 2022-12-20 drop+create table -> insert into overwrite table xxx */
 
 --还差 预警等级变动的数据接入进一步验证
 --综合预警等级变动层：综合预警等级变动表   因子变动层数据：归因详情当日(主表)+归因详情历史表+预警分模型结果表当日(综合预警等级字段来源)
@@ -583,6 +584,7 @@ Fourth_msg_corp_II as
 	)A left join warn_adj_rule_cfg ru
 		on a.corp_id = ru.corp_id 
 )
+insert overwrite table pth_rmp.rmp_warning_score_report4
 select distinct
 	batch_dt,
 	corp_id,

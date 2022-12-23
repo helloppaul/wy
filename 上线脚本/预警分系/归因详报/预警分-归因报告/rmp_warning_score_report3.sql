@@ -1,4 +1,5 @@
 -- RMP_WARNING_SCORE_REPORT 第三段-同类风险企业 --
+-- /* 2022-12-20 drop+create table -> insert into overwrite table xxx */
 
 
 set hive.exec.parallel=true;
@@ -321,6 +322,7 @@ Third_Msg as
 	join Third_Msg_Corp b 
 		on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id
 )
+insert overwrite table pth_rmp.rmp_warning_score_report3
 select 
 	batch_dt,
 	corp_id,

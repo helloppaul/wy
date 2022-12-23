@@ -1,5 +1,6 @@
 -- RMP_WARNING_SCORE_REPORT 第二段和第五段-当前等级归因和建议关注风险 
 -- /* 2022-11-25 首先为->主要为 */--
+-- /* 2022-12-20 drop+create table -> insert into overwrite table xxx */
 
 set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=16; 
@@ -10,8 +11,8 @@ set hive.vectorized.execution.reduce.enabled = true;
 
 
 
-drop table if exists pth_rmp.rmp_warning_score_report2;    
-create table pth_rmp.rmp_warning_score_report2 as      --@pth_rmp.rmp_warning_score_report2
+-- drop table if exists pth_rmp.rmp_warning_score_report2;    
+-- create table pth_rmp.rmp_warning_score_report2 as      --@pth_rmp.rmp_warning_score_report2
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (特殊2)
@@ -1235,6 +1236,7 @@ Fifth_Msg as
 	from Fifth_Data
 )
 ------------------------------------以上部分为临时表-------------------------------------------------------------------
+insert overwrite table pth_rmp.rmp_warning_score_report2
 select distinct
 	a.batch_dt,
 	a.corp_id,

@@ -1,5 +1,6 @@
 -- RMP_WARNING_SCORE_DETAIL_GXD (Í¬²½·½Ê½£ºÒ»Ìì¶àÅú´Î¸²¸Ç¸üÐÂ) --
 -- /* 2022-12-06 ÐÞ¸´ hiveÖÐÖ´ÐÐwarn_feat_corp_property_CFG·µ»Ø¿ÕÊý¾ÝµÄÎÊÌâ£¬hive¶ÔÓÚÖÐÎÄ×Ö·û³¤¶ÈÊ¶±ðºÍImpala±ê×¼²»Í¬ */
+-- /* 2022-12-20 drop+create table -> insert into overwrite table xxx */
 
 -- part1 ¸ßÖÐµÍÆµºÏ²¢µÄ ÌØÕ÷¹±Ï×¶È --
 set hive.exec.parallel=true;
@@ -10,8 +11,8 @@ set hive.vectorized.execution.enabled = true;
 set hive.vectorized.execution.reduce.enabled = true;
 
 
-drop table if exists pth_rmp.rmp_warn_feature_contrib;
-create table pth_rmp.rmp_warn_feature_contrib stored as parquet as  
+-- drop table if exists pth_rmp.rmp_warn_feature_contrib;
+-- create table pth_rmp.rmp_warn_feature_contrib stored as parquet as  
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª »ù±¾ÐÅÏ¢ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 with
 corp_chg as  --´øÓÐ ³ÇÍ¶/²úÒµÅÐ¶ÏºÍ¹ú±êÒ»¼¶ÐÐÒµ µÄÌØÊâcorp_chg
@@ -385,6 +386,7 @@ warn_feature_contrib as --ÌØÕ÷¹±Ï×¶È-ºÏ²¢¸ßÖÐµÍÆµ
 	)A join corp_chg chg 
             on cast(a.corp_code as string)=chg.source_id and chg.source_code='ZXZX'
 )
+insert overwrite table pth_rmp.rmp_warn_feature_contrib
 select * from warn_feature_contrib
 ;
 
@@ -395,8 +397,8 @@ set hive.exec.parallel=true;
 set hive.auto.convert.join = true;
 set hive.ignore.mapjoin.hint = false;  
 
-drop table if exists pth_rmp.rmp_warn_contribution_ratio;
-create table pth_rmp.rmp_warn_contribution_ratio stored as parquet as 
+-- drop table if exists pth_rmp.rmp_warn_contribution_ratio;
+-- create table pth_rmp.rmp_warn_contribution_ratio stored as parquet as 
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª »ù±¾ÐÅÏ¢ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 with
 corp_chg as  --´øÓÐ ³ÇÍ¶/²úÒµÅÐ¶ÏºÍ¹ú±êÒ»¼¶ÐÐÒµ µÄÌØÊâcorp_chg
@@ -496,6 +498,7 @@ warn_contribution_ratio as
     join corp_chg chg 
         on cast(a.corp_code as string)=chg.source_id and chg.source_code='ZXZX'
 )
+insert overwrite table pth_rmp.rmp_warn_contribution_ratio
 select * from warn_contribution_ratio
 ;
 
@@ -506,8 +509,8 @@ set hive.exec.parallel=true;
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
 
-drop table if exists pth_rmp.rmp_warn_feature_contrib_res3;
-create table pth_rmp.rmp_warn_feature_contrib_res3 stored as parquet as  
+-- drop table if exists pth_rmp.rmp_warn_feature_contrib_res3;
+-- create table pth_rmp.rmp_warn_feature_contrib_res3 stored as parquet as  
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª »ù±¾ÐÅÏ¢ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 with
 corp_chg as  --´øÓÐ ³ÇÍ¶/²úÒµÅÐ¶ÏºÍ¹ú±êÒ»¼¶ÐÐÒµ µÄÌØÊâcorp_chg
@@ -725,5 +728,6 @@ warn_feature_contrib_res3 as
     -- left join warn_union_adj_sync_score b --Ô¤¾¯·Ö-Ä£ÐÍ½á¹û±í
     --     on main.batch_dt=b.batch_dt and main.corp_id=b.corp_id
 )
+insert overwrite table pth_rmp.rmp_warn_feature_contrib_res3
 select * from warn_feature_contrib_res3
 ;
