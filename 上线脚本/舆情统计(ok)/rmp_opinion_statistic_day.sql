@@ -1,15 +1,40 @@
 -- 舆情统计日表 RMP_OPINION_STATISTIC_DAY (同步方式：一天多批次覆盖)  --
 --入参：${ETL_DATE}(20220818 int)，用于筛选score_dt
 --PS:不依赖 舆情风险信息整合表，直接依赖上游hds表为主
--- /*2022-9-19 不剔除快讯和政府预警，将 快讯和政府预警 纳入统计范围*/
--- /*2022-11-15 舆情统计日表 效率优化 */
--- /*2022-11-18 修复 sid_kw重复的问题，增加importance作为业务主键 */
+-- /* 2022-9-19 不剔除快讯和政府预警，将 快讯和政府预警 纳入统计范围 */
+-- /* 2022-11-15 舆情统计日表 效率优化 */
+-- /* 2022-11-18 修复 sid_kw重复的问题，增加importance作为业务主键 */
+-- /* 2022-12-15 新增 在地区维度分类下，在原有省的分类下再细分产业和板块，细分后再做舆情统计 */
 
 
 set hive.exec.parallel=true;
 set hive.auto.convert.join = true;
 set hive.ignore.mapjoin.hint = false;  
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
 
+--01 副本临时表创建 --
+drop table if exists pth_rmp.company_info_main_03_yqtj;
+create table pth_rmp.company_info_main_03_yqtj stored as parquet
+as 
+	select 
+		corp_id,credit_code as credit_cd,
+		is_list,is_bond,
+		list_board,bond_type,
+		regorg_prov,   --省
+		industryphy_name as gb_tag,
+		zjh_industry_l1 as zjh_tag,
+		sw_industry_l1 as sw_tag,
+		wind_industry_l1 as wind_tag
+	from pth_rmp.rmp_company_info_main a 
+	where a.etl_date in  (select max(etl_date) as max_etl_date from pth_rmp.rmp_company_info_main)
+	  and a.delete_flag=0 
+		-- on a.etl_date=b.max_etl_date 
+	group by corp_id,credit_code,is_list,is_bond,list_board,bond_type,regorg_prov,industryphy_name,zjh_industry_l1,sw_industry_l1,wind_industry_l1
+;
+
+
+--02 代码逻辑 --
 with 
 corp_chg as 
 (
@@ -27,20 +52,8 @@ corp_chg as
 ),
 rmp_company_info_main_ as 
 (
-	select 
-		corp_id,credit_code as credit_cd,
-		is_list,is_bond,
-		list_board,bond_type,
-		regorg_prov,   --省
-		industryphy_name as gb_tag,
-		zjh_industry_l1 as zjh_tag,
-		sw_industry_l1 as sw_tag,
-		wind_industry_l1 as wind_tag
-	from pth_rmp.rmp_company_info_main a 
-	where a.etl_date in  (select max(etl_date) as max_etl_date from pth_rmp.rmp_company_info_main)
-	  and a.delete_flag=0 
-		-- on a.etl_date=b.max_etl_date 
-	group by corp_id,credit_code,is_list,is_bond,list_board,bond_type,regorg_prov,industryphy_name,zjh_industry_l1,sw_industry_l1,wind_industry_l1
+	select a.*
+	from pth_rmp.company_info_main_03_yqtj a
 ),
 rmp_company_info_main_union_ as 
 (
@@ -125,17 +138,19 @@ main_news_without_kxun_region as
 industry_class_yq as 
 (
 	select 
+		main.corp_id,
 		to_date(main.news_dt) as score_dt,
 		main.importance,  
 		b.statistic_dim,
 		b.industry_class,
 		b.level_type_list,
 		b.level_type_ii,
-		count(main.news_id) as opinion_cnt
+		main.news_id
+		-- count(main.news_id) as opinion_cnt
 	from main_news_without_kxun_region main
 	join rmp_company_info_main_union_hy_ b 
 		on main.corp_id=b.corp_id
-	group by to_date(main.news_dt),main.importance,b.statistic_dim,b.industry_class,b.level_type_list,b.level_type_ii
+	group by main.corp_id,to_date(main.news_dt),main.importance,b.statistic_dim,b.industry_class,b.level_type_list,b.level_type_ii,main.news_id
 ),
 rmp_company_info_main_union_region_ as
 (
@@ -149,22 +164,50 @@ rmp_company_info_main_union_region_ as
 region_class_yq as 
 (
 	select 
+		main.corp_id,
 		to_date(main.news_dt) as score_dt,
-		importance,  
+		main.importance,  
 		b.statistic_dim,
 		-1 as industry_class,
-		b.level_type_list,
+		c.level_type_list,
 		b.level_type_ii,
-		count(main.news_id) as opinion_cnt
+		main.news_id
+		-- count(main.news_id) as opinion_cnt
 	from main_news_without_kxun_region main
 	join rmp_company_info_main_union_region_ b 
-		on main.corp_id=b.corp_id
-	group by to_date(main.news_dt),main.importance,b.statistic_dim,b.level_type_list,b.level_type_ii
+		on main.corp_id=b.corp_id  
+	left join industry_class_yq c    --对于区域的统计维度，在已有对省统计的基础上，在对上市，发债做统计
+		on main.corp_id=c.corp_id
+	group by main.corp_id,to_date(main.news_dt),main.importance,b.statistic_dim,c.level_type_list,b.level_type_ii,main.news_id  --去重
+),
+industry_class_union_region_class_statistic as 
+(
+	select 
+		score_dt,
+		importance,
+		statistic_dim,
+		industry_class,
+		level_type_list,
+		level_type_ii,
+		count(news_id) as opinion_cnt
+	from industry_class_yq
+	group by score_dt,importance,statistic_dim,industry_class,level_type_list,level_type_ii
+	union all 
+	select 
+		score_dt,
+		importance,
+		statistic_dim,
+		industry_class,
+		level_type_list,
+		level_type_ii,
+		count(news_id) as opinion_cnt
+	from region_class_yq
+	group by score_dt,importance,statistic_dim,industry_class,level_type_list,level_type_ii
 )
 ------------------------------ temp_table above ---------------------------------------------------------
-insert overwrite table pth_rmp.RMP_OPINION_STATISTIC_DAY partition(etl_date=${ETL_DATE})
+insert overwrite table pth_rmp.rmp_opinion_statistic_day partition(etl_date=${ETL_DATE})
 select 
-	md5(concat(cast(score_dt as string),statistic_dim,cast(industry_class as string),level_type_list,level_type_ii,cast(importance as string),'0')) as sid_kw,
+	md5(concat(cast(score_dt as string),statistic_dim,cast(industry_class as string),nvl(level_type_list,'0'),level_type_ii,cast(importance as string),'0')) as sid_kw,
 	*
 from 
 (
@@ -183,12 +226,7 @@ from
 		'' as update_by,
 		current_timestamp() update_time,
 		0 as version
-	from
-	(
-		select * from industry_class_yq
-		union all 
-		select * from region_class_yq
-	)A 
+	from industry_class_union_region_class_statistic
 )Fi
 where score_dt= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)) 
 ;
