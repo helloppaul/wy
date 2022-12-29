@@ -11,6 +11,7 @@
 -- /* 2022-12-02 alert逻辑调整 综合舆情分>=20且alert=1，最终才异动 */
 -- /* 2022-12-12 由读取pth_rmp.rmp_opinion_risk_info,改为读取更高效的副本表pth_rmp.rmp_opinion_risk_info_04 */
 -- /* 2022-12-15 综合舆情分代码逻辑调整升级，增加调整等级逻辑以及企业主体纳入上市发债企业 */
+-- /* 2022-12-27 修复缺失库名pth_rmp前缀的问题 */
 
 
 -- PS: 可以将综合舆情分发任务 拆解为：com_score_temp,label_hit_tab(这两部分并行)； insert部分(依赖前两部分完成后执行)
@@ -20,6 +21,8 @@
 
 
 -- 00 创建 临时表副本 --
+set hive.exec.parallel=true;
+
 insert overwrite table pth_rmp.corp_chg_04_zhyqf
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code--,a.etl_date as id_etl_date,b.etl_date as info_etl_date
 		,b.is_list,b.is_bond
@@ -603,11 +606,11 @@ where G.batch_dt is not null
 
 -- 03 调整等级字段逻辑 part1(数据准备) --
 set hive.exec.parallel=true;
-set hive.exec.parallel.thread.number=16;
+set hive.exec.parallel.thread.number=10;
 set hive.auto.convert.join=false;
 set hive.ignore.mapjoin.hint = false;
 --—————————————————————————————————————————————————————— 临时落地表 ————————————————————————————————————————————————————————————————————————————————--
-insert overwrite table rmp_alert_comprehs_score_temp_batch_copy
+insert overwrite table pth_rmp.rmp_alert_comprehs_score_temp_batch_copy
 	select b.*
 	from 
 	(
@@ -642,17 +645,27 @@ compy_info as
 (
 	select 
 		a.corp_id,
-		max(a.corp_name) as corp_nm
+		max(a.corp_name) as corp_nm,
+		b.score_dt,
+		b.batch_dt
 	from pth_rmp.corp_chg_04_zhyqf a
+	cross join (select score_dt,batch_dt from rmp_alert_comprehs_score_temp_batch_ where score_dt=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)) group by score_dt,batch_dt) b
 	where (a.is_list=1 or a.is_bond=1) 
-	group by a.corp_id
+	group by a.corp_id,b.score_dt,b.batch_dt
+	-- select 
+	-- 	a.corp_id,
+	-- 	max(a.corp_name) as corp_nm
+	-- from pth_rmp.corp_chg_04_zhyqf a
+	-- where (a.is_list=1 or a.is_bond=1) 
+	-- group by a.corp_id
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
 tmp_cal as --获取上市发债以及综合舆情分有的主体作为主表
 (
 	select 
 		-- b.sid_kw,
-		nvl(b.batch_dt,to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd'))) ) as batch_dt,
+		nvl(b.batch_dt,a.batch_dt) as batch_dt,
+		-- nvl(b.batch_dt,to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd'))) ) as batch_dt,
 		nvl(a.corp_id,b.corp_id) as corp_id,
 		nvl(a.corp_nm,b.corp_nm) as corp_nm,
 		b.credit_code,
@@ -685,7 +698,7 @@ select distinct * from tmp_cal
 
 -- 04 调整等级字段逻辑 part2(计算调整等级) --
 set hive.exec.parallel=true;
-set hive.exec.parallel.thread.number=16;
+set hive.exec.parallel.thread.number=10;
 set hive.auto.convert.join=false;
 set hive.ignore.mapjoin.hint = false;
 
