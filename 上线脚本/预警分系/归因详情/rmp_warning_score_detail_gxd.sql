@@ -1,6 +1,7 @@
 -- RMP_WARNING_SCORE_DETAIL_GXD (同步方式：一天多批次覆盖更新) --
 -- /* 2022-12-06 修复 hive中执行warn_feat_corp_property_CFG返回空数据的问题，hive对于中文字符长度识别和Impala标准不同 */
 -- /* 2022-12-20 drop+create table -> insert into overwrite table xxx */
+-- /* 2023-01-01 model_version_intf_ 改取用视图数据 */
 
 -- part1 高中低频合并的 特征贡献度 --
 set hive.exec.parallel=true;
@@ -42,27 +43,18 @@ timeLimit_switch as
 -- 模型版本控制 --
 model_version_intf_ as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf   @app_ehzh.rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf
 (
-    select 'creditrisk_lowfreq_concat' model_name,'v1.0.4' model_version,'active' status  --低频模型
-    union all
-    select 'creditrisk_midfreq_cityinv' model_name,'v1.0.4' model_version,'active' status  --中频-城投模型
-    union all 
-    select 'creditrisk_midfreq_general' model_name,'v1.0.2' model_version,'active' status  --中频-产业模型
-    union all 
-    select 'creditrisk_highfreq_scorecard' model_name,'v1.0.4' model_version,'active' status  --高频-评分卡模型(高频)
-    union all 
-    select 'creditrisk_highfreq_unsupervised' model_name,'v1.0.2' model_version,'active' status  --高频-无监督模型
-    union all 
-    select 'creditrisk_union' model_name,'v1.0.2' model_version,'active' status  --信用风险综合模型
-    -- select 
-    --     notes,
-    --     model_name,
-    --     model_version,
-    --     status,
-    --     etl_date
-    -- from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf a
-    -- where a.etl_date in (select max(etl_date) from t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf)
-    --   and status='active'
-    -- group by notes,model_name,model_version,status,etl_date
+	select * from pth_rmp.v_model_version  --见 预警分-配置表中的视图
+    -- select 'creditrisk_lowfreq_concat' model_name,'v1.0.4' model_version,'active' status  --低频模型
+    -- union all
+    -- select 'creditrisk_midfreq_cityinv' model_name,'v1.0.4' model_version,'active' status  --中频-城投模型
+    -- union all 
+    -- select 'creditrisk_midfreq_general' model_name,'v1.0.2' model_version,'active' status  --中频-产业模型
+    -- union all 
+    -- select 'creditrisk_highfreq_scorecard' model_name,'v1.0.4' model_version,'active' status  --高频-评分卡模型(高频)
+    -- union all 
+    -- select 'creditrisk_highfreq_unsupervised' model_name,'v1.0.2' model_version,'active' status  --高频-无监督模型
+    -- union all 
+    -- select 'creditrisk_union' model_name,'v1.0.2' model_version,'active' status  --信用风险综合模型
 ),
 -- 特征贡献度 --
 rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as  --特征贡献度_融合调整后综合 原始接口（增加了无监督特征：creditrisk_highfreq_unsupervised  ）
