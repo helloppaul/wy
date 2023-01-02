@@ -1,6 +1,11 @@
 -- RMP_WARNING_SCORE_REPORT 第二段和第五段-当前等级归因和建议关注风险 
 -- /* 2022-11-25 首先为->主要为 */--
 -- /* 2022-12-20 drop+create table -> insert into overwrite table xxx */
+-- /* 2023-01-01 修复 仅展示主要为一个维度的数据(在与rinfo数据关联时，先rinfo内部做时间筛选，主表再和rinfo left join 关联，而不是先left join 关联再 where 筛选)*/
+-- /* 2023-01-01 model_version_intf_ 改取用视图数据 */
+-- /* 2023-01-01 归因详情 RMP_WARNING_SCORE_DETAIL_Batch 数据，在原有取对应日期最大批次基础上，再取对应最大的update_time，防止数据追批导致数据的重复加总计算，如维度贡献度占比 */
+-- /* 2023-01-02  增加对 Second_Msg_Dimension数据中 dim_contrib_ratio字段 排序的nvl的处理，使得为null的排序靠后，而不是在001,002的位置 */
+-- /* 2023-01-02  修复 第二段大量企业的msg为NULL的问题(msg2数量 + 无监督话术(第五个维度) + NULL(5个维度均为贡献度占比均为NULL) = msg1数量) */
 
 set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=16; 
@@ -42,27 +47,18 @@ timeLimit_switch as
 -- 模型版本控制 --
 model_version_intf_ as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf   @app_ehzh.rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf
 (
-    select 'creditrisk_lowfreq_concat' model_name,'v1.0.4' model_version,'active' status  --低频模型
-    union all
-    select 'creditrisk_midfreq_cityinv' model_name,'v1.0.4' model_version,'active' status  --中频-城投模型
-    union all 
-    select 'creditrisk_midfreq_general' model_name,'v1.0.2' model_version,'active' status  --中频-产业模型
-    union all 
-    select 'creditrisk_highfreq_scorecard' model_name,'v1.0.4' model_version,'active' status  --高频-评分卡模型(高频)
-    union all 
-    select 'creditrisk_highfreq_unsupervised' model_name,'v1.0.2' model_version,'active' status  --高频-无监督模型
-    union all 
-    select 'creditrisk_union' model_name,'v1.0.2' model_version,'active' status  --信用风险综合模型
-    -- select 
-    --     notes,
-    --     model_name,
-    --     model_version,
-    --     status,
-    --     etl_date
-    -- from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf a
-    -- where a.etl_date in (select max(etl_date) from t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf)
-    --   and status='active'
-    -- group by notes,model_name,model_version,status,etl_date
+	select * from pth_rmp.v_model_version  --见 预警分-配置表中的视图
+    -- select 'creditrisk_lowfreq_concat' model_name,'v1.0.4' model_version,'active' status  --低频模型
+    -- union all
+    -- select 'creditrisk_midfreq_cityinv' model_name,'v1.0.4' model_version,'active' status  --中频-城投模型
+    -- union all 
+    -- select 'creditrisk_midfreq_general' model_name,'v1.0.2' model_version,'active' status  --中频-产业模型
+    -- union all 
+    -- select 'creditrisk_highfreq_scorecard' model_name,'v1.0.4' model_version,'active' status  --高频-评分卡模型(高频)
+    -- union all 
+    -- select 'creditrisk_highfreq_unsupervised' model_name,'v1.0.2' model_version,'active' status  --高频-无监督模型
+    -- union all 
+    -- select 'creditrisk_union' model_name,'v1.0.2' model_version,'active' status  --信用风险综合模型
 ),
 -- 预警分 --
 rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接口
@@ -304,8 +300,8 @@ RMP_WARNING_SCORE_DETAIL_Batch as -- 取每天最新批次数据（当天数据做范围限制）
 (
 	select a.*
 	from RMP_WARNING_SCORE_DETAIL_ a
-	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
-		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
+	join (select max(batch_dt) as max_batch_dt,score_dt,max(update_time) as max_update_time from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
+		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt and a.update_time=b.max_update_time
 	where a.ori_idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
 ),
 -- 新闻公告类数据 --
@@ -905,9 +901,9 @@ Second_Part_Data_Prepare as
 			on main.corp_id=a.corp_id and main.batch_dt=a.batch_dt
 		join warn_dim_risk_level_cfg_ cfg 
 			on main.dim_warn_level=cast(cfg.risk_lv as string) and main.dimension=cfg.dimension
-	)T left join mid_risk_info rinfo 
+	)T left join (select * from mid_risk_info where to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))>=notice_date ) rinfo 
 		on T.corp_id=rinfo.corp_id and T.ori_idx_name=rinfo.feature_cd
-	where T.score_dt>=rinfo.notice_date 
+	-- where T.score_dt>=rinfo.notice_date 
 	-- 	on main.corp_id=rinfo.corp_id and main.score_dt>=rinfo.notice_date and main.ori_idx_name=rinfo.feature_cd
 ),
 Second_Part_Data as 
@@ -953,23 +949,74 @@ Second_Part_Data as
 	) A
 ),
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
-Second_Part_Data_Dimension as -- 按维度层汇总描述用数据
+-- Second_Part_Data_Dimension 部分 --> Second_Msg_Dimension  --
+Second_Part_Data_Dimension_0 as 
 (
-	select distinct
+	select 
 		batch_dt,
 		corp_id,
 		corp_nm,
 		score_dt,
 		dimension,
 		dimension_ch,
-		dim_contrib_ratio,
-		dim_factorEvalu_contrib_ratio,
 		dim_warn_level_desc,
 		dim_factor_cnt,
+		dim_contrib_ratio
+	from Second_Part_Data
+	group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,dim_warn_level_desc,dim_contrib_ratio,dim_factor_cnt
+),
+Second_Part_Data_Dimension_1 as 
+(
+	select 
+		batch_dt,
+		corp_id,
+		score_dt,
+		dimension,
+		dim_factorEvalu_contrib_ratio,
 		dim_factorEvalu_factor_cnt
 	from Second_Part_Data
 	where factor_evaluate = 0
+	group by  batch_dt,corp_id,score_dt,dimension,dim_factorEvalu_contrib_ratio,dim_factorEvalu_factor_cnt
+
 ),
+Second_Part_Data_Dimension as -- 按维度层汇总描述用数据
+(
+
+	select 
+		a.batch_dt,
+		a.corp_id,
+		a.corp_nm,
+		a.score_dt,
+		a.dimension,
+		a.dimension_ch,
+		a.dim_warn_level_desc,
+		a.dim_contrib_ratio,
+		a.dim_factor_cnt,
+		nvl(b.dim_factorEvalu_contrib_ratio,0) as dim_factorEvalu_contrib_ratio,
+		-- nvl(b.dim_warn_level_desc,'') as dim_warn_level_desc,
+		nvl(b.dim_factorEvalu_factor_cnt,0) as dim_factorEvalu_factor_cnt
+	from Second_Part_Data_Dimension_0 a 
+	left join Second_Part_Data_Dimension_1 b 
+		on  a.batch_dt=b.batch_dt 
+			and a.corp_id=b.corp_id 
+			and a.score_dt=b.score_dt 
+			and a.dimension=b.dimension
+	-- select distinct
+	-- 	batch_dt,
+	-- 	corp_id,
+	-- 	corp_nm,
+	-- 	score_dt,
+	-- 	dimension,
+	-- 	dimension_ch,
+	-- 	dim_contrib_ratio,
+	-- 	dim_factorEvalu_contrib_ratio,
+	-- 	dim_warn_level_desc,
+	-- 	dim_factor_cnt,
+	-- 	dim_factorEvalu_factor_cnt
+	-- from Second_Part_Data
+	-- where factor_evaluate = 0
+),
+-- Second_Part_Data_Dimension_Type 部分 --
 Second_Part_Data_Dimension_Type_idx as --按指标层汇总数据，用于汇总多个 风险事件 到一个指标上
 (
 	select 
@@ -1047,7 +1094,7 @@ Second_Msg_Dimension as  -- 维度层的信息描述
 		score_dt,
 		dimension,
 		dimension_ch,
-		row_number() over(partition by batch_dt,corp_id,score_dt order by dim_contrib_ratio desc) as dim_contrib_ratio_rank,   --从大到小排列
+		row_number() over(partition by batch_dt,corp_id,score_dt order by nvl(dim_contrib_ratio,-1) desc) as dim_contrib_ratio_rank,   --从大到小排列  --2023-01-02 hz 增加对dim_contrib_ratio排序的nvl的处理，使得为null的排序靠后，而不是在001,002的位置
 		dim_factorEvalu_factor_cnt,
 		concat(
 			dimension_ch,'维度','（','贡献度占比',cast(cast(round(dim_contrib_ratio,0) as decimal(10,0)) as string),'%','）','，',
@@ -1147,7 +1194,20 @@ Second_Msg_Dim as
 		dim_rank,
 		case 	
 			when a.dim_factorEvalu_factor_cnt=0 then  --无异常指标时，话术直接输出维度层即可，结束语为'无显著异常指标及事件'
-					a.dim_msg
+					concat(
+						case 
+							when dim_rank='001' then 
+								concat('<',dim_rank,'>','主要为',dim_msg)
+							when dim_rank='002' then 
+								concat('<',dim_rank,'>','其次为',dim_msg)
+							when dim_rank='003' then 
+								concat('<',dim_rank,'>','第三为',dim_msg )
+							when dim_rank='004' then 
+								concat('<',dim_rank,'>','第四为',dim_msg)	
+							when dim_rank='005' then  
+								concat('<',dim_rank,'>','最后为',dim_msg)	
+						end
+					) 
 				else
 					concat(
 						case 
@@ -1185,7 +1245,7 @@ Second_Msg_Dim as
 			-- 		) 
 			-- end as msg_dim
 		from Second_Msg_Dimension a
-		join Second_Msg_Dimension_Type b 
+		left join Second_Msg_Dimension_Type b 
 			on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id and a.dimension=b.dimension
 		order by batch_dt,corp_id,score_dt,dim_rank
 	)A 
