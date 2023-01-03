@@ -2,9 +2,6 @@
 -- /*2022-11-13 ¹éÒòÏêÇéÀúÊ·½Ó¿Ú²ãµ÷Õû£¬ÓÃ¹éÒòÏêÇéµ±ÈÕ±íµÄÊı¾İ£¬¹éÒòÏêÇéµ±ÈÕ±íÈ·±£»á´æ·ÅÁ¬ĞøÁ½ÌìµÄÊı¾İ */
 --/* 2022-12-04 Íâ¹Ò¹æÔòÈ¡ÖµĞŞ¸´£¬È¡×îĞÂcreate_dtµÄÊı¾İ */
 -- /* 2022-12-20 drop+create table -> insert into overwrite table xxx */
--- /* 2023-01-01 model_version_intf_ ¸ÄÈ¡ÓÃÊÓÍ¼Êı¾İ */
--- /* 2023-01-03 warn_adj_rule_cfg Ä£ĞÍÍâ¹Ò¹æÔòcreate_dt<= ¸ÄÎª = */
-
 
 --»¹²î Ô¤¾¯µÈ¼¶±ä¶¯µÄÊı¾İ½ÓÈë½øÒ»²½ÑéÖ¤
 --×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯²ã£º×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯±í   Òò×Ó±ä¶¯²ãÊı¾İ£º¹éÒòÏêÇéµ±ÈÕ(Ö÷±í)+¹éÒòÏêÇéÀúÊ·±í+Ô¤¾¯·ÖÄ£ĞÍ½á¹û±íµ±ÈÕ(×ÛºÏÔ¤¾¯µÈ¼¶×Ö¶ÎÀ´Ô´)
@@ -46,18 +43,27 @@ timeLimit_switch as
 -- Ä£ĞÍ°æ±¾¿ØÖÆ --
 model_version_intf_ as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf   @app_ehzh.rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf
 (
-	select * from pth_rmp.v_model_version  --¼û Ô¤¾¯·Ö-ÅäÖÃ±íÖĞµÄÊÓÍ¼
-    -- select 'creditrisk_lowfreq_concat' model_name,'v1.0.4' model_version,'active' status  --µÍÆµÄ£ĞÍ
-    -- union all
-    -- select 'creditrisk_midfreq_cityinv' model_name,'v1.0.4' model_version,'active' status  --ÖĞÆµ-³ÇÍ¶Ä£ĞÍ
-    -- union all 
-    -- select 'creditrisk_midfreq_general' model_name,'v1.0.2' model_version,'active' status  --ÖĞÆµ-²úÒµÄ£ĞÍ
-    -- union all 
-    -- select 'creditrisk_highfreq_scorecard' model_name,'v1.0.4' model_version,'active' status  --¸ßÆµ-ÆÀ·Ö¿¨Ä£ĞÍ(¸ßÆµ)
-    -- union all 
-    -- select 'creditrisk_highfreq_unsupervised' model_name,'v1.0.2' model_version,'active' status  --¸ßÆµ-ÎŞ¼à¶½Ä£ĞÍ
-    -- union all 
-    -- select 'creditrisk_union' model_name,'v1.0.2' model_version,'active' status  --ĞÅÓÃ·çÏÕ×ÛºÏÄ£ĞÍ
+    select 'creditrisk_lowfreq_concat' model_name,'v1.0.4' model_version,'active' status  --µÍÆµÄ£ĞÍ
+    union all
+    select 'creditrisk_midfreq_cityinv' model_name,'v1.0.4' model_version,'active' status  --ÖĞÆµ-³ÇÍ¶Ä£ĞÍ
+    union all 
+    select 'creditrisk_midfreq_general' model_name,'v1.0.2' model_version,'active' status  --ÖĞÆµ-²úÒµÄ£ĞÍ
+    union all 
+    select 'creditrisk_highfreq_scorecard' model_name,'v1.0.4' model_version,'active' status  --¸ßÆµ-ÆÀ·Ö¿¨Ä£ĞÍ(¸ßÆµ)
+    union all 
+    select 'creditrisk_highfreq_unsupervised' model_name,'v1.0.2' model_version,'active' status  --¸ßÆµ-ÎŞ¼à¶½Ä£ĞÍ
+    union all 
+    select 'creditrisk_union' model_name,'v1.0.2' model_version,'active' status  --ĞÅÓÃ·çÏÕ×ÛºÏÄ£ĞÍ
+    -- select 
+    --     notes,
+    --     model_name,
+    --     model_version,
+    --     status,
+    --     etl_date
+    -- from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf a
+    -- where a.etl_date in (select max(etl_date) from t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf)
+    --   and status='active'
+    -- group by notes,model_name,model_version,status,etl_date
 ),
 -- -- Ô¤¾¯·Ö --
 -- rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --Ô¤¾¯·Ö_ÈÚºÏµ÷Õûºó×ÛºÏ  Ô­Ê¼½Ó¿Ú
@@ -228,7 +234,7 @@ warn_adj_rule_cfg as --Ô¤¾¯·Ö-Ä£ĞÍÍâ¹Ò¹æÔòÅäÖÃ±í   È¡×îĞÂetl_dateµÄÊı¾İ (¸üĞÂÆµÂ
 		join corp_chg b 
 			on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
 		where a.operator = '×Ô¶¯-·çÏÕÒÑ±©Â¶¹æÔò'
-		  and to_date(a.create_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+		  and to_date(a.create_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 	)m where rm=1 
 	  --and ETL_DATE in (select max(etl_date) from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf)  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
 ),
