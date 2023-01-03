@@ -124,6 +124,7 @@ warn_level_ratio_cfg_ as -- ×ÛºÏÔ¤¾¯µÈ¼¶µÈ¼¶»®·ÖµµÎ»-ÅäÖÃ±í
 		warn_lv_desc   -- ÂÌÉ«Ô¤¾¯µÈ¼¶  ...
 	from pth_rmp.rmp_warn_level_ratio_cfg
 ),
+-- Ä£ĞÍÍâ¹Ò¹æÔò --
 warn_adj_rule_cfg as --Ô¤¾¯·Ö-Ä£ĞÍÍâ¹Ò¹æÔòÅäÖÃ±í   È¡×îĞÂetl_dateµÄÊı¾İ (¸üĞÂÆµÂÊ:ÈÕ¶È¸üĞÂ)
 (
 	select m.*
@@ -135,7 +136,7 @@ warn_adj_rule_cfg as --Ô¤¾¯·Ö-Ä£ĞÍÍâ¹Ò¹æÔòÅäÖÃ±í   È¡×îĞÂetl_dateµÄÊı¾İ (¸üĞÂÆµÂ
 			b.corp_name as corp_nm,
 			a.category,
 			a.reason,
-			rank() over(partition by a.corp_id order by a.create_dt desc ,a.etl_date desc,a.reason desc) rm
+			rank() over(partition by b.corp_id order by a.create_dt desc ,a.etl_date desc,a.reason desc) rm
 		from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf a  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
 		join corp_chg b 
 			on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
