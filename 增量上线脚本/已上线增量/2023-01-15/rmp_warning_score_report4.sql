@@ -3,6 +3,8 @@
 --/* 2022-12-04 Íâ¹Ò¹æÔòÈ¡ÖµĞŞ¸´£¬È¡×îĞÂcreate_dtµÄÊı¾İ */
 -- /* 2022-12-20 drop+create table -> insert into overwrite table xxx */
 -- /* 2023-01-01 model_version_intf_ ¸ÄÈ¡ÓÃÊÓÍ¼Êı¾İ */
+-- /* 2023-01-03 warn_adj_rule_cfg Ä£ĞÍÍâ¹Ò¹æÔòcreate_dt<= ¸ÄÎª = */
+
 
 --»¹²î Ô¤¾¯µÈ¼¶±ä¶¯µÄÊı¾İ½ÓÈë½øÒ»²½ÑéÖ¤
 --×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯²ã£º×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯±í   Òò×Ó±ä¶¯²ãÊı¾İ£º¹éÒòÏêÇéµ±ÈÕ(Ö÷±í)+¹éÒòÏêÇéÀúÊ·±í+Ô¤¾¯·ÖÄ£ĞÍ½á¹û±íµ±ÈÕ(×ÛºÏÔ¤¾¯µÈ¼¶×Ö¶ÎÀ´Ô´)
@@ -226,7 +228,7 @@ warn_adj_rule_cfg as --Ô¤¾¯·Ö-Ä£ĞÍÍâ¹Ò¹æÔòÅäÖÃ±í   È¡×îĞÂetl_dateµÄÊı¾İ (¸üĞÂÆµÂ
 		join corp_chg b 
 			on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
 		where a.operator = '×Ô¶¯-·çÏÕÒÑ±©Â¶¹æÔò'
-		  and to_date(a.create_dt) <= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+		  and to_date(a.create_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 	)m where rm=1 
 	  --and ETL_DATE in (select max(etl_date) from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf)  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
 ),
