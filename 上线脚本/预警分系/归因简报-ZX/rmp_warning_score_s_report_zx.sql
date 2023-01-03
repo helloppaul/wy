@@ -198,7 +198,7 @@ feat_CFG as  --特征手工配置表
 -- 模型外挂规则 --
 warn_adj_rule_cfg as --预警分-模型外挂规则配置表   取最新etl_date的数据 (更新频率:日度更新)
 (
-	select m.*
+	select distinct m.*
 	from 
 	(
 		select 
