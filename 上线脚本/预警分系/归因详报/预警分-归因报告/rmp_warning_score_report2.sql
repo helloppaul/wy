@@ -6,6 +6,8 @@
 -- /* 2023-01-01 归因详情 RMP_WARNING_SCORE_DETAIL_Batch 数据，在原有取对应日期最大批次基础上，再取对应最大的update_time，防止数据追批导致数据的重复加总计算，如维度贡献度占比 */
 -- /* 2023-01-02  增加对 Second_Msg_Dimension数据中 dim_contrib_ratio字段 排序的nvl的处理，使得为null的排序靠后，而不是在001,002的位置 */
 -- /* 2023-01-02  修复 第二段大量企业的msg为NULL的问题(msg2数量 + 无监督话术(第五个维度) + NULL(5个维度均为贡献度占比均为NULL) = msg1数量) */
+-- /* 2023-01-04  修复 第五段和第二段提示维度不对应的问题，在原有异常因子基础上，加上维度贡献度占比>0的判断 */
+-- /* 2023-01-04  修复 舆情维度风险时间描述，会出现 '、被纳入被执行人、xxx'的问题 */
 
 set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=16; 
@@ -1075,7 +1077,7 @@ Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
 			dimension_ch,
 			type,
 			idx_desc,
-			risk_info_desc_in_one_idx,    --汇总到一个指标上的风险信息
+			if(risk_info_desc_in_one_idx='',NULL,risk_info_desc_in_one_idx) as risk_info_desc_in_one_idx,    --汇总到一个指标上的风险信息  增加''转NULL处理(hive和impala的区别)
 			row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type order by contribution_ratio desc) as rm
 		from Second_Part_Data_Dimension_Type_idx
 		-- where factor_evaluate = 0
@@ -1281,7 +1283,7 @@ Fifth_Data as
 			dimension_ch as dimension_ch_no_color,
 			concat('<span class="RED"><span class="WEIGHT">',dimension_ch,'</span></span>') as dimension_ch
 		from (select distinct * from Second_Part_Data_Prepare) t
-		where factor_evaluate = 0   --因子评价，因子是否异常的字段 0：异常 1：正常
+		where factor_evaluate = 0 and dim_contrib_ratio>0   --因子评价，因子是否异常的字段 0：异常 1：正常
 	)A 
 	group by batch_dt,corp_id,corp_nm,score_dt
 ),
