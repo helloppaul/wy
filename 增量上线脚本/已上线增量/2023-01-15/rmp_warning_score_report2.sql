@@ -6,6 +6,11 @@
 -- /* 2023-01-01 归因详情 RMP_WARNING_SCORE_DETAIL_Batch 数据，在原有取对应日期最大批次基础上，再取对应最大的update_time，防止数据追批导致数据的重复加总计算，如维度贡献度占比 */
 -- /* 2023-01-02  增加对 Second_Msg_Dimension数据中 dim_contrib_ratio字段 排序的nvl的处理，使得为null的排序靠后，而不是在001,002的位置 */
 -- /* 2023-01-02  修复 第二段大量企业的msg为NULL的问题(msg2数量 + 无监督话术(第五个维度) + NULL(5个维度均为贡献度占比均为NULL) = msg1数量) */
+-- /* 2023-01-04  修复 第五段和第二段提示维度不对应的问题，在原有异常因子基础上，加上维度贡献度占比>0的判断 */
+-- /* 2023-01-04  修复 舆情维度风险时间描述，会出现 '、被纳入被执行人、xxx'的问题 */
+-- /* 2023-01-04  修复big 舆情维度风险事件描述有重复且为做数量限制(限制为10)  (1)企业,维度，type，risk_info数据 (2)直接由risk_info汇总到type，idx汇总到type，而不是像修改前risk_info汇总到idx再汇总到type，这样没办法做去重且新闻数量无法显示 */
+-- /* 2023-01-04  根据需求，放开对指标描述的数量限制 */
+-- /* 2023-01-04  代码效率优化，去除冗余代码，且对大数据采用落临时parquet表 */
 
 set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=16; 
@@ -14,10 +19,11 @@ set hive.ignore.mapjoin.hint = false;
 set hive.vectorized.execution.enabled = true;
 set hive.vectorized.execution.reduce.enabled = true;
 
-
-
 -- drop table if exists pth_rmp.rmp_warning_score_report2;    
 -- create table pth_rmp.rmp_warning_score_report2 as      --@pth_rmp.rmp_warning_score_report2
+
+
+--part1 数据准备层加工 --
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (特殊2)
@@ -908,47 +914,57 @@ Second_Part_Data_Prepare as
 ),
 Second_Part_Data as 
 (
-	select distinct *
-	from 
-	(
-		select 
-			batch_dt,
-			corp_id,
-			corp_nm,
-			score_dt,
-			synth_warnlevel,
-			dimension,
-			dimension_ch,
-			-- sum(contribution_ratio) as dim_contrib_ratio,
-			dim_contrib_ratio,
-			dim_factorEvalu_contrib_ratio,
-			-- sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension) as dim_contrib_ratio,
-			-- sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate) as dim_factorEvalu_contrib_ratio,
-			contribution_ratio,
-			dim_warn_level,
-			dim_warn_level_desc,  --维度风险等级(难点)
-			type,
-			factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
-			idx_name,  -- 异常因子/异常指标
-			feature_name_target,
-			idx_value,
-			last_idx_value,
-			idx_unit,
-			idx_score,   --指标评分 used
-			msg_title,    --风险信息（一个指标对应多个风险事件）
-			case idx_unit
-				when '%' then 
-					concat(feature_name_target,'为',cast(cast(round(idx_value,2) as decimal(10,2))as string),idx_unit)
-				else 
-					concat(feature_name_target,'为',cast(idx_value as string),idx_unit)
-			end as idx_desc,	
-			dim_factor_cnt,			
-			dim_factorEvalu_factor_cnt
-		from (select distinct * from Second_Part_Data_Prepare ) t
-		order by corp_id,score_dt desc,dim_contrib_ratio desc
-	) A
-),
+	select distinct
+		batch_dt,
+		corp_id,
+		corp_nm,
+		score_dt,
+		synth_warnlevel,
+		dimension,
+		dimension_ch,
+		-- sum(contribution_ratio) as dim_contrib_ratio,
+		dim_contrib_ratio,
+		dim_factorEvalu_contrib_ratio,
+		-- sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension) as dim_contrib_ratio,
+		-- sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension,factor_evaluate) as dim_factorEvalu_contrib_ratio,
+		contribution_ratio,
+		dim_warn_level,
+		dim_warn_level_desc,  --维度风险等级(难点)
+		type,
+		factor_evaluate,  --因子评价，因子是否异常的字段 0：异常 1：正常
+		idx_name,  -- 异常因子/异常指标
+		feature_name_target,
+		idx_value,
+		last_idx_value,
+		idx_unit,
+		idx_score,   --指标评分 used
+		msg_title,    --风险信息（一个指标对应多个风险事件）
+		case idx_unit
+			when '%' then 
+				concat(feature_name_target,'为',cast(cast(round(idx_value,2) as decimal(10,2))as string),idx_unit)
+			else 
+				concat(feature_name_target,'为',cast(idx_value as string),idx_unit)
+		end as idx_desc,	
+		dim_factor_cnt,			
+		dim_factorEvalu_factor_cnt
+	from Second_Part_Data_Prepare t
+)
+insert overwrite table pth_rmp.rmp_second_part_data 
+select * from Second_Part_Data
+;
+
+--part2 应用层加工 --
+set hive.exec.parallel=true;
+set hive.exec.parallel.thread.number=10; 
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
 --—————————————————————————————————————————————————————— 应用层 ————————————————————————————————————————————————————————————————————————————————--
+with
+Second_Part_Data as 
+(
+	select *
+	from pth_rmp.rmp_second_part_data
+),
 -- Second_Part_Data_Dimension 部分 --> Second_Msg_Dimension  --
 Second_Part_Data_Dimension_0 as 
 (
@@ -1017,7 +1033,7 @@ Second_Part_Data_Dimension as -- 按维度层汇总描述用数据
 	-- where factor_evaluate = 0
 ),
 -- Second_Part_Data_Dimension_Type 部分 --
-Second_Part_Data_Dimension_Type_idx as --按指标层汇总数据，用于汇总多个 风险事件 到一个指标上
+Second_Part_Data_Dimension_Type_from_risk_info as --多个风险事件合并到一个type上面
 (
 	select 
 		batch_dt,
@@ -1027,10 +1043,8 @@ Second_Part_Data_Dimension_Type_idx as --按指标层汇总数据，用于汇总多个 风险事件
 		dimension,
 		dimension_ch,
 		type,
-		idx_desc,
-		contribution_ratio,  --指标层的贡献度占比
-		concat_ws('、',collect_set(msg_title)) as risk_info_desc_in_one_idx   -- hive 
-		-- group_concat(distinct msg_title,'、') as risk_info_desc_in_one_idx    -- impala 
+		concat_ws('、',collect_set(msg_title)) as risk_info_desc_in_one_type   -- hive 
+		-- nvl(group_concat(distinct msg_title,'、'),'') as risk_info_desc_in_one_type    -- impala 
 	from 
 	(
 		select 
@@ -1041,16 +1055,16 @@ Second_Part_Data_Dimension_Type_idx as --按指标层汇总数据，用于汇总多个 风险事件
 			dimension,
 			dimension_ch,
 			type,
-			idx_desc,
+			-- idx_desc,
 			msg_title,
-			contribution_ratio,
-			row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type,idx_desc order by contribution_ratio desc) as rm
+			-- contribution_ratio,
+			row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type order by contribution_ratio desc) as rm
 		from Second_Part_Data
 		where factor_evaluate = 0
-	)A where rm<=10  --按照贡献度排名从高到低排序后，取出前十条风险事件作为展示
-	group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type,idx_desc,contribution_ratio
+	) A where rm<=10
+	group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type
 ),
-Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
+Second_Part_Data_Dimension_Type_from_idx as --多个异常指标合并到一个type上面
 (
 	select 
 		batch_dt,
@@ -1060,29 +1074,27 @@ Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
 		dimension,
 		dimension_ch,
 		type,
-		concat_ws('、',collect_set(risk_info_desc_in_one_idx)) as risk_info_desc_in_one_type,   -- hive 
-		-- nvl(group_concat( risk_info_desc_in_one_idx,'、'),'') as  risk_info_desc_in_one_type,   --impala  再将风险事件汇总到type层
 		concat_ws('、',collect_set(idx_desc)) as idx_desc_in_one_type   -- hive (拼接值为NULL，返回'')
 		-- nvl(group_concat(distinct idx_desc,'、'),'') as idx_desc_in_one_type    -- impala  (拼接值全部为NULL，返回NULL)
-	from 
-	(
-		select
-			batch_dt,
-			corp_id,
-			corp_nm,
-			score_dt,
-			dimension,
-			dimension_ch,
-			type,
-			idx_desc,
-			risk_info_desc_in_one_idx,    --汇总到一个指标上的风险信息
-			row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type order by contribution_ratio desc) as rm
-		from Second_Part_Data_Dimension_Type_idx
-		-- where factor_evaluate = 0
-		-- group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type
-	) A where rm<=5   --取贡献度排名最高的5个异常因子
+	from Second_Part_Data
+	where factor_evaluate = 0
 	group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type
-
+),
+Second_Part_Data_Dimension_Type as -- 按维度层 以及 类别层汇总描述用数据
+(
+	select 
+		a.batch_dt,
+		a.corp_id,
+		a.corp_nm,
+		a.score_dt,
+		a.dimension,
+		a.dimension_ch,
+		a.type,
+		a.idx_desc_in_one_type,
+		b.risk_info_desc_in_one_type
+	from Second_Part_Data_Dimension_Type_from_idx a 
+	left join  Second_Part_Data_Dimension_Type_from_risk_info b
+		on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id and a.dimension=b.dimension and a.type=b.type
 ),
 -- 第二段信息 --
 Second_Msg_Dimension as  -- 维度层的信息描述
@@ -1273,15 +1285,15 @@ Fifth_Data as
 		-- group_concat(dimension_ch,'、') as abnormal_dim_msg -- impala
 	from 
 	(
-		select distinct
+		select
 			batch_dt,
 			corp_id,
 			corp_nm,
 			score_dt,
 			dimension_ch as dimension_ch_no_color,
 			concat('<span class="RED"><span class="WEIGHT">',dimension_ch,'</span></span>') as dimension_ch
-		from (select distinct * from Second_Part_Data_Prepare) t
-		where factor_evaluate = 0   --因子评价，因子是否异常的字段 0：异常 1：正常
+		from Second_Part_Data t
+		where factor_evaluate = 0 and dim_contrib_ratio>0   --因子评价，因子是否异常的字段 0：异常 1：正常
 	)A 
 	group by batch_dt,corp_id,corp_nm,score_dt
 ),
