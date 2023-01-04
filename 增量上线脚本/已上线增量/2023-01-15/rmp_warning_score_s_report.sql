@@ -5,7 +5,7 @@
 --/* 2022-11-18 ¹éÒò¼ò±¨Wy ĞÂ°æ */
 --/* 2022-12-04 Íâ¹Ò¹æÔòÈ¡ÖµĞŞ¸´£¬È¡×îĞÂcreate_dtµÄÊı¾İ */
 -- /* 2023-01-01 model_version_intf_ ¸ÄÈ¡ÓÃÊÓÍ¼Êı¾İ */
--- /* 2023-01-03 warn_adj_rule_cfg Ä£ĞÍÍâ¹Ò¹æÔòcreate_dt<= ¸ÄÎª = */
+-- /* 2023-01-03 warn_adj_rule_cfg Ä£ĞÍÍâ¹Ò¹æÔòcreate_dt<= ¸ÄÎª = Í¬Ê±¶ÔÊı¾İ°´ÕÕcorp_id·Ö×éºó£¬ÔÙÅÅĞò*/
 
 
 
@@ -150,9 +150,10 @@ warn_dim_risk_level_cfg_ as  -- Î¬¶È¹±Ï×¶ÈÕ¼±È¶ÔÓ¦·çÏÕË®Æ½-ÅäÖÃ±í
 		risk_lv_desc  -- ¸ß·çÏÕ ...
 	from pth_rmp.rmp_warn_dim_risk_level_cfg
 ),
+-- Ä£ĞÍÍâ¹Ò¹æÔò --
 warn_adj_rule_cfg as --Ô¤¾¯·Ö-Ä£ĞÍÍâ¹Ò¹æÔòÅäÖÃ±í   È¡×îĞÂetl_dateµÄÊı¾İ (¸üĞÂÆµÂÊ:ÈÕ¶È¸üĞÂ)
 (
-	select m.*
+	select distinct m.*
 	from 
 	(
 		select 
@@ -161,7 +162,7 @@ warn_adj_rule_cfg as --Ô¤¾¯·Ö-Ä£ĞÍÍâ¹Ò¹æÔòÅäÖÃ±í   È¡×îĞÂetl_dateµÄÊı¾İ (¸üĞÂÆµÂ
 			b.corp_name as corp_nm,
 			a.category,
 			a.reason,
-			rank() over(order by a.create_dt desc ,a.etl_date desc,a.reason desc) rm
+			rank() over(partition by b.corp_id order by a.create_dt desc ,a.etl_date desc,a.reason desc) rm
 		from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf a  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
 		join corp_chg b 
 			on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'

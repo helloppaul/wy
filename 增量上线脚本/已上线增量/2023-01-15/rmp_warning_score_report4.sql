@@ -3,7 +3,8 @@
 --/* 2022-12-04 Íâ¹Ò¹æÔòÈ¡ÖµĞŞ¸´£¬È¡×îĞÂcreate_dtµÄÊı¾İ */
 -- /* 2022-12-20 drop+create table -> insert into overwrite table xxx */
 -- /* 2023-01-01 model_version_intf_ ¸ÄÈ¡ÓÃÊÓÍ¼Êı¾İ */
--- /* 2023-01-03 warn_adj_rule_cfg Ä£ĞÍÍâ¹Ò¹æÔòcreate_dt<= ¸ÄÎª = */
+-- /* 2023-01-03 warn_adj_rule_cfg Ä£ĞÍÍâ¹Ò¹æÔòcreate_dt<= ¸ÄÎª = Í¬Ê±¶ÔÊı¾İ°´ÕÕcorp_id·Ö×éºó£¬ÔÙÅÅĞò*/
+-- /* 2023-01-03 ĞÂÔö ¶ñ»¯µ½·çÏÕÒÑ±©Â¶µÈ¼¶µÄÊı¾İÒ²ÒªÊä³öµÄÂß¼­ */
 
 
 --»¹²î Ô¤¾¯µÈ¼¶±ä¶¯µÄÊı¾İ½ÓÈë½øÒ»²½ÑéÖ¤
@@ -14,9 +15,11 @@ set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=12;
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
 
-drop table if exists pth_rmp.rmp_warning_score_report4;  
-create table pth_rmp.rmp_warning_score_report4 as  --@pth_rmp.rmp_warning_score_report4
+-- drop table if exists pth_rmp.rmp_warning_score_report4;  
+-- create table pth_rmp.rmp_warning_score_report4 as  --@pth_rmp.rmp_warning_score_report4
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª »ù±¾ĞÅÏ¢ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
 with
 corp_chg as  --´øÓĞ ³ÇÍ¶/²úÒµÅĞ¶ÏºÍ¹ú±êÒ»¼¶ĞĞÒµ/Ö¤¼à»áÒ»¼¶ĞĞÒµ µÄÌØÊâcorp_chg  (ÌØÊâ2)
@@ -212,9 +215,10 @@ warn_dim_risk_level_cfg_ as  -- Î¬¶È¹±Ï×¶ÈÕ¼±È¶ÔÓ¦·çÏÕË®Æ½-ÅäÖÃ±í
 		risk_lv_desc  -- ¸ß·çÏÕ ...
 	from pth_rmp.rmp_warn_dim_risk_level_cfg
 ),
+-- Ä£ĞÍÍâ¹Ò¹æÔò --
 warn_adj_rule_cfg as --Ô¤¾¯·Ö-Ä£ĞÍÍâ¹Ò¹æÔòÅäÖÃ±í   È¡×îĞÂetl_dateµÄÊı¾İ (¸üĞÂÆµÂÊ:ÈÕ¶È¸üĞÂ)
 (
-	select m.*
+	select distinct m.*
 	from 
 	(
 		select 
@@ -223,7 +227,7 @@ warn_adj_rule_cfg as --Ô¤¾¯·Ö-Ä£ĞÍÍâ¹Ò¹æÔòÅäÖÃ±í   È¡×îĞÂetl_dateµÄÊı¾İ (¸üĞÂÆµÂ
 			b.corp_name as corp_nm,
 			a.category,
 			a.reason,
-			rank() over(order by a.create_dt desc ,a.etl_date desc,a.reason desc) rm
+			rank() over(partition by b.corp_id order by a.create_dt desc ,a.etl_date desc,a.reason desc) rm
 		from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf a  --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_modl_adjrule_list_intf
 		join corp_chg b 
 			on cast(a.corp_code as string)=b.source_id and b.source_code='ZXZX'
@@ -374,7 +378,7 @@ Basic_data_I as  -- Éú³É ÊÇ·ñÎ¬¶È¶ñ»¯ + ÊÇ·ñÎ¬¶ÈÒì³£Ö¸±êÕ¼±È¶ñ»¯ + ÊÇ·ñÖ¸±ê¶ñ»¯ 
 		last_dim_warn_level,
 		
 		case 
-			when dim_warn_level > last_dim_warn_level then   --Î¬¶È·¢Éú¶ñ»¯
+			when cast(dim_warn_level as int) < cast(last_dim_warn_level as int) then   --Î¬¶È·¢Éú¶ñ»¯
 				1 
 			else 
 				0
@@ -442,7 +446,7 @@ Basic_data_II as
 		on a.dim_warn_level=cast(cfg.risk_lv as string) and a.dimension=cfg.dimension
 	join warn_dim_risk_level_cfg_ cfg_l
 		on a.last_dim_warn_level=cast(cfg_l.risk_lv as string) and a.dimension=cfg_l.dimension
-	where a.dim_warn_level_worsen_flag=1 or a.dim_submodel_contribution_ratio_worsen_flag=1   --PS: Î¬¶ÈĞë·¢Éú¶ñ»¯ »òÕß Î¬¶ÈÒì³£Ö¸±ê·¢Éú¶ñ»¯, ²ÅÕ¹Ê¾µÚËÄ¶Î£¬·ñÔòÕû¶Î²»Õ¹Ê¾
+	where a.synth_warnlevel='-5' or a.dim_warn_level_worsen_flag=1 or a.dim_submodel_contribution_ratio_worsen_flag=1   --PS: ×ÛºÏÔ¤¾¯µÈ¼¶¶ñ»¯µ½·çÏÕÒÑ±©Â¶ »òÕß Î¬¶ÈĞë·¢Éú¶ñ»¯ »òÕß Î¬¶ÈÒì³£Ö¸±ê·¢Éú¶ñ»¯, ²ÅÕ¹Ê¾µÚËÄ¶Î£¬·ñÔòÕû¶Î²»Õ¹Ê¾
 ),
 -- µÚËÄ¶Î type²ãÊı¾İ»ã×Ü --
 Fourth_msg_type as 
@@ -519,7 +523,7 @@ Fourth_msg_dim as
 -- 	-- where idx_score_worsen_flag = 1 
 -- ),
 -- µÚËÄ¶Î ÆóÒµ²ãÊı¾İ»ã×Ü --
-Fourth_msg_corp_I as --¿Ï¶¨ÊÇÎ¬¶È·¢Éú±ä»¯ »òÕß ÊÇÎ¬¶ÈÒì³£Õ¼±È Âú×ãÌõ¼şµÄÊı¾İ
+Fourth_msg_corp_I as --¿Ï¶¨ÊÇ ×ÛºÏÔ¤¾¯µÈ¼¶¶ñ»¯µ½-5 »òÕß Î¬¶È·¢Éú±ä»¯ »òÕß ÊÇÎ¬¶ÈÒì³£Õ¼±È Âú×ãÌõ¼şµÄÊı¾İ
 (
 	select 
 		a.batch_dt,
@@ -538,13 +542,13 @@ Fourth_msg_corp_I as --¿Ï¶¨ÊÇÎ¬¶È·¢Éú±ä»¯ »òÕß ÊÇÎ¬¶ÈÒì³£Õ¼±È Âú×ãÌõ¼şµÄÊı¾İ
 		case 
 			when dim_warn_level_worsen_flag=1 and dim_submodel_contribution_ratio_worsen_flag=0 then 
 				concat(
-					a.dimension_ch,'Î¬¶È','ÓÉ',a.last_dim_warn_level_desc,'ÉÏÉıÖÁ',a.dim_warn_level_desc,b.dim_msg
+					a.dimension_ch,'Î¬¶È','ÓÉ',a.last_dim_warn_level_desc,'ÉÏÉıÖÁ',a.dim_warn_level_desc,nvl(b.dim_msg,'')
 				)
 			when dim_warn_level_worsen_flag=0 and dim_submodel_contribution_ratio_worsen_flag=1 then 
-				concat('·çÏÕË®Æ½ÉÏÉıµÄÎ¬¶ÈÎª',a.dimension_ch,'Î¬¶È',b.dim_msg
+				concat('·çÏÕË®Æ½ÉÏÉıµÄÎ¬¶ÈÎª',a.dimension_ch,'Î¬¶È',nvl(b.dim_msg,'')
 				)
 			else 
-				''
+				NULL
 		end as corp_dim_msg
 	from Basic_data_II a 
 	left join Fourth_msg_dim b 
@@ -557,21 +561,21 @@ Fourth_msg_corp_II as
 		ru.reason,
 		case 
 			when ru.reason is not null then  
-				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ',a.synth_warnlevel_desc,'±ä»¯ÖÁ','·çÏÕÒÑ±©Â¶Ô¤¾¯µÈ¼¶','£¬','Ö÷ÒªÓÉÓÚ´¥·¢',ru.reason,'£¬',a.corp_dim_msg,'¡£')
+				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ',a.synth_warnlevel_desc,'±ä»¯ÖÁ','·çÏÕÒÑ±©Â¶Ô¤¾¯µÈ¼¶','£¬','Ö÷ÒªÓÉÓÚ´¥·¢',ru.reason,nvl(concat('£¬',a.corp_dim_msg),''),'¡£')
 			else 
-				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ',a.last_synth_warnlevel_desc,'±ä»¯ÖÁ',a.synth_warnlevel_desc,'£¬',a.corp_dim_msg,'¡£')
+				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ',a.last_synth_warnlevel_desc,'±ä»¯ÖÁ',a.synth_warnlevel_desc,nvl(concat('£¬',a.corp_dim_msg),''),'¡£')
 		end as msg4_with_no_color,
 		case 
 			when ru.reason is not null then  
-				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ','<span class="RED"><span class="WEIGHT">',a.synth_warnlevel_desc,'ÉÏÉıÖÁ','·çÏÕÒÑ±©Â¶Ô¤¾¯µÈ¼¶','£¬','Ö÷ÒªÓÉÓÚ´¥·¢',ru.reason,'</span></span>','£¬',a.corp_dim_msg,'¡£')
+				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ','<span class="RED"><span class="WEIGHT">',a.synth_warnlevel_desc,'ÉÏÉıÖÁ','·çÏÕÒÑ±©Â¶Ô¤¾¯µÈ¼¶','£¬','Ö÷ÒªÓÉÓÚ´¥·¢',ru.reason,'</span></span>',nvl(concat('£¬',a.corp_dim_msg),''),'¡£')
 			else 
-				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ','<span class="RED"><span class="WEIGHT">',a.last_synth_warnlevel_desc,'ÉÏÉıÖÁ',a.synth_warnlevel_desc,'</span></span>','£¬',a.corp_dim_msg,'¡£')
+				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ','<span class="RED"><span class="WEIGHT">',a.last_synth_warnlevel_desc,'ÉÏÉıÖÁ',a.synth_warnlevel_desc,'</span></span>',nvl(concat('£¬',a.corp_dim_msg),''),'¡£')
 		end as msg4
 	from 
 	(
 		select 
-			batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,last_synth_warnlevel_desc,corp_dim_msg,
-			concat_ws('',collect_set(corp_dim_msg)) as msg_corp_
+			batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,last_synth_warnlevel_desc,corp_dim_msg
+			-- concat_ws('',collect_set(corp_dim_msg)) as msg_corp_
 			-- group_concat(distinct corp_dim_msg,'') as msg_corp_   -- impala
 		from Fourth_msg_corp_I
 		group by batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,last_synth_warnlevel_desc,corp_dim_msg
