@@ -1,3 +1,16 @@
+-- 圓少蛍-庁侏井云陣崙 篇夕 --
+create view pth_rmp.v_model_version as 
+    select 
+        notes,
+        model_name,
+        model_version,
+        status,
+        etl_date
+    from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf a
+    where a.etl_date in (select max(etl_date) from hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf)
+      and status='active'
+    group by notes,model_name,model_version,status,etl_date
+;
 -- 圓少蛍喘塘崔燕 --
 --！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！ 忝栽圓少吉雫吉雫皿蛍亀了-塘崔燕 ！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！！--
 drop table if exists pth_rmp.rmp_warn_level_ratio_cfg; 
