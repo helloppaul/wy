@@ -11,6 +11,7 @@
 -- /* 2023-01-04  修复big 舆情维度风险事件描述有重复且为做数量限制(限制为10)  (1)企业,维度，type，risk_info数据 (2)直接由risk_info汇总到type，idx汇总到type，而不是像修改前risk_info汇总到idx再汇总到type，这样没办法做去重且新闻数量无法显示 */
 -- /* 2023-01-04  根据需求，放开对指标描述的数量限制 */
 -- /* 2023-01-04  代码效率优化，去除冗余代码，且对大数据采用落临时parquet表 */
+-- /* 2023-01-05  对所有指标都保留到小数位后两位 */
 
 set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=16; 
@@ -939,12 +940,13 @@ Second_Part_Data as
 		idx_unit,
 		idx_score,   --指标评分 used
 		msg_title,    --风险信息（一个指标对应多个风险事件）
-		case idx_unit
-			when '%' then 
-				concat(feature_name_target,'为',cast(cast(round(idx_value,2) as decimal(10,2))as string),idx_unit)
-			else 
-				concat(feature_name_target,'为',cast(idx_value as string),idx_unit)
-		end as idx_desc,	
+		concat(feature_name_target,'为',cast(cast(round(idx_value,2) as decimal(10,2))as string),idx_unit) as idx_desc,
+		-- case idx_unit
+		-- 	when '%' then 
+		-- 		concat(feature_name_target,'为',cast(cast(round(idx_value,2) as decimal(10,2))as string),idx_unit)
+		-- 	else 
+		-- 		concat(feature_name_target,'为',cast(idx_value as string),idx_unit)
+		-- end as idx_desc,	
 		dim_factor_cnt,			
 		dim_factorEvalu_factor_cnt
 	from Second_Part_Data_Prepare t
@@ -1309,7 +1311,7 @@ Fifth_Msg as
 )
 ------------------------------------以上部分为临时表-------------------------------------------------------------------
 insert overwrite table pth_rmp.rmp_warning_score_report2
-select distinct
+select 
 	a.batch_dt,
 	a.corp_id,
 	a.corp_nm,
