@@ -5,9 +5,13 @@
 -- /* 2023-01-01 model_version_intf_ ¸ÄÈ¡ÓÃÊÓÍ¼Êı¾İ */
 -- /* 2023-01-03 warn_adj_rule_cfg Ä£ĞÍÍâ¹Ò¹æÔòcreate_dt<= ¸ÄÎª = Í¬Ê±¶ÔÊı¾İ°´ÕÕcorp_id·Ö×éºó£¬ÔÙÅÅĞò*/
 -- /* 2023-01-03 ĞÂÔö ¶ñ»¯µ½·çÏÕÒÑ±©Â¶µÈ¼¶µÄÊı¾İÒ²ÒªÊä³öµÄÂß¼­ */
+-- /* 2023-01-04 ¹éÒòÏêÇéÀúÊ·ºÍÔ¤¾¯µÈ¼¶±ä¶¯±í¶ÁÈë½Ó¿Ú±íÈ¡×î´óupdate_time,·ÀÖ¹×·Åú²úÉúµÄÖØ¸´Êı¾İµÄÓ°Ïì */
+-- /* 2023-01-05 ĞŞ¸´ ·çÏÕÒÑ±©Â¶ÉÏÉıÖÁ·çÏÕÒÑ±©Â¶µÄÎÊÌâ */
+-- /* 2023-01-05 ĞŞ¸´ Í¬Ò»¼ÒÆóÒµ³öÏÖ¶àÌõµÚËÄ¶ÎĞÅÏ¢ÃèÊöµÄÎÊÌâ£¬Ô­Òò£ºÃ»ÓĞ¶ÔÆóÒµ¸÷¸öÎ¬¶ÈĞÅÏ¢¾ÛºÏµ½µ½ÆóÒµ²ã (Fourth_msg_corp_II±íµÄ×îÄÚ²ã×Ó²éÑ¯) */
+-- /* 2023-01-05 ĞŞ¸´ È±ÉÙ µ±Î¬¶È·¢Éú¶ñ»¯ÇÒÎ¬¶ÈÒì³£Õ¼±ÈÒ²·¢Éú¶ñ»¯Ê±µÄµÚËÄ¶ÎÃèÊö (Fourth_msg_corp_I±ícase whenÌõ¼şÅĞ¶ÏµÄ´¦Àí) */
 
 
---»¹²î Ô¤¾¯µÈ¼¶±ä¶¯µÄÊı¾İ½ÓÈë½øÒ»²½ÑéÖ¤
+
 --×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯²ã£º×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯±í   Òò×Ó±ä¶¯²ãÊı¾İ£º¹éÒòÏêÇéµ±ÈÕ(Ö÷±í)+¹éÒòÏêÇéÀúÊ·±í+Ô¤¾¯·ÖÄ£ĞÍ½á¹û±íµ±ÈÕ(×ÛºÏÔ¤¾¯µÈ¼¶×Ö¶ÎÀ´Ô´)
 --£¨1£©¶ñ»¯Ö¸±êÅĞ¶Ï´íÎó £¨2£©Î¬¶ÈºÍ¶ñ»¯Ö¸±êÃ»ÓĞ¹ÒÉÏ¹³  £¨3£©·çÏÕË®Æ½ÉÏÉıµÄÖ÷ÒªÎ¬¶È£¬ĞèÒªºÍ×òÌìµÄÒì³£Õ¼±È¶Ô±È£¬·¢ÉúÉı¸ßµÄ²ÅÕ¹Ê¾
 
@@ -62,63 +66,6 @@ model_version_intf_ as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_v
     -- union all 
     -- select 'creditrisk_union' model_name,'v1.0.2' model_version,'active' status  --ĞÅÓÃ·çÏÕ×ÛºÏÄ£ĞÍ
 ),
--- -- Ô¤¾¯·Ö --
--- rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --Ô¤¾¯·Ö_ÈÚºÏµ÷Õûºó×ÛºÏ  Ô­Ê¼½Ó¿Ú
--- (
--- 	select a.*
---     from 
---     (
--- 		select m.*
--- 		from 
--- 		(
--- 			-- Ê±¼äÏŞÖÆ²¿·Ö --
--- 			select *,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
--- 			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
--- 			where 1 in (select max(flag) from timeLimit_switch) 
--- 			and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
--- 			union all
--- 			-- ·ÇÊ±¼äÏŞÖÆ²¿·Ö --
--- 			select *,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
--- 			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
--- 			where 1 in (select not max(flag) from timeLimit_switch) 
--- 		) m where rm=1
--- 	) a join model_version_intf_ b
--- 		on a.model_version = b.model_version and a.model_name=b.model_name
--- ),
--- RMP_WARNING_SCORE_MODEL_ as  --Ô¤¾¯·Ö-Ä£ĞÍ½á¹û±í
--- (
---     select distinct
---         cast(a.rating_dt as string) as batch_dt,
---         chg.corp_id,
---         chg.corp_name as corp_nm,
--- 		chg.credit_code as credit_cd,
---         to_date(a.rating_dt) as score_date,
---         a.total_score_adjusted as synth_score,  -- Ô¤¾¯·Ö
--- 		case a.interval_text_adjusted
--- 			when 'ÂÌÉ«Ô¤¾¯' then '-1' 
--- 			when '»ÆÉ«Ô¤¾¯' then '-2'
--- 			when '³ÈÉ«Ô¤¾¯' then '-3'
--- 			when 'ºìÉ«Ô¤¾¯' then '-4'
--- 			when '·çÏÕÒÑ±©Â¶' then '-5'
--- 		end as synth_warnlevel,  -- ×ÛºÏÔ¤¾¯µÈ¼¶,
--- 		case
--- 			when a.interval_text_adjusted in ('ÂÌÉ«Ô¤¾¯','»ÆÉ«Ô¤¾¯') then 
--- 				'-1'   --µÍ·çÏÕ
--- 			when a.interval_text_adjusted  = '³ÈÉ«Ô¤¾¯' then 
--- 				'-2'  --ÖĞ·çÏÕ
--- 			when a.interval_text_adjusted  ='ºìÉ«Ô¤¾¯' then 
--- 				'-3'  --¸ß·çÏÕ
--- 			when a.interval_text_adjusted  ='·çÏÕÒÑ±©Â¶' then 
--- 				'-4'   --·çÏÕÒÑ±©Â¶
--- 		end as adjust_warnlevel,
--- 		a.model_name,
--- 		a.model_version
---     from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a   
---     join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
---         on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
---     join corp_chg chg
---         on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
--- ),
 -- ¹éÒòÏêÇé --
 RMP_WARNING_SCORE_DETAIL_ as  --Ô¤¾¯·Ö--¹éÒòÏêÇé Ô­Ê¼½Ó¿Ú
 (
@@ -161,13 +108,13 @@ RMP_WARNING_SCORE_DETAIL_HIS_ as  --Ô¤¾¯·Ö--¹éÒòÏêÇéÀúÊ·(È¡¹éÒòÏêÇé±í£¬¹éÒòÏêÇé±
 RMP_WARNING_SCORE_CHG_ as 
 (
 	-- Ê±¼äÏŞÖÆ²¿·Ö --
-	select  batch_dt,corp_id,corp_nm,credit_cd,score_date,synth_warnlevel,chg_direction,synth_warnlevel_l,model_version,score_date as score_dt
+	select  batch_dt,corp_id,corp_nm,credit_cd,score_date,synth_warnlevel,chg_direction,synth_warnlevel_l,model_version,score_date as score_dt,update_time
 	from pth_rmp.RMP_WARNING_SCORE_CHG  --@pth_rmp.RMP_WARNING_SCORE_CHG
 	where 1 in (select max(flag) from timeLimit_switch)  and delete_flag=0
       and to_date(score_date) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 	union all 
 	-- ·ÇÊ±¼äÏŞÖÆ²¿·Ö --
-    select batch_dt,corp_id,corp_nm,credit_cd,score_date,synth_warnlevel,chg_direction,synth_warnlevel_l,model_version,score_date as score_dt
+    select batch_dt,corp_id,corp_nm,credit_cd,score_date,synth_warnlevel,chg_direction,synth_warnlevel_l,model_version,score_date as score_dt,update_time
     from pth_rmp.RMP_WARNING_SCORE_CHG  --@pth_rmp.RMP_WARNING_SCORE_CHG
     where 1 in (select not max(flag) from timeLimit_switch)  and delete_flag=0
 ),
@@ -267,13 +214,6 @@ feat_CFG as  --ÌØÕ÷ÊÖ¹¤ÅäÖÃ±í
     where sub_model_type in ('ÖĞÆµ-²úÒµ','ÖĞÆµ-³ÇÍ¶','ÎŞ¼à¶½')
 ),
 --¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª ÖĞ¼ä²ã ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª--
--- RMP_WARNING_SCORE_MODEL_Batch as  -- È¡Ã¿Ìì×îĞÂÅú´ÎÊı¾İ
--- (
--- 	select a.*
--- 	from RMP_WARNING_SCORE_MODEL_ a 
--- 	-- join (select max(batch_dt) as max_batch_dt,score_date from RMP_WARNING_SCORE_MODEL_ group by score_date) b
--- 	-- 	on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
--- ),
 -- ¹éÒòÏêÇéÀàÊı¾İ -- 
 rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch as --È¡Ã¿Ìì×îĞÂÅú´Î ×ÛºÏÔ¤¾¯-ÌØÕ÷¹±Ï×¶È(ÓÃÓÚÏŞÖÆ½ñÌìÌØÕ÷·¶Î§£¬×òÌìµÄ²»ÓÃÏŞÖÆ)
 (
@@ -288,16 +228,16 @@ RMP_WARNING_SCORE_DETAIL_Batch as -- È¡Ã¿Ìì×îĞÂÅú´ÎÊı¾İ£¨µ±ÌìÊı¾İÌØÕ÷×ö·¶Î§ÏŞÖÆ£
 (
 	select a.*
 	from RMP_WARNING_SCORE_DETAIL_ a
-	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
-		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
+	join (select max(batch_dt) as max_batch_dt,score_dt,max(update_time) as max_update_time from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
+		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt and a.update_time=b.max_update_time
 	where a.ori_idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
 ),
 RMP_WARNING_SCORE_DETAIL_HIS_Batch as --È¡ÀúÊ·¹éÒòÏêÇé ×î´óÅú´Î(È¡×Ô¹éÒòÏêÇéµ±ÈÕ±í£¬ËùÒÔĞèÒª×î´óÅú´Î´¦Àí)
 (
 	select a.*
 	from RMP_WARNING_SCORE_DETAIL_HIS_ a
-	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_HIS_ group by score_dt) b
-		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
+	join (select max(batch_dt) as max_batch_dt,score_dt,max(update_time) as max_update_time from RMP_WARNING_SCORE_DETAIL_HIS_ group by score_dt) b
+		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt and a.update_time=b.max_update_time
 	where a.ori_idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
 
 ),
@@ -313,8 +253,8 @@ RMP_WARNING_SCORE_CHG_Batch as  --È¡Ã¿Ìì×îĞÂÅú´ÎµÄÔ¤¾¯±ä¶¯µÈ¼¶Êı¾İ
 (
 	select a.*
 	from RMP_WARNING_SCORE_CHG_ a 
-	join (select max(batch_dt) as max_batch_dt,score_date from RMP_WARNING_SCORE_CHG_ group by score_date) b 
-		on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
+	join (select max(batch_dt) as max_batch_dt,score_date,max(update_time) as max_update_time from RMP_WARNING_SCORE_CHG_ group by score_date) b 
+		on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date and a.update_time=b.max_update_time
 ),
 --´ó¿í±í »ù´¡Êı¾İ --
 Basic_data as 	-- ×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯+µ±ÈÕ¹éÒòÏêÇé+×òÈÕ¹éÒòÏêÇé £¨Ö¸±ê²ã×îÏ¸Á£¶È£©
@@ -497,31 +437,6 @@ Fourth_msg_dim as
 		end dim_msg  --xxxÎ¬¶ÈÖĞÓĞy¸öÖ¸±ê·¢Éú¶ñ»¯
 	from Fourth_msg_type
 ),
--- -- µÚËÄ¶Î dimension²ãÊı¾İ»ã×Ü --
--- Fourth_msg_dim as 
--- (
--- 	select 
--- 		batch_dt,
--- 		corp_id,
--- 		corp_nm,
--- 		score_dt,
--- 		-- synth_warnlevel_desc,
--- 		-- last_synth_warnlevel_desc,
--- 		dimension_ch,
--- 		worsen_dim_idx_cnt,
--- 		dim_idx_cnt,
--- 		dim_submodel_contribution_ratio_worsen_flag,
--- 		-- dim_
--- 		-- concat(dimension_ch,'Î¬¶È','ÓÉ',last_dim_warn_level_desc,'ÉÏÉıÖÁ',dim_warn_level_desc,)
--- 		case 
--- 			when worsen_dim_idx_cnt>0 then 
--- 				concat('£¬',dimension_ch,'Î¬¶ÈÖĞ','ÓĞ',cast(worsen_dim_idx_cnt as string),'¸öÖ¸±ê·¢Éú¶ñ»¯','£¬','¾ßÌå±íÏÖÎª',worsen_idx_desc_in_one_type)
--- 			else 
--- 				'¡£'
--- 		end as dim_msg  --xxxÎ¬¶ÈÖĞÓĞy¸öÖ¸±ê·¢Éú¶ñ»¯
--- 	from Fourth_msg_type --Basic_data_II
--- 	-- where idx_score_worsen_flag = 1 
--- ),
 -- µÚËÄ¶Î ÆóÒµ²ãÊı¾İ»ã×Ü --
 Fourth_msg_corp_I as --¿Ï¶¨ÊÇ ×ÛºÏÔ¤¾¯µÈ¼¶¶ñ»¯µ½-5 »òÕß Î¬¶È·¢Éú±ä»¯ »òÕß ÊÇÎ¬¶ÈÒì³£Õ¼±È Âú×ãÌõ¼şµÄÊı¾İ
 (
@@ -540,7 +455,7 @@ Fourth_msg_corp_I as --¿Ï¶¨ÊÇ ×ÛºÏÔ¤¾¯µÈ¼¶¶ñ»¯µ½-5 »òÕß Î¬¶È·¢Éú±ä»¯ »òÕß ÊÇÎ¬¶È
 	   	b.dim_msg,
 
 		case 
-			when dim_warn_level_worsen_flag=1 and dim_submodel_contribution_ratio_worsen_flag=0 then 
+			when dim_warn_level_worsen_flag=1 and dim_submodel_contribution_ratio_worsen_flag in (0,1)  then 
 				concat(
 					a.dimension_ch,'Î¬¶È','ÓÉ',a.last_dim_warn_level_desc,'ÉÏÉıÖÁ',a.dim_warn_level_desc,nvl(b.dim_msg,'')
 				)
@@ -561,29 +476,29 @@ Fourth_msg_corp_II as
 		ru.reason,
 		case 
 			when ru.reason is not null then  
-				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ',a.synth_warnlevel_desc,'±ä»¯ÖÁ','·çÏÕÒÑ±©Â¶Ô¤¾¯µÈ¼¶','£¬','Ö÷ÒªÓÉÓÚ´¥·¢',ru.reason,nvl(concat('£¬',a.corp_dim_msg),''),'¡£')
+				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ',a.last_synth_warnlevel_desc,'ÉÏÉıÖÁ','·çÏÕÒÑ±©Â¶Ô¤¾¯µÈ¼¶','£¬','Ö÷ÒªÓÉÓÚ´¥·¢',ru.reason,nvl(concat('£¬',a.msg_corp_),''),'¡£')
 			else 
-				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ',a.last_synth_warnlevel_desc,'±ä»¯ÖÁ',a.synth_warnlevel_desc,nvl(concat('£¬',a.corp_dim_msg),''),'¡£')
+				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ',a.last_synth_warnlevel_desc,'ÉÏÉıÖÁ',a.synth_warnlevel_desc,nvl(concat('£¬',a.msg_corp_),''),'¡£')
 		end as msg4_with_no_color,
 		case 
 			when ru.reason is not null then  
-				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ','<span class="RED"><span class="WEIGHT">',a.synth_warnlevel_desc,'ÉÏÉıÖÁ','·çÏÕÒÑ±©Â¶Ô¤¾¯µÈ¼¶','£¬','Ö÷ÒªÓÉÓÚ´¥·¢',ru.reason,'</span></span>',nvl(concat('£¬',a.corp_dim_msg),''),'¡£')
+				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ','<span class="RED"><span class="WEIGHT">',a.last_synth_warnlevel_desc,'ÉÏÉıÖÁ','·çÏÕÒÑ±©Â¶Ô¤¾¯µÈ¼¶','£¬','Ö÷ÒªÓÉÓÚ´¥·¢',ru.reason,'</span></span>',nvl(concat('£¬',a.msg_corp_),''),'¡£')
 			else 
-				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ','<span class="RED"><span class="WEIGHT">',a.last_synth_warnlevel_desc,'ÉÏÉıÖÁ',a.synth_warnlevel_desc,'</span></span>',nvl(concat('£¬',a.corp_dim_msg),''),'¡£')
+				concat('Ïà½ÏÓÚÇ°Ò»Ìì£¬','Ô¤¾¯µÈ¼¶ÓÉ','<span class="RED"><span class="WEIGHT">',a.last_synth_warnlevel_desc,'ÉÏÉıÖÁ',a.synth_warnlevel_desc,'</span></span>',nvl(concat('£¬',a.msg_corp_),''),'¡£')
 		end as msg4
 	from 
 	(
 		select 
-			batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,last_synth_warnlevel_desc,corp_dim_msg
-			-- concat_ws('',collect_set(corp_dim_msg)) as msg_corp_
-			-- group_concat(distinct corp_dim_msg,'') as msg_corp_   -- impala
+			batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,last_synth_warnlevel_desc,--corp_dim_msg
+			concat_ws('£»',collect_set(corp_dim_msg)) as msg_corp_
+			-- group_concat(distinct corp_dim_msg,'£»') as msg_corp_   -- impala
 		from Fourth_msg_corp_I
-		group by batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,last_synth_warnlevel_desc,corp_dim_msg
+		group by batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,last_synth_warnlevel_desc--,corp_dim_msg
 	)A left join warn_adj_rule_cfg ru
 		on a.corp_id = ru.corp_id 
 )
 insert overwrite table pth_rmp.rmp_warning_score_report4
-select distinct
+select
 	batch_dt,
 	corp_id,
 	corp_nm,
