@@ -12,6 +12,8 @@
 -- /* 2023-01-04  根据需求，放开对指标描述的数量限制 */
 -- /* 2023-01-04  代码效率优化，去除冗余代码，且对大数据采用落临时parquet表 */
 -- /* 2023-01-05  对所有指标都保留到小数位后两位 */
+-- /* 2023-01-05  修复 Second_Part_Data_Prepare 缺失 异常风险监测维度的数据 */
+-- /* 2023-01-05  修复 第五段在不满足维度输出条件下，输出 '该主体当前无显著风险表现。' */
 
 set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=16; 
@@ -906,7 +908,7 @@ Second_Part_Data_Prepare as
 		-- 	on main.ori_idx_name=f_cfg.feature_cd and main.dimension=f_cfg.dimension
 		left join RMP_WARNING_SCORE_MODEL_Batch a
 			on main.corp_id=a.corp_id and main.batch_dt=a.batch_dt
-		join warn_dim_risk_level_cfg_ cfg 
+		left join warn_dim_risk_level_cfg_ cfg 
 			on main.dim_warn_level=cast(cfg.risk_lv as string) and main.dimension=cfg.dimension
 	)T left join (select * from mid_risk_info where to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))>=notice_date ) rinfo 
 		on T.corp_id=rinfo.corp_id and T.ori_idx_name=rinfo.feature_cd
@@ -966,6 +968,7 @@ Second_Part_Data as
 (
 	select *
 	from pth_rmp.rmp_second_part_data
+	where dimension<>5 --暂时不显示 异常风险检测 维度的描述
 ),
 -- Second_Part_Data_Dimension 部分 --> Second_Msg_Dimension  --
 Second_Part_Data_Dimension_0 as 
@@ -1060,7 +1063,7 @@ Second_Part_Data_Dimension_Type_from_risk_info as --多个风险事件合并到一个type上
 			-- idx_desc,
 			msg_title,
 			-- contribution_ratio,
-			row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type order by contribution_ratio desc) as rm
+			row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type order by msg_title desc) as rm
 		from Second_Part_Data
 		where factor_evaluate = 0
 	) A where rm<=10
@@ -1283,6 +1286,7 @@ Fifth_Data as
 		corp_id,
 		corp_nm,
 		score_dt,
+		min(factor_evaluate) as corp_factor_evaluate,  --该维度大于0，且只要有一个异常指标，即为min(factor_evaluate) =0， ,则输出第五段'建议关注公司xxx维度'
 		concat_ws('、',collect_set(dimension_ch)) as abnormal_dim_msg  -- hive
 		-- group_concat(dimension_ch,'、') as abnormal_dim_msg -- impala
 	from 
@@ -1292,10 +1296,12 @@ Fifth_Data as
 			corp_id,
 			corp_nm,
 			score_dt,
-			dimension_ch as dimension_ch_no_color,
+			factor_evaluate,
+			-- dimension_ch as dimension_ch_no_color,
 			concat('<span class="RED"><span class="WEIGHT">',dimension_ch,'</span></span>') as dimension_ch
 		from Second_Part_Data t
-		where factor_evaluate = 0 and dim_contrib_ratio>0   --因子评价，因子是否异常的字段 0：异常 1：正常
+		where dim_contrib_ratio>0 
+		-- where factor_evaluate = 0 and dim_contrib_ratio>0   --因子评价，因子是否异常的字段 0：异常 1：正常
 	)A 
 	group by batch_dt,corp_id,corp_nm,score_dt
 ),
@@ -1306,7 +1312,12 @@ Fifth_Msg as
 		corp_id,
 		corp_nm,
 		score_dt,
-		concat('建议关注公司',abnormal_dim_msg,'维度','带来的风险。') as msg
+		case 
+			when corp_factor_evaluate = 0 then
+				concat('建议关注公司',abnormal_dim_msg,'维度','带来的风险。') 
+			else 
+				'该主体当前无显著风险表现。'
+		end as msg
 	from Fifth_Data
 )
 ------------------------------------以上部分为临时表-------------------------------------------------------------------
