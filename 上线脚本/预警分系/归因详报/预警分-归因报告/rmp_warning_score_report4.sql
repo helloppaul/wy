@@ -6,9 +6,12 @@
 -- /* 2023-01-03 warn_adj_rule_cfg 模型外挂规则create_dt<= 改为 = 同时对数据按照corp_id分组后，再排序*/
 -- /* 2023-01-03 新增 恶化到风险已暴露等级的数据也要输出的逻辑 */
 -- /* 2023-01-04 归因详情历史和预警等级变动表读入接口表取最大update_time,防止追批产生的重复数据的影响 */
+-- /* 2023-01-05 修复 风险已暴露上升至风险已暴露的问题 */
+-- /* 2023-01-05 修复 同一家企业出现多条第四段信息描述的问题，原因：没有对企业各个维度信息聚合到到企业层 (Fourth_msg_corp_II表的最内层子查询) */
+-- /* 2023-01-05 修复 缺少 当维度发生恶化且维度异常占比也发生恶化时的第四段描述 (Fourth_msg_corp_I表case when条件判断的处理) */
 
 
---还差 预警等级变动的数据接入进一步验证
+
 --综合预警等级变动层：综合预警等级变动表   因子变动层数据：归因详情当日(主表)+归因详情历史表+预警分模型结果表当日(综合预警等级字段来源)
 --（1）恶化指标判断错误 （2）维度和恶化指标没有挂上钩  （3）风险水平上升的主要维度，需要和昨天的异常占比对比，发生升高的才展示
 
@@ -541,7 +544,7 @@ Fourth_msg_corp_I as --肯定是 综合预警等级恶化到-5 或者 维度发生变化 或者 是维度
 	   	b.dim_msg,
 
 		case 
-			when dim_warn_level_worsen_flag=1 and dim_submodel_contribution_ratio_worsen_flag=0 then 
+			when dim_warn_level_worsen_flag=1 and dim_submodel_contribution_ratio_worsen_flag in (0,1)  then 
 				concat(
 					a.dimension_ch,'维度','由',a.last_dim_warn_level_desc,'上升至',a.dim_warn_level_desc,nvl(b.dim_msg,'')
 				)
@@ -562,29 +565,29 @@ Fourth_msg_corp_II as
 		ru.reason,
 		case 
 			when ru.reason is not null then  
-				concat('相较于前一天，','预警等级由',a.synth_warnlevel_desc,'变化至','风险已暴露预警等级','，','主要由于触发',ru.reason,nvl(concat('，',a.corp_dim_msg),''),'。')
+				concat('相较于前一天，','预警等级由',a.last_synth_warnlevel_desc,'上升至','风险已暴露预警等级','，','主要由于触发',ru.reason,nvl(concat('，',a.msg_corp_),''),'。')
 			else 
-				concat('相较于前一天，','预警等级由',a.last_synth_warnlevel_desc,'变化至',a.synth_warnlevel_desc,nvl(concat('，',a.corp_dim_msg),''),'。')
+				concat('相较于前一天，','预警等级由',a.last_synth_warnlevel_desc,'上升至',a.synth_warnlevel_desc,nvl(concat('，',a.msg_corp_),''),'。')
 		end as msg4_with_no_color,
 		case 
 			when ru.reason is not null then  
-				concat('相较于前一天，','预警等级由','<span class="RED"><span class="WEIGHT">',a.synth_warnlevel_desc,'上升至','风险已暴露预警等级','，','主要由于触发',ru.reason,'</span></span>',nvl(concat('，',a.corp_dim_msg),''),'。')
+				concat('相较于前一天，','预警等级由','<span class="RED"><span class="WEIGHT">',a.last_synth_warnlevel_desc,'上升至','风险已暴露预警等级','，','主要由于触发',ru.reason,'</span></span>',nvl(concat('，',a.msg_corp_),''),'。')
 			else 
-				concat('相较于前一天，','预警等级由','<span class="RED"><span class="WEIGHT">',a.last_synth_warnlevel_desc,'上升至',a.synth_warnlevel_desc,'</span></span>',nvl(concat('，',a.corp_dim_msg),''),'。')
+				concat('相较于前一天，','预警等级由','<span class="RED"><span class="WEIGHT">',a.last_synth_warnlevel_desc,'上升至',a.synth_warnlevel_desc,'</span></span>',nvl(concat('，',a.msg_corp_),''),'。')
 		end as msg4
 	from 
 	(
 		select 
-			batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,last_synth_warnlevel_desc,corp_dim_msg
-			-- concat_ws('',collect_set(corp_dim_msg)) as msg_corp_
-			-- group_concat(distinct corp_dim_msg,'') as msg_corp_   -- impala
+			batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,last_synth_warnlevel_desc,--corp_dim_msg
+			concat_ws('；',collect_set(corp_dim_msg)) as msg_corp_
+			-- group_concat(distinct corp_dim_msg,'；') as msg_corp_   -- impala
 		from Fourth_msg_corp_I
-		group by batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,last_synth_warnlevel_desc,corp_dim_msg
+		group by batch_dt,corp_id,corp_nm,score_dt,synth_warnlevel_desc,last_synth_warnlevel_desc--,corp_dim_msg
 	)A left join warn_adj_rule_cfg ru
 		on a.corp_id = ru.corp_id 
 )
 insert overwrite table pth_rmp.rmp_warning_score_report4
-select distinct
+select
 	batch_dt,
 	corp_id,
 	corp_nm,
