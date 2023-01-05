@@ -66,63 +66,6 @@ model_version_intf_ as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_v
     -- union all 
     -- select 'creditrisk_union' model_name,'v1.0.2' model_version,'active' status  --信用风险综合模型
 ),
--- -- 预警分 --
--- rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接口
--- (
--- 	select a.*
---     from 
---     (
--- 		select m.*
--- 		from 
--- 		(
--- 			-- 时间限制部分 --
--- 			select *,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
--- 			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
--- 			where 1 in (select max(flag) from timeLimit_switch) 
--- 			and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
--- 			union all
--- 			-- 非时间限制部分 --
--- 			select *,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
--- 			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
--- 			where 1 in (select not max(flag) from timeLimit_switch) 
--- 		) m where rm=1
--- 	) a join model_version_intf_ b
--- 		on a.model_version = b.model_version and a.model_name=b.model_name
--- ),
--- RMP_WARNING_SCORE_MODEL_ as  --预警分-模型结果表
--- (
---     select distinct
---         cast(a.rating_dt as string) as batch_dt,
---         chg.corp_id,
---         chg.corp_name as corp_nm,
--- 		chg.credit_code as credit_cd,
---         to_date(a.rating_dt) as score_date,
---         a.total_score_adjusted as synth_score,  -- 预警分
--- 		case a.interval_text_adjusted
--- 			when '绿色预警' then '-1' 
--- 			when '黄色预警' then '-2'
--- 			when '橙色预警' then '-3'
--- 			when '红色预警' then '-4'
--- 			when '风险已暴露' then '-5'
--- 		end as synth_warnlevel,  -- 综合预警等级,
--- 		case
--- 			when a.interval_text_adjusted in ('绿色预警','黄色预警') then 
--- 				'-1'   --低风险
--- 			when a.interval_text_adjusted  = '橙色预警' then 
--- 				'-2'  --中风险
--- 			when a.interval_text_adjusted  ='红色预警' then 
--- 				'-3'  --高风险
--- 			when a.interval_text_adjusted  ='风险已暴露' then 
--- 				'-4'   --风险已暴露
--- 		end as adjust_warnlevel,
--- 		a.model_name,
--- 		a.model_version
---     from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ a   
---     join (select max(rating_dt) as max_rating_dt,to_date(rating_dt) as score_dt from rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_ group by to_date(rating_dt)) b
---         on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt)=b.score_dt
---     join corp_chg chg
---         on chg.source_code='ZXZX' and chg.source_id=cast(a.corp_code as string)
--- ),
 -- 归因详情 --
 RMP_WARNING_SCORE_DETAIL_ as  --预警分--归因详情 原始接口
 (
@@ -271,13 +214,6 @@ feat_CFG as  --特征手工配置表
     where sub_model_type in ('中频-产业','中频-城投','无监督')
 ),
 --—————————————————————————————————————————————————————— 中间层 ————————————————————————————————————————————————————————————————————————————————--
--- RMP_WARNING_SCORE_MODEL_Batch as  -- 取每天最新批次数据
--- (
--- 	select a.*
--- 	from RMP_WARNING_SCORE_MODEL_ a 
--- 	-- join (select max(batch_dt) as max_batch_dt,score_date from RMP_WARNING_SCORE_MODEL_ group by score_date) b
--- 	-- 	on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
--- ),
 -- 归因详情类数据 -- 
 rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch as --取每天最新批次 综合预警-特征贡献度(用于限制今天特征范围，昨天的不用限制)
 (
@@ -501,31 +437,6 @@ Fourth_msg_dim as
 		end dim_msg  --xxx维度中有y个指标发生恶化
 	from Fourth_msg_type
 ),
--- -- 第四段 dimension层数据汇总 --
--- Fourth_msg_dim as 
--- (
--- 	select 
--- 		batch_dt,
--- 		corp_id,
--- 		corp_nm,
--- 		score_dt,
--- 		-- synth_warnlevel_desc,
--- 		-- last_synth_warnlevel_desc,
--- 		dimension_ch,
--- 		worsen_dim_idx_cnt,
--- 		dim_idx_cnt,
--- 		dim_submodel_contribution_ratio_worsen_flag,
--- 		-- dim_
--- 		-- concat(dimension_ch,'维度','由',last_dim_warn_level_desc,'上升至',dim_warn_level_desc,)
--- 		case 
--- 			when worsen_dim_idx_cnt>0 then 
--- 				concat('，',dimension_ch,'维度中','有',cast(worsen_dim_idx_cnt as string),'个指标发生恶化','，','具体表现为',worsen_idx_desc_in_one_type)
--- 			else 
--- 				'。'
--- 		end as dim_msg  --xxx维度中有y个指标发生恶化
--- 	from Fourth_msg_type --Basic_data_II
--- 	-- where idx_score_worsen_flag = 1 
--- ),
 -- 第四段 企业层数据汇总 --
 Fourth_msg_corp_I as --肯定是 综合预警等级恶化到-5 或者 维度发生变化 或者 是维度异常占比 满足条件的数据
 (
