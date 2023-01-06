@@ -14,6 +14,7 @@
 -- /* 2023-01-05  对所有指标都保留到小数位后两位 */
 -- /* 2023-01-05  修复 Second_Part_Data_Prepare 缺失 异常风险监测维度的数据 */
 -- /* 2023-01-05  修复 第五段在不满足维度输出条件下，输出 '该主体当前无显著风险表现。' */
+-- /* 2023-01-06  调整 调整msg_title输出顺序 */
 
 set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=16; 
@@ -1063,9 +1064,9 @@ Second_Part_Data_Dimension_Type_from_risk_info as --多个风险事件合并到一个type上
 			-- idx_desc,
 			msg_title,
 			-- contribution_ratio,
-			row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type order by msg_title desc) as rm
+			row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type order by contribution_ratio desc) as rm
 		from Second_Part_Data
-		where factor_evaluate = 0
+		where factor_evaluate = 0 and contribution_ratio is not null
 	) A where rm<=10
 	group by batch_dt,corp_id,corp_nm,score_dt,dimension,dimension_ch,type
 ),
