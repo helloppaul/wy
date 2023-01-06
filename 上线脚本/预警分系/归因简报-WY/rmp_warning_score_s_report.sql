@@ -6,6 +6,7 @@
 --/* 2022-12-04 Íâ¹Ò¹æÔòÈ¡ÖµĞŞ¸´£¬È¡×îĞÂcreate_dtµÄÊı¾İ */
 -- /* 2023-01-01 model_version_intf_ ¸ÄÈ¡ÓÃÊÓÍ¼Êı¾İ */
 -- /* 2023-01-03 warn_adj_rule_cfg Ä£ĞÍÍâ¹Ò¹æÔòcreate_dt<= ¸ÄÎª = Í¬Ê±¶ÔÊı¾İ°´ÕÕcorp_id·Ö×éºó£¬ÔÙÅÅĞò*/
+-- /* 2023-01-06 ¹éÒòÏêÇéÀúÊ·ºÍÔ¤¾¯µÈ¼¶±ä¶¯±í¶ÁÈë½Ó¿Ú±íÈ¡×î´óupdate_time,·ÀÖ¹×·Åú²úÉúµÄÖØ¸´Êı¾İµÄÓ°Ïì */
 
 
 
@@ -96,13 +97,13 @@ RMP_WARNING_SCORE_DETAIL_HIS_ as  --Ô¤¾¯·Ö--¹éÒòÏêÇéÀúÊ·(È¡¹éÒòÏêÇé±í£¬¹éÒòÏêÇé±
 RMP_WARNING_SCORE_CHG_ as 
 (
 	-- Ê±¼äÏŞÖÆ²¿·Ö --
-	select  batch_dt,corp_id,corp_nm,credit_cd,score_date,synth_warnlevel,chg_direction,synth_warnlevel_l,model_version,score_date as score_dt
+	select  batch_dt,corp_id,corp_nm,credit_cd,score_date,synth_warnlevel,chg_direction,synth_warnlevel_l,model_version,score_date as score_dt,update_time
 	from pth_rmp.RMP_WARNING_SCORE_CHG  --@pth_rmp.RMP_WARNING_SCORE_CHG
 	where 1 in (select max(flag) from timeLimit_switch)  and delete_flag=0
       and to_date(score_date) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 	union all 
 	-- ·ÇÊ±¼äÏŞÖÆ²¿·Ö --
-    select batch_dt,corp_id,corp_nm,credit_cd,score_date,synth_warnlevel,chg_direction,synth_warnlevel_l,model_version,score_date as score_dt
+    select batch_dt,corp_id,corp_nm,credit_cd,score_date,synth_warnlevel,chg_direction,synth_warnlevel_l,model_version,score_date as score_dt,update_time
     from pth_rmp.RMP_WARNING_SCORE_CHG  --@pth_rmp.RMP_WARNING_SCORE_CHG
     where 1 in (select not max(flag) from timeLimit_switch)  and delete_flag=0
 ),
@@ -216,16 +217,16 @@ RMP_WARNING_SCORE_DETAIL_Batch as -- È¡Ã¿Ìì×îĞÂÅú´ÎÊı¾İ£¨µ±ÌìÊı¾İÌØÕ÷×ö·¶Î§ÏŞÖÆ£
 (
 	select a.*
 	from RMP_WARNING_SCORE_DETAIL_ a
-	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
-		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
+	join (select max(batch_dt) as max_batch_dt,score_dt,max(update_time) as max_update_time from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
+		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt and a.update_time=b.max_update_time
 	where a.ori_idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
 ),
 RMP_WARNING_SCORE_DETAIL_HIS_Batch as --È¡ÀúÊ·¹éÒòÏêÇé ×î´óÅú´Î(È¡×Ô¹éÒòÏêÇéµ±ÈÕ±í£¬ËùÒÔĞèÒª×î´óÅú´Î´¦Àí)
 (
 	select a.*
 	from RMP_WARNING_SCORE_DETAIL_HIS_ a
-	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_HIS_ group by score_dt) b
-		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
+	join (select max(batch_dt) as max_batch_dt,score_dt,max(update_time) as max_update_time from RMP_WARNING_SCORE_DETAIL_HIS_ group by score_dt) b
+		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt and a.update_time=b.max_update_time
 	where a.ori_idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
 
 ),
