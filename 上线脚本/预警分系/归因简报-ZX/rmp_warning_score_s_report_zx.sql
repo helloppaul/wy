@@ -3,6 +3,15 @@
 --/* 2022-12-04 外挂规则取值修复，取最新create_dt的数据 */
 -- /* 2023-01-01 model_version_intf_ 改取用视图数据 */
 -- /* 2023-01-03 warn_adj_rule_cfg 模型外挂规则create_dt<= 改为 = 同时对数据按照corp_id分组后，再排序*/
+-- /* 2023-01-06 归因详情 RMP_WARNING_SCORE_DETAIL_Batch 数据，在原有取对应日期最大批次基础上，再取对应最大的update_time，防止数据追批导致数据的重复加总计算，如维度贡献度占比 */
+-- /* 2023-01-07 修复 指标排序，先筛选出异常指标，再排序 */
+-- /* 2023-01-07 修复 s_report_msg_dim表 维度缺失问题 */
+-- /* 2023-01-07 修复 s_report_msg_dim表 的 风险涉及...语句结束时的逗号做判断，后续还有话术描述才输出逗号，否则不输出 */
+-- /* 2023-01-07 增加 s_report_msg_dim表，当无异常指标时，'无显著异常指标'话术的输出 */
+-- /* 2023-01-07 增加 无监督语句前的逗号 且 无监督不显示'无显著异常指标'话术 */
+
+
+
 
 set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=12; 
@@ -266,10 +275,10 @@ RMP_WARNING_SCORE_MODEL_Batch as  -- 取每天最新批次数据
 -- 归因详情 --
 RMP_WARNING_SCORE_DETAIL_Batch as -- 取每天最新批次数据（当天数据做范围限制）
 (
-	select distinct a.*
+	select a.*
 	from RMP_WARNING_SCORE_DETAIL_ a
-	join (select max(batch_dt) as max_batch_dt,score_dt from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
-		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt
+	join (select max(batch_dt) as max_batch_dt,score_dt,max(update_time) as max_update_time from RMP_WARNING_SCORE_DETAIL_ group by score_dt) b
+		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt and a.update_time=b.max_update_time
 	-- where a.idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
 ),
 -- 新闻公告类数据 --
@@ -887,15 +896,12 @@ s_report_Data_Prepare as
 		feature_name_target,
 		contribution_ratio,
 		factor_evaluate
-
-		-- concat_ws('、',collect_Set(msg_title)) as risk_info_desc_in_one_idx  -- hive 废弃
-		-- group_concat(distinct msg_title,'、') as risk_info_desc_in_one_idx  -- impala 废弃
 	from s_report_Data_Prepare_ 
 	group by batch_dt,corp_id,corp_nm,score_dt,category_nvl,reason_nvl,interval_text_adjusted,dimension,
 			 dimension_ch,dim_contrib_ratio,type,idx_name,idx_value,last_idx_value,idx_unit,idx_score,
 			 feature_name_target,contribution_ratio,factor_evaluate
 ),
-s_report_Data_dim as 
+s_report_Data_dim as --多个异常指标汇总到对应的一个维度层
 (
 	select 
 		batch_dt,
@@ -915,28 +921,31 @@ s_report_Data_dim as
 
 		-- concat_ws('、',collect_set(risk_info_desc_in_one_idx))  as abnormal_risk_info_desc -- hive 废弃
 		-- group_concat(distinct risk_info_desc_in_one_idx,'、')  as abnormal_risk_info_desc 废弃
-	from (select *,row_number() over(partition by batch_dt,corp_id,score_dt,dimension order by 1) as rm from s_report_Data_Prepare ) A
-	where factor_evaluate = 0 and rm<=5
+	from (select *,row_number() over(partition by batch_dt,corp_id,score_dt,dimension order by idx_score desc) as rm from s_report_Data_Prepare where factor_evaluate = 0) A
+	where rm<=5
 	group by batch_dt,corp_id,corp_nm,score_dt,interval_text_adjusted,dimension,dimension_ch,dim_contrib_ratio
 	order by dim_contrib_ratio desc
 ),
-s_report_msg as 
+s_report_msg_dim as 
 (
-	select distinct
-		batch_dt,
-		corp_id,
-		corp_nm,
-		score_dt,
-		reason_nvl,
-		interval_text_adjusted,
-		dimension_ch,
+	select
+		a.batch_dt,
+		a.corp_id,
+		a.corp_nm,
+		a.score_dt,
+		a.reason_nvl,
+		a.interval_text_adjusted,
+		a.dimension_ch,
 		concat(
-			'风险涉及','<span class="WEIGHT">',dimension_ch,'维度','（','贡献度占比',cast(cast(round(dim_contrib_ratio,0) as decimal(10,0)) as string),'%','）','</span>','，',
+			'风险涉及','<span class="WEIGHT">',a.dimension_ch,'维度','（','贡献度占比',cast(cast(round(a.dim_contrib_ratio,0) as decimal(10,0)) as string),'%','）','</span>',
+			-- if(a.dimension=5,'，通过异常检测机器学习模型，捕捉到该主体在新闻、公告、司法、诚信、价格等特征层面，相较于历史未发生信用恶化的主体具有显著的离群表现，即该主体与历史发生非标违约、债券违约、评级下调、展望下调等信用恶化事件的主体表现更趋近',''),
 			case 
-				when  abnormal_idx_desc<>'' then 
-					concat('异常指标包括：',abnormal_idx_desc)
+				when a.dimension=5 then 
+					'，通过异常检测机器学习模型，捕捉到该主体在新闻、公告、司法、诚信、价格等特征层面，相较于历史未发生信用恶化的主体具有显著的离群表现，即该主体与历史发生非标违约、债券违约、评级下调、展望下调等信用恶化事件的主体表现更趋近'
+				when a.dimension<>5 and b.abnormal_idx_desc<>'' then 
+					concat('，','异常指标包括：',b.abnormal_idx_desc)
 				else 
-					''
+					'，无显著异常指标'
 			end
 			-- case 
 			-- 	when  abnormal_risk_info_desc<>'' and abnormal_risk_info_desc is not null then 
@@ -945,7 +954,12 @@ s_report_msg as
 			-- 		''
 			-- end
 		) as msg_in_one_dim
-	from s_report_Data_dim
+	from (select batch_dt,corp_id,corp_nm,score_dt,category_nvl,reason_nvl,interval_text_adjusted,dimension,dimension_ch,dim_contrib_ratio 
+	      from s_report_Data_Prepare 
+		  group by batch_dt,corp_id,corp_nm,score_dt,category_nvl,reason_nvl,interval_text_adjusted,dimension,dimension_ch,dim_contrib_ratio
+		 ) a
+	left join s_report_Data_dim b
+		on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id and a.score_dt=b.score_dt and a.dimension=b.dimension
 ),
 s_report_msg_corp as 
 (
@@ -960,7 +974,7 @@ s_report_msg_corp as
 				when '绿色预警' then 
 					concat('<span class="GREEN"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
 				when '黄色预警' then 
-					concat('<span class="YELLO"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
+					concat('<span class="YELLOW"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
 				when '橙色预警' then 
 					concat('<span class="ORANGE"><span class="WEIGHT">',interval_text_adjusted,'等级','</span></span>')
 				when '红色预警' then 
@@ -981,7 +995,7 @@ s_report_msg_corp as
 			interval_text_adjusted,
 			concat_ws('；',collect_Set(msg_in_one_dim)) as s_msg_  -- hive
 			-- group_concat(distinct msg_in_one_dim,'；') as s_msg_  -- impala
-		from s_report_msg
+		from s_report_msg_dim
 		group by batch_dt,corp_id,corp_nm,interval_text_adjusted,reason_nvl,score_dt
 	) A
 )
