@@ -16,6 +16,10 @@
 -- /* 2023-01-05  修复 第五段在不满足维度输出条件下，输出 '该主体当前无显著风险表现。' */
 -- /* 2023-01-06  调整 调整msg_title输出顺序 */
 -- /* 2023-01-06  剔除 预警分模型结果 重复执行代码 */
+-- /* 2023-01-07  新增 无监督逻辑 */
+-- /* 2023-01-08  代码效率优化 */
+-- /* 2023-01-08  新增 第五段 无监督逻辑 */
+
 
 set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=16; 
@@ -49,12 +53,12 @@ corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (
 	where a.delete_flag=0 and b.delete_flag=0 and a.source_code='ZXZX'
 ),
 --—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
--- 时间限制开关 --
-timeLimit_switch as 
-(
-    select True as flag   --TRUE:时间约束，FLASE:时间不做约束，通常用于初始化
-    -- select False as flag
-),
+-- -- 时间限制开关 --
+-- timeLimit_switch as 
+-- (
+--     select True as flag   --TRUE:时间约束，FLASE:时间不做约束，通常用于初始化
+--     -- select False as flag
+-- ),
 -- 模型版本控制 --
 model_version_intf_ as   --@hds.t_ods_ais_me_rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf   @app_ehzh.rsk_rmp_warncntr_dftwrn_conf_modl_ver_intf
 (
@@ -83,13 +87,14 @@ rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接
 			-- 时间限制部分 --
 			select *,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
 			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-			where 1 in (select max(flag) from timeLimit_switch) 
-			and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
-			union all
-			-- 非时间限制部分 --
-			select * ,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
-			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-			where 1 in (select not max(flag) from timeLimit_switch) 
+			where 1=1  --1 in (select max(flag) from timeLimit_switch) 
+			  and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
+			  and etl_date=${ETL_DATE}
+			-- union all
+			-- -- 非时间限制部分 --
+			-- select * ,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
+			-- from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
+			-- where 1 in (select not max(flag) from timeLimit_switch) 
 		) m where rm=1
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
@@ -107,13 +112,14 @@ RMP_WARNING_SCORE_DETAIL_ as  --预警分--归因详情 原始接口
 	-- 时间限制部分 --
 	select * 
 	from pth_rmp.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
-	where 1 in (select max(flag) from timeLimit_switch)  and delete_flag=0
-      and to_date(score_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-	union all 
-	-- 非时间限制部分 --
-    select * 
-    from pth_rmp.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
-    where 1 in (select not max(flag) from timeLimit_switch)  and delete_flag=0
+	where 1=1--1 in (select max(flag) from timeLimit_switch)  and delete_flag=0
+	  and etl_date=${ETL_DATE}
+    --   and to_date(score_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	-- union all 
+	-- -- 非时间限制部分 --
+    -- select * 
+    -- from pth_rmp.RMP_WARNING_SCORE_DETAIL  --@pth_rmp.RMP_WARNING_SCORE_DETAIL
+    -- where 1 in (select not max(flag) from timeLimit_switch)  and delete_flag=0
 ),
 -- 特征贡献度 --
 rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as  --特征贡献度_融合调整后综合 原始接口（增加了无监督特征：creditrisk_highfreq_unsupervised  ）
@@ -127,13 +133,14 @@ rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_ as  --特征贡献度_融合调整后综合
         (
             select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
             from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
-            where 1 in (select max(flag) from timeLimit_switch) 
-            and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-        union all 
-            -- 非时间限制部分 --
-            select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
-            from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
-            where 1 in (select not max(flag) from timeLimit_switch) 
+            where 1=1--1 in (select max(flag) from timeLimit_switch) 
+			  and etl_date=${ETL_DATE}
+              and to_date(end_dt) = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+        -- union all 
+        --     -- 非时间限制部分 --
+        --     select *,rank() over(partition by to_date(end_dt) order by etl_date desc ) as rm
+        --     from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf
+        --     where 1 in (select not max(flag) from timeLimit_switch) 
         ) m  where rm=1   
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
@@ -144,15 +151,16 @@ news_intf_ as
 	-- 时间限制部分 --
     select *
     from pth_rmp.rmp_opinion_risk_info_07 --@pth_rmp.rmp_opinion_risk_info_07
-    where 1 in (select max(flag) from timeLimit_switch) and crnw0003_010 in ('1','4') 
+    where 1=1--1 in (select max(flag) from timeLimit_switch) 
+	  and crnw0003_010 in ('1','4') 
 	  -- 近12个月的新闻数据 --
       and to_date(notice_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-365))
 	  and to_date(notice_dt)<= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select * 
-    from pth_rmp.rmp_opinion_risk_info_07 --@pth_rmp.rmp_opinion_risk_info_07
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    -- union all 
+    -- -- 非时间限制部分 --
+    -- select * 
+    -- from pth_rmp.rmp_opinion_risk_info_07 --@pth_rmp.rmp_opinion_risk_info_07
+    -- where 1 in (select not max(flag) from timeLimit_switch) 
 ),
 -- 诚信 --
 cx_intf_ as 
@@ -162,17 +170,17 @@ cx_intf_ as
 		*,
 		to_date(notice_dt) as notice_date
     from pth_rmp.RMP_WARNING_SCORE_CX --@pth_rmp.RMP_WARNING_SCORE_CX
-    where 1 in (select max(flag) from timeLimit_switch)
+    where 1=1--1 in (select max(flag) from timeLimit_switch)
 	  -- 近12个月的新闻数据 --
       and to_date(notice_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-365))
 	  and to_date(notice_dt)<= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select 
-		*,
-		to_date(notice_dt) as notice_date
-    from pth_rmp.RMP_WARNING_SCORE_CX --@pth_rmp.RMP_WARNING_SCORE_CX
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    -- union all 
+    -- -- 非时间限制部分 --
+    -- select 
+	-- 	*,
+	-- 	to_date(notice_dt) as notice_date
+    -- from pth_rmp.RMP_WARNING_SCORE_CX --@pth_rmp.RMP_WARNING_SCORE_CX
+    -- where 1 in (select not max(flag) from timeLimit_switch) 
 ),
 -- 司法 --
 sf_ktts_inft_ as --开庭庭审
@@ -181,17 +189,17 @@ sf_ktts_inft_ as --开庭庭审
 		*,
 		to_date(notice_dt) as notice_date
     from pth_rmp.RMP_WARNING_SCORE_KTGG --@pth_rmp.RMP_WARNING_SCORE_KTGG
-    where 1 in (select max(flag) from timeLimit_switch)
+    where 1=1--1 in (select max(flag) from timeLimit_switch)
 	  -- 近12个月的开庭庭审数据 --
       and to_date(notice_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-365))
 	  and to_date(notice_dt)<= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select 
-		*,
-		to_date(notice_dt) as notice_date
-    from pth_rmp.RMP_WARNING_SCORE_KTGG --@pth_rmp.RMP_WARNING_SCORE_KTGG
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    -- union all 
+    -- -- 非时间限制部分 --
+    -- select 
+	-- 	*,
+	-- 	to_date(notice_dt) as notice_date
+    -- from pth_rmp.RMP_WARNING_SCORE_KTGG --@pth_rmp.RMP_WARNING_SCORE_KTGG
+    -- where 1 in (select not max(flag) from timeLimit_switch) 
 ),
 sf_cpws_inft_ as --裁判文书
 (
@@ -199,17 +207,17 @@ sf_cpws_inft_ as --裁判文书
 		*,
 		to_date(notice_dt) as notice_date
     from pth_rmp.RMP_WARNING_SCORE_CPWS --@pth_rmp.RMP_WARNING_SCORE_CPWS
-    where 1 in (select max(flag) from timeLimit_switch)
+    where 1=1 --1 in (select max(flag) from timeLimit_switch)
 	  -- 近12个月的开庭庭审数据 --
       and to_date(notice_dt) >= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-365))
 	  and to_date(notice_dt)<= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-    union all 
-    -- 非时间限制部分 --
-    select 
-		*,
-		to_date(notice_dt) as notice_date
-    from pth_rmp.RMP_WARNING_SCORE_CPWS --@pth_rmp.RMP_WARNING_SCORE_CPWS
-    where 1 in (select not max(flag) from timeLimit_switch) 
+    -- union all 
+    -- -- 非时间限制部分 --
+    -- select 
+	-- 	*,
+	-- 	to_date(notice_dt) as notice_date
+    -- from pth_rmp.RMP_WARNING_SCORE_CPWS --@pth_rmp.RMP_WARNING_SCORE_CPWS
+    -- where 1 in (select not max(flag) from timeLimit_switch) 
 ),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
 warn_dim_risk_level_cfg_ as  -- 维度贡献度占比对应风险水平-配置表
@@ -968,7 +976,6 @@ Second_Part_Data as
 (
 	select *
 	from pth_rmp.rmp_second_part_data
-	where dimension<>5 --暂时不显示 异常风险检测 维度的描述
 ),
 -- Second_Part_Data_Dimension 部分 --> Second_Msg_Dimension  --
 Second_Part_Data_Dimension_0 as 
@@ -1113,34 +1120,37 @@ Second_Msg_Dimension as  -- 维度层的信息描述
 		dimension_ch,
 		row_number() over(partition by batch_dt,corp_id,score_dt order by nvl(dim_contrib_ratio,-1) desc) as dim_contrib_ratio_rank,   --从大到小排列  --2023-01-02 hz 增加对dim_contrib_ratio排序的nvl的处理，使得为null的排序靠后，而不是在001,002的位置
 		dim_factorEvalu_factor_cnt,
-		concat(
-			dimension_ch,'维度','（','贡献度占比',cast(cast(round(dim_contrib_ratio,0) as decimal(10,0)) as string),'%','）','，',
-			'该维度当前处于',dim_warn_level_desc,'等级','，',
-			case 
-				when dim_factorEvalu_factor_cnt=0 then 
-					concat('无显著异常指标及事件','。')
-				else 
-					concat(
-						dimension_ch,'维度','纳入的',cast(dim_factor_cnt as string),'个指标中','，',cast(dim_factorEvalu_factor_cnt as string),'个指标表现异常','，',
-						'异常指标对主体总体风险贡献度为',cast(cast(round(dim_factorEvalu_contrib_ratio,0) as decimal(10,0)) as string) ,'%','，'
-					)
-			end
-		) as dim_msg_no_color,
+		-- concat(
+		-- 	dimension_ch,'维度','（','贡献度占比',cast(cast(round(dim_contrib_ratio,0) as decimal(10,0)) as string),'%','）','，',
+		-- 	'该维度当前处于',dim_warn_level_desc,'等级','，',
+		-- 	case 
+		-- 		when dimension=5 then 
+		-- 			'通过异常检测机器学习模型，捕捉到该主体在新闻、公告、司法、诚信、价格等特征层面，相较于历史未发生信用恶化的主体具有显著的离群表现，即该主体与历史发生非标违约、债券违约、评级下调、展望下调等信用恶化事件的主体表现更趋近。'
+		-- 		when dimension<>5 and dim_factorEvalu_factor_cnt=0 then 
+		-- 			concat('无显著异常指标及事件','。')
+		-- 		else 
+		-- 			concat(
+		-- 				dimension_ch,'维度','纳入的',cast(dim_factor_cnt as string),'个指标中','，',cast(dim_factorEvalu_factor_cnt as string),'个指标表现异常','，',
+		-- 				'异常指标对主体总体风险贡献度为',cast(cast(round(dim_factorEvalu_contrib_ratio,0) as decimal(10,0)) as string) ,'%','，'
+		-- 			)
+		-- 	end
+		-- ) as dim_msg_no_color,
 		concat(
 			'<span class="WEIGHT">',dimension_ch,'维度','（','贡献度占比',cast(cast(round(dim_contrib_ratio,0) as decimal(10,0)) as string),'%','）','</span>','，',
-		
-			'该维度当前处于',
 				case 
-					when dim_warn_level_desc ='高风险' then 
-						concat('<span class="RED"><span class="WEIGHT">',dim_warn_level_desc,'</span></span>')
-					when dim_warn_level_desc ='中风险' then 
-						concat('<span class="ORANGE"><span class="WEIGHT">',dim_warn_level_desc,'</span></span>')
-					when dim_warn_level_desc ='低风险' then 
-						concat('<span class="GREEN"><span class="WEIGHT">',dim_warn_level_desc,'</span></span>')
+					when dimension<>5 and dim_warn_level_desc ='高风险' then 
+						concat('该维度当前处于','<span class="RED"><span class="WEIGHT">',dim_warn_level_desc,'</span></span>','等级，')
+					when dimension<>5 and dim_warn_level_desc ='中风险' then 
+						concat('该维度当前处于','<span class="ORANGE"><span class="WEIGHT">',dim_warn_level_desc,'</span></span>','等级，')
+					when dimension<>5 and dim_warn_level_desc ='低风险' then 
+						concat('该维度当前处于','<span class="GREEN"><span class="WEIGHT">',dim_warn_level_desc,'</span></span>','等级，')
+					else   --dimension=5的情形
+						''
 				end,
-				'等级','，',
 			case 
-				when dim_factorEvalu_factor_cnt=0 then 
+				when dimension=5 then 
+					'通过异常检测机器学习模型，捕捉到该主体在新闻、公告、司法、诚信、价格等特征层面，相较于历史未发生信用恶化的主体具有显著的离群表现，即该主体与历史发生非标违约、债券违约、评级下调、展望下调等信用恶化事件的主体表现更趋近。'
+				when dimension<>5 and dim_factorEvalu_factor_cnt=0 then 
 					concat('无显著异常指标及事件','。')
 				else 
 					concat(
@@ -1288,7 +1298,7 @@ Fifth_Data as
 		score_dt,
 		min(factor_evaluate) as corp_factor_evaluate,  --该维度大于0，且只要有一个异常指标，即为min(factor_evaluate) =0， ,则输出第五段'建议关注公司xxx维度'
 		concat_ws('、',collect_set(dimension_ch)) as abnormal_dim_msg  -- hive
-		-- group_concat(dimension_ch,'、') as abnormal_dim_msg -- impala
+		-- group_concat(distinct dimension_ch,'、') as abnormal_dim_msg -- impala
 	from 
 	(
 		select
@@ -1296,9 +1306,17 @@ Fifth_Data as
 			corp_id,
 			corp_nm,
 			score_dt,
-			factor_evaluate,
+			if(dimension=5,0,factor_evaluate) as factor_evaluate,  --给dimension=5(异常风险监测)的给默认值，只要是有dimension=5对应的factor_evaluate为0(异常)
 			-- dimension_ch as dimension_ch_no_color,
-			concat('<span class="RED"><span class="WEIGHT">',dimension_ch,'</span></span>') as dimension_ch
+			case 
+				when dimension=5 then  --维度贡献度占比大于0度且有异常指标的维度 或者为异常风险检测维度，作为第五段最终需要输出的维度
+					concat('<span class="RED"><span class="WEIGHT">',dimension_ch,'</span></span>')  
+				when dimension<>5 and factor_evaluate=0 then
+					concat('<span class="RED"><span class="WEIGHT">',dimension_ch,'</span></span>')
+				else 
+					NULL
+			end as dimension_ch
+			-- concat('<span class="RED"><span class="WEIGHT">',dimension_ch,'</span></span>') as dimension_ch
 		from Second_Part_Data t
 		where dim_contrib_ratio>0 
 		-- where factor_evaluate = 0 and dim_contrib_ratio>0   --因子评价，因子是否异常的字段 0：异常 1：正常
