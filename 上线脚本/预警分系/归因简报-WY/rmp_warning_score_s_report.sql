@@ -7,6 +7,13 @@
 -- /* 2023-01-01 model_version_intf_ ¸ÄÈ¡ÓÃÊÓÍ¼Êı¾İ */
 -- /* 2023-01-03 warn_adj_rule_cfg Ä£ĞÍÍâ¹Ò¹æÔòcreate_dt<= ¸ÄÎª = Í¬Ê±¶ÔÊı¾İ°´ÕÕcorp_id·Ö×éºó£¬ÔÙÅÅĞò*/
 -- /* 2023-01-06 ¹éÒòÏêÇéÀúÊ·ºÍÔ¤¾¯µÈ¼¶±ä¶¯±í¶ÁÈë½Ó¿Ú±íÈ¡×î´óupdate_time,·ÀÖ¹×·Åú²úÉúµÄÖØ¸´Êı¾İµÄÓ°Ïì */
+-- /* 2023-01-09  Âß¼­µ÷ÕûÎª½öÕ¹Ê¾Òì³£Ö¸±ê */
+-- /* 2023-01-09  Ôö¼Ó ÎŞ¼à¶½Âß¼­ */
+-- /* 2023-01-09  ĞŞ¸´ ÓĞtypeÃ»ÓĞÖ¸±êµÄÇé¿ö£¬ÅÅ³ıÎŞÒì³£Ö¸±êµÄtype */
+-- /* 2023-01-09  ĞŞ¸´ È¥³ıÎŞ¼à¶½»°Êõ×îºóµÄ¾äºÅÒÔ¼°ÎŞÏÔÖøÒì³£·çÏÕ×îºóµÄ¾äºÅ£¬ºÍÆäÓà¶ÎÂä±£³ÖÒ»ÖÂ */
+
+
+
 
 
 
@@ -221,15 +228,15 @@ RMP_WARNING_SCORE_DETAIL_Batch as -- È¡Ã¿Ìì×îĞÂÅú´ÎÊı¾İ£¨µ±ÌìÊı¾İÌØÕ÷×ö·¶Î§ÏŞÖÆ£
 		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt and a.update_time=b.max_update_time
 	where a.ori_idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
 ),
-RMP_WARNING_SCORE_DETAIL_HIS_Batch as --È¡ÀúÊ·¹éÒòÏêÇé ×î´óÅú´Î(È¡×Ô¹éÒòÏêÇéµ±ÈÕ±í£¬ËùÒÔĞèÒª×î´óÅú´Î´¦Àí)
-(
-	select a.*
-	from RMP_WARNING_SCORE_DETAIL_HIS_ a
-	join (select max(batch_dt) as max_batch_dt,score_dt,max(update_time) as max_update_time from RMP_WARNING_SCORE_DETAIL_HIS_ group by score_dt) b
-		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt and a.update_time=b.max_update_time
-	where a.ori_idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
+-- RMP_WARNING_SCORE_DETAIL_HIS_Batch as --È¡ÀúÊ·¹éÒòÏêÇé ×î´óÅú´Î(È¡×Ô¹éÒòÏêÇéµ±ÈÕ±í£¬ËùÒÔĞèÒª×î´óÅú´Î´¦Àí)
+-- (
+-- 	select a.*
+-- 	from RMP_WARNING_SCORE_DETAIL_HIS_ a
+-- 	join (select max(batch_dt) as max_batch_dt,score_dt,max(update_time) as max_update_time from RMP_WARNING_SCORE_DETAIL_HIS_ group by score_dt) b
+-- 		on a.batch_dt=b.max_batch_dt and a.score_dt=b.score_dt and a.update_time=b.max_update_time
+-- 	where a.ori_idx_name in (select feature_name from rsk_rmp_warncntr_dftwrn_intp_union_featpct_intf_Batch)
 
-),
+-- ),
 mid_RMP_WARNING_SCORE_DETAIL_HIS as 
 (
 	select main.*,cfg.risk_lv_desc as dim_warn_level_desc
@@ -242,8 +249,8 @@ RMP_WARNING_SCORE_CHG_Batch as  --È¡Ã¿Ìì×îĞÂÅú´ÎµÄÔ¤¾¯±ä¶¯µÈ¼¶Êı¾İ
 (
 	select a.*
 	from RMP_WARNING_SCORE_CHG_ a 
-	join (select max(batch_dt) as max_batch_dt,score_date from RMP_WARNING_SCORE_CHG_ group by score_date) b 
-		on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date
+	join (select max(batch_dt) as max_batch_dt,score_date,max(update_time) as max_update_time from RMP_WARNING_SCORE_CHG_ group by score_date) b 
+		on a.batch_dt=b.max_batch_dt and a.score_date=b.score_date and a.update_time=b.max_update_time
 ),
 --´ó¿í±í »ù´¡Êı¾İ --
 Basic_data as 	-- ×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯+µ±ÈÕ¹éÒòÏêÇé+×òÈÕ¹éÒòÏêÇé £¨Ö¸±ê²ã×îÏ¸Á£¶È£©
@@ -258,7 +265,7 @@ Basic_data as 	-- ×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯+µ±ÈÕ¹éÒòÏêÇé+×òÈÕ¹éÒòÏêÇé £¨Ö¸±ê²ã×îÏ¸Á£¶È£©
 		a.synth_warnlevel_l as last_synth_warnlevel,--×òÈÕÔ¤¾¯µÈ¼¶
 		b.dimension,
 		b.dim_warn_level,
-		c.dim_warn_level as last_dim_warn_level,
+		-- c.dim_warn_level as last_dim_warn_level,
 		b.type,
 		b.sub_model_name,
 		b.idx_name,
@@ -266,21 +273,21 @@ Basic_data as 	-- ×ÛºÏÔ¤¾¯µÈ¼¶±ä¶¯+µ±ÈÕ¹éÒòÏêÇé+×òÈÕ¹éÒòÏêÇé £¨Ö¸±ê²ã×îÏ¸Á£¶È£©
 		b.last_idx_value,
 		b.idx_unit,
 		b.idx_score,
-		c.idx_score as last_idx_score,
+		-- c.idx_score as last_idx_score,
 		b.contribution_ratio,
 		b.factor_evaluate,
-		b.dim_submodel_contribution_ratio,   --Òì³£Ö¸±ê¹±Ï×¶ÈÕ¼±È
-		c.dim_submodel_contribution_ratio as last_dim_submodel_contribution_ratio  --×òÈÕÒì³£Ö¸±ê¹±Ï×¶ÈÕ¼±È
+		b.dim_submodel_contribution_ratio   --Òì³£Ö¸±ê¹±Ï×¶ÈÕ¼±È
+		-- c.dim_submodel_contribution_ratio as last_dim_submodel_contribution_ratio  --×òÈÕÒì³£Ö¸±ê¹±Ï×¶ÈÕ¼±È
 	from  RMP_WARNING_SCORE_DETAIL_Batch b   --¹éÒòÏêÇé½ñÈÕ
 	left join  RMP_WARNING_SCORE_CHG_Batch a   --Ô¤¾¯µÈ¼¶±ä¶¯±í 
 		on a.corp_id = b.corp_id and a.score_date=b.score_dt 
-	left join RMP_WARNING_SCORE_DETAIL_HIS_Batch c  --¹éÒòÏêÇé×òÈÕ
-		on 	b.corp_id=c.corp_id 
-			and to_date(date_add(b.score_dt,-1))= c.score_dt 
-			and b.dimension=c.dimension 
-			and b.type=c.type 
-			and b.sub_model_name=c.sub_model_name
-			and b.ori_idx_name=c.ori_idx_name
+	-- left join RMP_WARNING_SCORE_DETAIL_HIS_Batch c  --¹éÒòÏêÇé×òÈÕ
+	-- 	on 	b.corp_id=c.corp_id 
+	-- 		and to_date(date_add(b.score_dt,-1))= c.score_dt 
+	-- 		and b.dimension=c.dimension 
+	-- 		and b.type=c.type 
+	-- 		and b.sub_model_name=c.sub_model_name
+	-- 		and b.ori_idx_name=c.ori_idx_name
 	-- where a.chg_direction='1'    --×ÛºÏÔ¤¾¯µÈ¼¶Ğë·¢Éú¶ñ»¯±ØĞëÒªµÄ»°£¬²ÅÕ¹Ê¾µÚËÄ¶Î£¬·ñÔòÕû¶Î²»Õ¹Ê¾
 ),
 Basic_data_I as  -- Éú³É ÊÇ·ñÎ¬¶È¶ñ»¯ + ÊÇ·ñÎ¬¶ÈÒì³£Ö¸±êÕ¼±È¶ñ»¯ + ÊÇ·ñÖ¸±ê¶ñ»¯ Êı¾İ
@@ -291,7 +298,7 @@ Basic_data_I as  -- Éú³É ÊÇ·ñÎ¬¶È¶ñ»¯ + ÊÇ·ñÎ¬¶ÈÒì³£Ö¸±êÕ¼±È¶ñ»¯ + ÊÇ·ñÖ¸±ê¶ñ»¯ 
 		corp_nm,
 		score_dt,
 		synth_warnlevel,
-		last_synth_warnlevel,
+		-- last_synth_warnlevel,
 		chg_direction, 
 
 		dimension,
@@ -304,36 +311,36 @@ Basic_data_I as  -- Éú³É ÊÇ·ñÎ¬¶È¶ñ»¯ + ÊÇ·ñÎ¬¶ÈÒì³£Ö¸±êÕ¼±È¶ñ»¯ + ÊÇ·ñÖ¸±ê¶ñ»¯ 
 		end as dimension_ch,
 		
 		dim_warn_level,
-		last_dim_warn_level,
+		-- last_dim_warn_level,
 		
-		case 
-			when dim_warn_level > last_dim_warn_level then   --Î¬¶È·¢Éú¶ñ»¯
-				1 
-			else 
-				0
-		end as dim_warn_level_worsen_flag,  --ÊÇ·ñÎ¬¶È¶ñ»¯ 
+		-- case 
+		-- 	when cast(dim_warn_level as int) < cast(last_dim_warn_level as int) then   --Î¬¶È·¢Éú¶ñ»¯
+		-- 		1 
+		-- 	else 
+		-- 		0
+		-- end as dim_warn_level_worsen_flag,  --ÊÇ·ñÎ¬¶È¶ñ»¯ 
 
 		dim_submodel_contribution_ratio,
-		last_dim_submodel_contribution_ratio,
-		case 
-			when dim_submodel_contribution_ratio>last_dim_submodel_contribution_ratio then 
-				1 
-			else 
-				0
-		end as dim_submodel_contribution_ratio_worsen_flag, --ÊÇ·ñÎ¬¶ÈÒì³£Ö¸±êÕ¼±È¶ñ»¯
+		-- last_dim_submodel_contribution_ratio,
+		-- case 
+		-- 	when dim_submodel_contribution_ratio>last_dim_submodel_contribution_ratio then 
+		-- 		1 
+		-- 	else 
+		-- 		0
+		-- end as dim_submodel_contribution_ratio_worsen_flag, --ÊÇ·ñÎ¬¶ÈÒì³£Ö¸±êÕ¼±È¶ñ»¯
 		
 		type,
 		factor_evaluate,
 		-- min(factor_evaluate) over(partition by batch_dt,corp_id,score_dt,dimension,type) as type_unabnormal_flag,  --typeÊÇ·ñÒì³£ÅĞ¶Ï  0:Òì³£  1:Õı³£
 
 		idx_score,
-		last_idx_score, 
-		case 
-			when idx_score>last_idx_score then 
-				1 
-			else 
-				0
-		end as idx_score_worsen_flag ,	--ÊÇ·ñ¶ñ»¯Ö¸±ê
+		-- last_idx_score, 
+		-- case 
+		-- 	when idx_score>last_idx_score then 
+		-- 		1 
+		-- 	else 
+		-- 		0
+		-- end as idx_score_worsen_flag ,	--ÊÇ·ñ¶ñ»¯Ö¸±ê
 		idx_name,
 		idx_value,
 		case 
@@ -344,15 +351,15 @@ Basic_data_I as  -- Éú³É ÊÇ·ñÎ¬¶È¶ñ»¯ + ÊÇ·ñÎ¬¶ÈÒì³£Ö¸±êÕ¼±È¶ñ»¯ + ÊÇ·ñÖ¸±ê¶ñ»¯ 
 			else 	
 				cast(idx_value as string)
 		end as idx_value_str,
-		last_idx_value,
-		case 
-			when idx_unit='%' then 
-				cast(cast(round(last_idx_value,2) as decimal(10,2)) as string) 
-			when idx_unit in ('Ôª','ÍòÔª','ÒÚÔª','±¶','ÍòÈË','´Î') then 
-				cast(cast(round(last_idx_value,2) as decimal(10,2)) as string) 
-			else 	
-				cast(last_idx_value as string)
-		end as last_idx_value_str,
+		-- last_idx_value,
+		-- case 
+		-- 	when idx_unit='%' then 
+		-- 		cast(cast(round(last_idx_value,2) as decimal(10,2)) as string) 
+		-- 	when idx_unit in ('Ôª','ÍòÔª','ÒÚÔª','±¶','ÍòÈË','´Î') then 
+		-- 		cast(cast(round(last_idx_value,2) as decimal(10,2)) as string) 
+		-- 	else 	
+		-- 		cast(last_idx_value as string)
+		-- end as last_idx_value_str,
 		idx_unit,
 		contribution_ratio
 	from Basic_data 
@@ -360,106 +367,160 @@ Basic_data_I as  -- Éú³É ÊÇ·ñÎ¬¶È¶ñ»¯ + ÊÇ·ñÎ¬¶ÈÒì³£Ö¸±êÕ¼±È¶ñ»¯ + ÊÇ·ñÖ¸±ê¶ñ»¯ 
 Basic_data_II as 
 (
 	select 
-		a.*,
-		-- cfg_syn.warn_lv_desc as synth_warnlevel_desc,
-		-- cfg_syn_l.warn_lv_desc as last_synth_warnlevel_desc,
-		-- cfg.risk_lv_desc as dim_warn_level_desc,
-		-- cfg_l.risk_lv_desc as last_dim_warn_level_desc,
-		count(a.idx_name) over(partition by a.corp_id,a.score_dt,a.dimension,a.idx_score_worsen_flag) as worsen_dim_idx_cnt, --¶ñ»¯Ö¸±êÊıÁ¿
-		count(a.idx_name) over(partition by a.corp_id,a.score_dt,a.dimension) as dim_idx_cnt, --Î¬¶ÈÖ¸±êÊıÁ¿
+		batch_dt,
+		corp_id,
+		corp_nm,
+		score_dt,
+		corp_dimension5_flag,
+		dimension,
+		dim_contrib_ratio,
+		type,
+		idx_name,
+		factor_evaluate,
+		contribution_ratio,
 		case 
-			when (a.factor_evaluate = 0 and a.contribution_ratio>0) and (a.chg_direction='1' and (a.dim_warn_level_worsen_flag=1 or  dim_submodel_contribution_ratio_worsen_flag=1) and a.idx_score_worsen_flag=1) then --Ö¸±êÒì³£ ÇÒ Ö¸±ê¶ñ»¯
-				concat(a.idx_name,'Îª','<span class="RED">',a.idx_value_str,a.idx_unit,'</span>','£¬ÇÒ·¢Éú¶ñ»¯£¬','ÓÉ','<span class="RED">',a.last_idx_value_str,a.idx_unit,'±ä»¯ÖÁ',a.idx_value_str,a.idx_unit,'</span>')
-			when (a.factor_evaluate = 0 and a.contribution_ratio>0) and  idx_score_worsen_flag=0 then --Ö¸±êÒì³£ µ« Ö¸±êÎ´¶ñ»¯
-				concat(a.idx_name,'Îª','<span class="RED">',a.idx_value_str,a.idx_unit,'</span>')
-			when (a.factor_evaluate = 1 or a.factor_evaluate=0 and a.contribution_ratio is null)  and (a.chg_direction='1' and (a.dim_warn_level_worsen_flag=1 or  dim_submodel_contribution_ratio_worsen_flag=1) and a.idx_score_worsen_flag=1) then --Ö¸±êÕı³£ µ« Ö¸±ê¶ñ»¯
-				concat(a.idx_name,'ÓÉ','<span class="RED">',a.last_idx_value_str,a.idx_unit,'</span>','±ä»¯ÖÁ','<span class="RED">',a.idx_value_str,a.idx_unit,'</span>')
+			when factor_evaluate =0 and dim_contrib_ratio>0 then 
+				concat(idx_name,'Îª','<span class="RED">',idx_value_str,idx_unit,'</span>')
 			else 
 				NULL
 		end as idx_desc
-	from Basic_data_I a
-	-- join (select distinct warn_lv,warn_lv_desc from warn_level_ratio_cfg_) cfg_syn
-	-- 	on cast(a.synth_warnlevel as string)=cfg_syn.warn_lv 
-	-- join (select distinct warn_lv,warn_lv_desc from warn_level_ratio_cfg_) cfg_syn_l
-	-- 	on cast(a.last_synth_warnlevel as string)=cfg_syn_l.warn_lv  
-	-- join warn_dim_risk_level_cfg_ cfg 
-	-- 	on a.dim_warn_level=cast(cfg.risk_lv as string) and a.dimension=cfg.dimension
-	-- join warn_dim_risk_level_cfg_ cfg_l
-	-- 	on a.last_dim_warn_level=cast(cfg_l.risk_lv as string) and a.dimension=cfg_l.dimension
-	-- where a.dim_warn_level_worsen_flag=1 or a.dim_submodel_contribution_ratio_worsen_flag=1   --PS: Î¬¶ÈĞë·¢Éú¶ñ»¯ »òÕß Î¬¶ÈÒì³£Ö¸±ê·¢Éú¶ñ»¯, ²ÅÕ¹Ê¾µÚËÄ¶Î£¬·ñÔòÕû¶Î²»Õ¹Ê¾
+	from 
+	(
+		select 
+			batch_dt,
+			corp_id,
+			corp_nm,
+			score_dt,
+			max(if(dimension=5 and contribution_ratio>0,1,0)) over(partition by batch_dt,corp_id,score_dt) as corp_dimension5_flag,  --ÊÇ·ñ×îÖÕÊä³öÒì³£·çÏÕ¼à²â»°ÊõµÄ±êÊ¶
+			dimension,
+			sum(contribution_ratio) over(partition by corp_id,batch_dt,score_dt,dimension) as dim_contrib_ratio,
+			type,
+			idx_name,
+			idx_value,
+			idx_value_str,
+			idx_unit,
+			factor_evaluate,
+			contribution_ratio
+		from Basic_data_I
+	) A
+	-- select 
+	-- 	a.*,
+	-- 	-- cfg_syn.warn_lv_desc as synth_warnlevel_desc,
+	-- 	-- cfg_syn_l.warn_lv_desc as last_synth_warnlevel_desc,
+	-- 	-- cfg.risk_lv_desc as dim_warn_level_desc,
+	-- 	-- cfg_l.risk_lv_desc as last_dim_warn_level_desc,
+	-- 	if(min(a.factor_evaluate)=0 and dimension=5 and contribution_ratio>0) as corp_dimension5_flag,  --ÆóÒµÓĞÒì³£·çÏÕ¼ì²âÎ¬¶ÈÇÒÎ¬¶È¹±Ï×¶ÈÕ¼±È´óÓÚ0µÄ±êÊ¶
+	-- 	count(a.idx_name) over(partition by a.corp_id,a.score_dt,a.dimension,a.idx_score_worsen_flag) as worsen_dim_idx_cnt, --¶ñ»¯Ö¸±êÊıÁ¿
+	-- 	count(a.idx_name) over(partition by a.corp_id,a.score_dt,a.dimension) as dim_idx_cnt, --Î¬¶ÈÖ¸±êÊıÁ¿
+	-- 	case 
+	-- 		when (a.factor_evaluate = 0 and a.contribution_ratio>0) and (a.chg_direction='1' and (a.dim_warn_level_worsen_flag=1 or  dim_submodel_contribution_ratio_worsen_flag=1) and a.idx_score_worsen_flag=1) then --Ö¸±êÒì³£ ÇÒ Ö¸±ê¶ñ»¯
+	-- 			concat(a.idx_name,'Îª','<span class="RED">',a.idx_value_str,a.idx_unit,'</span>','£¬ÇÒ·¢Éú¶ñ»¯£¬','ÓÉ','<span class="RED">',a.last_idx_value_str,a.idx_unit,'±ä»¯ÖÁ',a.idx_value_str,a.idx_unit,'</span>')
+	-- 		when (a.factor_evaluate = 0 and a.contribution_ratio>0) and  idx_score_worsen_flag=0 then --Ö¸±êÒì³£ µ« Ö¸±êÎ´¶ñ»¯
+	-- 			concat(a.idx_name,'Îª','<span class="RED">',a.idx_value_str,a.idx_unit,'</span>')
+	-- 		when (a.factor_evaluate = 1 or a.factor_evaluate=0 and a.contribution_ratio is null)  and (a.chg_direction='1' and (a.dim_warn_level_worsen_flag=1 or  dim_submodel_contribution_ratio_worsen_flag=1) and a.idx_score_worsen_flag=1) then --Ö¸±êÕı³£ µ« Ö¸±ê¶ñ»¯
+	-- 			concat(a.idx_name,'ÓÉ','<span class="RED">',a.last_idx_value_str,a.idx_unit,'</span>','±ä»¯ÖÁ','<span class="RED">',a.idx_value_str,a.idx_unit,'</span>')
+	-- 		else 
+	-- 			NULL
+	-- 	end as idx_desc
+	-- from Basic_data_I a
 ),
 -- µÚËÄ¶Î type²ãÊı¾İ»ã×Ü --
 s_msg_type as 
 (
 	select 
-		batch_dt,corp_id,corp_nm,score_dt,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt,type,
-		concat_ws('¡¢',collect_set(idx_desc)) as worsen_idx_desc_in_one_type  --hive
+		batch_dt,
+		corp_id,
+		corp_nm,
+		score_dt,
+		corp_dimension5_flag,
+		dimension,
+		type,
+		dim_contrib_ratio,
+		concat_ws('¡¢',collect_set(idx_desc)) as worsen_idx_desc_in_one_type
 		-- group_concat(distinct idx_desc,'¡¢') as worsen_idx_desc_in_one_type 
-	from 
-	(
-		select distinct
-			batch_dt,
-			corp_id,
-			corp_nm,
-			score_dt,
-			dimension_ch,
-			worsen_dim_idx_cnt,
-			dim_idx_cnt,
-			type,
-			idx_desc
-		from 
-		(
-			select
-				batch_dt,
-				corp_id,
-				corp_nm,
-				score_dt,
-				dimension_ch,
-				worsen_dim_idx_cnt,
-				dim_idx_cnt,
-				type,
-				idx_desc,
-				row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type order by 1) as rm
-			from Basic_data_II
-			-- where idx_score_worsen_flag = 1  
-		)A where rm<=5  --È¡¹±Ï×¶ÈÅÅÃûÇ°5´óµÄ¶ñ»¯Ö¸±ê×÷ÎªÕ¹Ê¾
-	)B group by batch_dt,corp_id,corp_nm,score_dt,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt,type
+	from Basic_data_II
+	group by batch_dt,corp_id,corp_nm,score_dt,corp_dimension5_flag,dimension,dim_contrib_ratio,type
 ),
+-- s_msg_type as 
+-- (
+-- 	select 
+-- 		batch_dt,corp_id,corp_nm,score_dt,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt,type,
+-- 		concat_ws('¡¢',collect_set(idx_desc)) as worsen_idx_desc_in_one_type  --hive
+-- 		-- group_concat(distinct idx_desc,'¡¢') as worsen_idx_desc_in_one_type 
+-- 	from 
+-- 	(
+-- 		select distinct
+-- 			batch_dt,
+-- 			corp_id,
+-- 			corp_nm,
+-- 			score_dt,
+-- 			dimension_ch,
+-- 			worsen_dim_idx_cnt,
+-- 			dim_idx_cnt,
+-- 			type,
+-- 			idx_desc
+-- 		from 
+-- 		(
+-- 			select
+-- 				batch_dt,
+-- 				corp_id,
+-- 				corp_nm,
+-- 				score_dt,
+-- 				dimension_ch,
+-- 				worsen_dim_idx_cnt,
+-- 				dim_idx_cnt,
+-- 				type,
+-- 				idx_desc,
+-- 				row_number() over(partition by batch_dt,corp_id,score_dt,dimension,type order by 1) as rm
+-- 			from Basic_data_II
+-- 			-- where idx_score_worsen_flag = 1  
+-- 		)A where rm<=5  --È¡¹±Ï×¶ÈÅÅÃûÇ°5´óµÄ¶ñ»¯Ö¸±ê×÷ÎªÕ¹Ê¾
+-- 	)B group by batch_dt,corp_id,corp_nm,score_dt,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt,type
+-- ),
 s_msg as 
 (	
 	select 
 		b.batch_dt,b.corp_id,b.corp_nm,b.score_dt,
 		concat('¸ÃÖ÷ÌåĞè¹Ø×¢ÅÅ²é·çÏÕµã°üÀ¨£º\\r\\n',
 			case 
-				when ru.reason is null and (b.report_msg_='' or b.report_msg_ is null) then
-					'¸ÃÖ÷Ìåµ±Ç°ÎŞÏÔÖø·çÏÕµã¡£'
+				when ru.reason is null and (b.report_msg_='' or b.report_msg_ is null)  then
+					if(b.corp_dimension5_flag=1,b.corp_dimension5_desc,'¸ÃÖ÷Ìåµ±Ç°ÎŞÏÔÖø·çÏÕµã')  
 				when ru.reason is not null and b.report_msg_='' then 
-					concat('¸ÃÖ÷Ìå´¥·¢','<span class="WEIGHT">',nvl(ru.reason,''),'</span>\\r\\n')
+					if(b.corp_dimension5_flag=1, concat('¸ÃÖ÷Ìå´¥·¢','<span class="WEIGHT">',nvl(ru.reason,''),'</span>\\r\\n',b.corp_dimension5_desc),concat('¸ÃÖ÷Ìå´¥·¢','<span class="WEIGHT">',nvl(ru.reason,''),'</span>\\r\\n') )
 				when ru.reason is not null and b.report_msg_<>''  then 
-					concat('¸ÃÖ÷Ìå´¥·¢','<span class="WEIGHT">',nvl(ru.reason,''),'</span>\\r\\n',b.report_msg_)
-				when ru.reason is null and b.report_msg_<>'' then 
-					b.report_msg_
+					if(b.corp_dimension5_flag=1,concat('¸ÃÖ÷Ìå´¥·¢','<span class="WEIGHT">',nvl(ru.reason,''),'</span>\\r\\n',b.report_msg_,'\\r\\n',b.corp_dimension5_desc),concat('¸ÃÖ÷Ìå´¥·¢','<span class="WEIGHT">',nvl(ru.reason,''),'</span>\\r\\n',b.report_msg_))
+					-- concat('¸ÃÖ÷Ìå´¥·¢','<span class="WEIGHT">',nvl(ru.reason,''),'</span>\\r\\n',b.report_msg_)
+				when ru.reason is null and (b.report_msg_<>'' or b.report_msg_ is not null)  then 
+					if(b.corp_dimension5_flag=1,concat(b.report_msg_,'\\r\\n',b.corp_dimension5_desc),b.report_msg_)
+					-- b.report_msg_
 			end
 		) as report_msg
 	from 
 	(
 		select 
-			batch_dt,corp_id,corp_nm,score_dt,  --,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt,
-			concat_ws('\\r\\n',collect_set(msg_type)) as report_msg_
+			batch_dt,corp_id,corp_nm,score_dt,
+			corp_dimension5_flag,  --,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt,
+			case 
+				when corp_dimension5_flag = 1 then 
+					'Í¨¹ıÒì³£¼ì²â»úÆ÷Ñ§Ï°Ä£ĞÍ£¬²¶×½µ½¸ÃÖ÷ÌåÔÚĞÂÎÅ¡¢¹«¸æ¡¢Ë¾·¨¡¢³ÏĞÅ¡¢¼Û¸ñµÈÌØÕ÷²ãÃæ£¬Ïà½ÏÓÚÀúÊ·Î´·¢ÉúĞÅÓÃ¶ñ»¯µÄÖ÷Ìå¾ßÓĞÏÔÖøµÄÀëÈº±íÏÖ£¬¼´¸ÃÖ÷ÌåÓëÀúÊ··¢Éú·Ç±êÎ¥Ô¼¡¢Õ®È¯Î¥Ô¼¡¢ÆÀ¼¶ÏÂµ÷¡¢Õ¹ÍûÏÂµ÷µÈĞÅÓÃ¶ñ»¯ÊÂ¼şµÄÖ÷Ìå±íÏÖ¸üÇ÷½ü'
+				else 
+					'' 
+			end as corp_dimension5_desc,
+			concat_ws('\\r\\n',collect_set(msg_type)) as report_msg_  --impala:null »ò ³¤¶È´óÓÚ0µÄ×Ö·û´® hive:'' »òÕß ³¤¶È´óÓÚ0µÄ×Ö·û´®
 			-- group_concat(distinct msg_type,'\\r\\n') as report_msg_
 		from 
 		(
 			select 
-				batch_dt,corp_id,corp_nm,score_dt, --,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt,
+				batch_dt,corp_id,corp_nm,score_dt,corp_dimension5_flag, --,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt,
 				case 
-					when worsen_idx_desc_in_one_type <> ''  then
+					when worsen_idx_desc_in_one_type <> '' and worsen_idx_desc_in_one_type  is not null  then
 						concat('<span class="WEIGHT">',type,'Òì³££º','</span>',worsen_idx_desc_in_one_type) 
 					else 
 						NULL
 				end as msg_type
 			from s_msg_type 
 		) A
-		group by batch_dt,corp_id,corp_nm,score_dt--,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt
+		group by batch_dt,corp_id,corp_nm,score_dt,corp_dimension5_flag--,dimension_ch,worsen_dim_idx_cnt,dim_idx_cnt
 	)B left join warn_adj_rule_cfg ru
 			on b.corp_id = ru.corp_id 
 )
