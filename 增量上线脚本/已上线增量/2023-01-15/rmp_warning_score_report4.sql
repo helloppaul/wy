@@ -1,6 +1,6 @@
 -- RMP_WARNING_SCORE_REPORT 第四段-归因变动 --
 -- /*2022-11-13 归因详情历史接口层调整，用归因详情当日表的数据，归因详情当日表确保会存放连续两天的数据 */
---/* 2022-12-04 外挂规则取值修复，取最新create_dt的数据 */
+-- /* 2022-12-04 外挂规则取值修复，取最新create_dt的数据 */
 -- /* 2022-12-20 drop+create table -> insert into overwrite table xxx */
 -- /* 2023-01-01 model_version_intf_ 改取用视图数据 */
 -- /* 2023-01-03 warn_adj_rule_cfg 模型外挂规则create_dt<= 改为 = 同时对数据按照corp_id分组后，再排序*/
@@ -9,6 +9,7 @@
 -- /* 2023-01-05 修复 风险已暴露上升至风险已暴露的问题 */
 -- /* 2023-01-05 修复 同一家企业出现多条第四段信息描述的问题，原因：没有对企业各个维度信息聚合到到企业层 (Fourth_msg_corp_II表的最内层子查询) */
 -- /* 2023-01-05 修复 缺少 当维度发生恶化且维度异常占比也发生恶化时的第四段描述 (Fourth_msg_corp_I表case when条件判断的处理) */
+-- /* 2023-01-06 修复 Fourth_msg_corp_II表，在msg_corp_字段为''是，会多出一个逗号的情形 */
 
 
 
@@ -476,15 +477,15 @@ Fourth_msg_corp_II as
 		ru.reason,
 		case 
 			when ru.reason is not null then  
-				concat('相较于前一天，','预警等级由',a.last_synth_warnlevel_desc,'上升至','风险已暴露预警等级','，','主要由于触发',ru.reason,nvl(concat('，',a.msg_corp_),''),'。')
+				concat('相较于前一天，','预警等级由',a.last_synth_warnlevel_desc,'上升至','风险已暴露预警等级','，','主要由于触发',ru.reason,nvl(concat('，',if(a.msg_corp_='',null,a.msg_corp_) ),''),'。')
 			else 
-				concat('相较于前一天，','预警等级由',a.last_synth_warnlevel_desc,'上升至',a.synth_warnlevel_desc,nvl(concat('，',a.msg_corp_),''),'。')
+				concat('相较于前一天，','预警等级由',a.last_synth_warnlevel_desc,'上升至',a.synth_warnlevel_desc,nvl(concat('，',if(a.msg_corp_='',null,a.msg_corp_)),''),'。')
 		end as msg4_with_no_color,
 		case 
 			when ru.reason is not null then  
-				concat('相较于前一天，','预警等级由','<span class="RED"><span class="WEIGHT">',a.last_synth_warnlevel_desc,'上升至','风险已暴露预警等级','，','主要由于触发',ru.reason,'</span></span>',nvl(concat('，',a.msg_corp_),''),'。')
+				concat('相较于前一天，','预警等级由','<span class="RED"><span class="WEIGHT">',a.last_synth_warnlevel_desc,'上升至','风险已暴露预警等级','，','主要由于触发',ru.reason,'</span></span>',nvl(concat('，',if(a.msg_corp_='',null,a.msg_corp_)),''),'。')
 			else 
-				concat('相较于前一天，','预警等级由','<span class="RED"><span class="WEIGHT">',a.last_synth_warnlevel_desc,'上升至',a.synth_warnlevel_desc,'</span></span>',nvl(concat('，',a.msg_corp_),''),'。')
+				concat('相较于前一天，','预警等级由','<span class="RED"><span class="WEIGHT">',a.last_synth_warnlevel_desc,'上升至',a.synth_warnlevel_desc,'</span></span>',nvl(concat('，',if(a.msg_corp_='',null,a.msg_corp_)),''),'。')
 		end as msg4
 	from 
 	(
