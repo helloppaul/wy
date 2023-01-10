@@ -1,16 +1,21 @@
 -- RMP_WARNING_SCORE_REPORT 第三段-同类风险企业 --
 -- /* 2022-12-20 drop+create table -> insert into overwrite table xxx */
 -- /* 2023-01-01 model_version_intf_ 改取用视图数据 */
+-- /* 2023-01-09 最终输出结果增加distinct去重 */
+-- /* 2023-01-08  代码效率优化且增加两个参数优化语句 */
+
 
 
 set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=15; 
 set hive.auto.convert.join = false;
 set hive.ignore.mapjoin.hint = false;  
+set hive.vectorized.execution.enabled = true;
+set hive.vectorized.execution.reduce.enabled = true;
 
 
-drop table if exists pth_rmp.rmp_warning_score_report3;  
-create table pth_rmp.rmp_warning_score_report3 as  --@pth_rmp.rmp_warning_score_report3
+-- drop table if exists pth_rmp.rmp_warning_score_report3;  
+-- create table pth_rmp.rmp_warning_score_report3 as  --@pth_rmp.rmp_warning_score_report3
 --—————————————————————————————————————————————————————— 基本信息 ————————————————————————————————————————————————————————————————————————————————--
 with
 corp_chg as  --带有 城投/产业判断和国标一级行业/证监会一级行业 的特殊corp_chg  (特殊2)
@@ -65,13 +70,9 @@ rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf_  as --预警分_融合调整后综合  原始接
 			-- 时间限制部分 --
 			select *,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
 			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-			where 1 in (select max(flag) from timeLimit_switch) 
-			and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
-			union all
-			-- 非时间限制部分 --
-			select * ,rank() over(partition by to_date(rating_dt) order by etl_date desc ) as rm
-			from hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf  --@hds.tr_ods_ais_me_rsk_rmp_warncntr_dftwrn_rslt_union_adj_intf
-			where 1 in (select not max(flag) from timeLimit_switch) 
+			where 1 = 1--in (select max(flag) from timeLimit_switch) 
+			  and etl_date=${ETL_DATE}
+			  and to_date(rating_dt) = to_date(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')))
 		) m where rm=1
     ) a join model_version_intf_ b
         on a.model_version = b.model_version and a.model_name=b.model_name
@@ -315,7 +316,7 @@ Third_Msg as
 		on a.batch_dt=b.batch_dt and a.corp_id=b.corp_id
 )
 insert overwrite table pth_rmp.rmp_warning_score_report3
-select 
+select distinct
 	batch_dt,
 	corp_id,
 	corp_nm,
