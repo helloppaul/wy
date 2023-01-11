@@ -12,6 +12,10 @@
 -- /* 2022-12-12 由读取pth_rmp.rmp_opinion_risk_info,改为读取更高效的副本表pth_rmp.rmp_opinion_risk_info_04 */
 -- /* 2022-12-15 综合舆情分代码逻辑调整升级，增加调整等级逻辑以及企业主体纳入上市发债企业 */
 -- /* 2022-12-27 修复缺失库名pth_rmp前缀的问题 */
+-- /* 2023-01-06 修改重要关联方表取数逻辑*/
+-- /* 2023-01-10 SQL性能调优 */
+-- /* 2023-01-10 update_time取对应最大批次，防止追批重复数据 */
+
 
 
 -- PS: 可以将综合舆情分发任务 拆解为：com_score_temp,label_hit_tab(这两部分并行)； insert部分(依赖前两部分完成后执行)
@@ -59,23 +63,25 @@ corp_chg as
 --—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 RMP_ALERT_SCORE_SUMM_ as --取距离当前ETL_date最近的14天单主体舆情分数据（单主体舆情分不一定每家企业每天都有数据）
 (	
-	select distinct
-		0 as his_flag,
-		batch_dt,   
-		corp_id,corp_nm,credit_code,score_dt,score,yq_num,score_hit_ci,score_hit_yq,score_hit,label_hit,alert,fluctuated,model_version,delete_flag--,update_time
-	from pth_rmp.RMP_ALERT_SCORE_SUMM a
-	where a.delete_flag=0
-	-- 取距离当前ETL_DATE最近一天的日期 --
-	and a.score_dt in (select max(score_dt) from pth_rmp.RMP_ALERT_SCORE_SUMM where to_date(score_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd') )	  
-	UNION ALL 
+	-- select distinct
+	-- 	0 as his_flag,
+	-- 	batch_dt,   
+	-- 	corp_id,corp_nm,credit_code,score_dt,score,yq_num,score_hit_ci,score_hit_yq,score_hit,label_hit,alert,fluctuated,model_version,delete_flag--,update_time
+	-- from pth_rmp.RMP_ALERT_SCORE_SUMM a
+	-- where a.delete_flag=0
+	-- -- 取距离当前ETL_DATE最近一天的日期 --
+	-- and a.score_dt in (select max(score_dt) from pth_rmp.RMP_ALERT_SCORE_SUMM where to_date(score_dt) = from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd' ),'yyyy-MM-dd') )	  
+	-- UNION ALL 
 	select distinct
 		1 as his_flag,
 		score_dt as batch_dt,
-		corp_id,corp_nm,credit_code,score_dt,score,yq_num,score_hit_ci,score_hit_yq,score_hit,label_hit,alert,fluctuated,model_version,delete_flag--,update_time
+		corp_id,corp_nm,credit_code,score_dt,score,yq_num,score_hit_ci,score_hit_yq,score_hit,label_hit,alert,fluctuated,model_version,delete_flag,update_time
      from pth_rmp.RMP_ALERT_SCORE_SUMM
     where delete_flag=0
-	  and to_date(score_dt)<to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
-	  and to_date(score_dt)>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-13))
+	  and etl_date >=cast(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')-13*3600*24,'yyyyMMdd') as int)
+	  and etl_date <=cast(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')-0*3600*24,'yyyyMMdd') as int)
+	  and score_dt<= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
+	  and score_dt>= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-13))
 ),
 rmp_opinion_risk_info_ as 
 (
@@ -96,12 +102,41 @@ rmp_opinion_risk_info_ as
 ),
 RMP_COMPANY_CORE_REL_ as 
 (
-	select distinct a.* 
-	from pth_rmp.RMP_COMPANY_CORE_REL a 
+	select distinct gd.* 
+	from pth_rmp.RMP_COMPANY_CORE_REL gd
 	where 1 = 1
 	  -- 时间限制(自动取最大日期)
-	  and a.relation_dt in (select max(relation_dt) max_relation_dt from pth_rmp.RMP_COMPANY_CORE_REL)
+	  and gd.etl_date in (select max(etl_date) max_etl_date from pth_rmp.RMP_COMPANY_CORE_REL where type_='gd')
+	  and type_='gd'
 		-- on a.relation_dt=b.max_relation_dt
+union all 
+   select distinct dwtz.* 
+	from pth_rmp.RMP_COMPANY_CORE_REL dwtz 
+	where 1 = 1
+	  -- 时间限制(自动取最大日期)
+	  and dwtz.etl_date in (select max(etl_date) max_etl_date from pth_rmp.RMP_COMPANY_CORE_REL where type_='dwtz')
+	  and type_='dwtz'
+union all 
+   select distinct skr.* 
+	from pth_rmp.RMP_COMPANY_CORE_REL skr 
+	where 1 = 1
+	  -- 时间限制(自动取最大日期)
+	  and skr.etl_date in (select max(etl_date) max_etl_date from pth_rmp.RMP_COMPANY_CORE_REL where type_='skr')
+	  and type_='skr'
+union all 
+   select distinct ssfz.* 
+	from pth_rmp.RMP_COMPANY_CORE_REL ssfz 
+	where 1 = 1
+	  -- 时间限制(自动取最大日期)
+	  and ssfz.etl_date in (select max(etl_date) max_etl_date from pth_rmp.RMP_COMPANY_CORE_REL where type_='ssfz')
+	  and type_='ssfz'
+union all
+	select distinct xtskr.* 
+	from pth_rmp.RMP_COMPANY_CORE_REL xtskr 
+	where 1 = 1
+	  -- 时间限制(自动取最大日期)
+	  and xtskr.etl_date in (select max(etl_date) max_etl_date from pth_rmp.RMP_COMPANY_CORE_REL where type_='xtskr')
+	  and type_='xtskr'
 ),
 --—————————————————————————————————————————————————————— 配置表 ————————————————————————————————————————————————————————————————————————————————--
 CFG_rmp_opinion_risk_info_tag as 
@@ -109,10 +144,10 @@ CFG_rmp_opinion_risk_info_tag as
 	select * 
 	from pth_rmp.rmp_opinion_risk_info_tag
 ),
-CFG_rmp_calendar as 
-(
-	select * from pth_rmp.rmp_calendar --@rmp_calendar
-),
+-- CFG_rmp_calendar as 
+-- (
+-- 	select * from pth_rmp.rmp_calendar --@rmp_calendar
+-- ),
 CFG_RMP_COMPY_CORE_REL_DEGREE as   --重要关联方强度配置表
 (
 	select *
@@ -138,10 +173,9 @@ MID_RMP_ALERT_SCORE_SUMM as  -- 取每天最新批次的 单主体舆情分数�
 		a.fluctuated,
 		a.model_version 
 	from RMP_ALERT_SCORE_SUMM_ a
-	join (select max(batch_dt) as max_batch_dt,score_dt as score_dt from RMP_ALERT_SCORE_SUMM_ group by score_dt) b  
-		on a.batch_dt=b.max_batch_dt and a.score_dt = b.score_dt
+	join (select max(batch_dt) as max_batch_dt,score_dt as score_dt,max(update_time) as max_update_time from RMP_ALERT_SCORE_SUMM_ group by score_dt) b  
+		on a.batch_dt=b.max_batch_dt and a.score_dt = b.score_dt and a.update_time=b.max_update_time
 	where 1=1 
-	  and a.delete_flag=0
 	--   and a.his_flag=0
 	--   and a.batch_dt in (select max(batch_dt) as max_batch_dt from RMP_ALERT_SCORE_SUMM_)
 
