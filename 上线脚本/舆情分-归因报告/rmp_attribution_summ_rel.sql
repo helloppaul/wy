@@ -9,6 +9,8 @@
 --3.排序问题，hive可使用sort_array()进行升序排序，解决impala无法排序拼接的问题
 --依赖 pth_rmp.RMP_COMPY_CONTRIB_DEGREE pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP  pth_rmp.rmp_opinion_risk_info
 --/*2022-12-12 增加pth_rmp.rmp_opinion_risk_info的副本表pth_rmp.rmp_opinion_risk_info_04，供下游04组加工任务使用*/
+-- /* 2023-01-06 代码效率优化 */
+
 
 
 set hive.exec.parallel=true;
@@ -26,16 +28,21 @@ with
 RMP_ALERT_COMPREHS_SCORE_TEMP_Batch as  --最新批次的综合舆情分数据,且有关联方
 (
 	select a.* from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP a 
-	join (select max(batch_dt) as new_batch_dt,score_dt from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP group by score_dt )b  
-		on nvl(a.batch_dt,'') = nvl(b.new_batch_dt,'') and a.score_dt=b.score_dt
+	join (select max(batch_dt) as new_batch_dt,score_dt,max(update_time) as max_update_time from pth_rmp.RMP_ALERT_COMPREHS_SCORE_TEMP  
+		  where etl_date=${ETL_DATE}
+		  group by score_dt
+		 )b  
+		on a.batch_dt = b.new_batch_dt and a.score_dt=b.score_dt and a.update_time=b.max_update_time
 	where a.alert=1 
-	  and a.score_dt= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)) 
+	  and a.etl_date=${ETL_DATE}
+	--   and a.score_dt= to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)) 
 ),
 RMP_COMPY_CONTRIB_DEGREE_ as 
 (
 	select *
 	from pth_rmp.RMP_COMPY_CONTRIB_DEGREE
-	where score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)) 
+	where etl_date=${ETL_DATE}
+	-- where score_dt = to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0)) 
 ),
 rmp_opinion_risk_info_ as 
 (
@@ -49,8 +56,8 @@ RMP_COMPY_CONTRIB_DEGREE_BATCH as
 (
 	select a.*
 	from RMP_COMPY_CONTRIB_DEGREE_ a
-	join (select score_dt, max(batch_dt) as max_batch_dt from RMP_COMPY_CONTRIB_DEGREE_ group by score_dt) b 
-		on a.score_dt=b.score_dt and a.batch_dt=b.max_batch_dt
+	join (select score_dt, max(batch_dt) as max_batch_dt,max(update_time) as max_update_time from RMP_COMPY_CONTRIB_DEGREE_ group by score_dt) b 
+		on a.score_dt=b.score_dt and a.batch_dt=b.max_batch_dt and a.update_time=b.max_update_time
 ),
 com_score_with_contrib_degree as 
 (
