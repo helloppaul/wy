@@ -1,7 +1,7 @@
 -- 单主体舆情分 rmp_alert_score_summ (同步方式：一天多批次插入)--
 --入参：${ETL_DATE}(20220818 int) 
---/*2022-12-12 增加pth_rmp.rmp_opinion_risk_info的副本表pth_rmp.rmp_opinion_risk_info_04，供下游04组加工任务使用*/
-
+--/* 2022-12-12 增加pth_rmp.rmp_opinion_risk_info的副本表pth_rmp.rmp_opinion_risk_info_04，供下游04组加工任务使用*/
+--/* 2023-1-11 SQL效率优化 */
 set hive.exec.parallel=true;
 set hive.exec.parallel.thread.number=16;
 set hive.auto.convert.join=ture;
@@ -32,18 +32,24 @@ corp_chg as
 		  	-- on b1.etl_date=b2.etl_date
 		) b 
 		on a.corp_id=b.corp_id --and a.etl_date = b.etl_date
-	where a.delete_flag=0 and b.delete_flag=0
+	where a.delete_flag=0 and b.delete_flag=0 and a.source_code='FI'
 ),
 --—————————————————————————————————————————————————————— 接口层 ————————————————————————————————————————————————————————————————————————————————--
 rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj_intf_  as   -- 模型_舆情分  原始接口
 (
 	select * 
 	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_rslt_sentiself_adj_intf
+	where 1=1
+	  and etl_date1 >=cast(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')-13*3600*24,'yyyyMMdd') as int)
+	  and etl_date1 <=cast(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')-0*3600*24,'yyyyMMdd') as int)
 ),
 rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf_ as  -- 模型_特征原始值  原始接口
 (
 	select *
 	from hds.tr_ods_ais_me_rsk_rmp_warncntr_opnwrn_feat_sentiself_val_intf
+	where 1=1
+	  and etl_date1 >=cast(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')-13*3600*24,'yyyyMMdd') as int)
+	  and etl_date1 <=cast(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')-0*3600*24,'yyyyMMdd') as int)
 ),
 rmp_opinion_risk_info_ as   --modify yangcan 跑批日期为当天,取当前系统时间-24小时数据,跑批日期为历史日期,取跑批日期当天数据
 (
@@ -71,7 +77,7 @@ mid_opinion_alert_score as   --单主体舆情分  取每天最新批次数据 (
 		on a.rating_dt=b.max_rating_dt and to_date(a.rating_dt) = b.score_dt and a.etl_date=b.max_etl_date
 	join corp_chg chg 
 		on chg.source_id = cast(a.corp_code as string)
-	where chg.source_code='FI'
+	where 1=1 --chg.source_code='FI'
 	--只取最近14天单主体舆情分 yangcan modify 20221116
       and to_date(a.rating_dt)<=	to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 	  and to_date(a.rating_dt)>=	to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-13))
@@ -84,7 +90,7 @@ mid_opinion_feat as   --特征原始值  取每天最新批次数据 (如果只�
 		on a.end_dt=b.max_end_dt and to_date(a.end_dt) = b.score_dt and a.etl_date=b.max_etl_date
 	join corp_chg chg 
 		on chg.source_id = cast(a.corp_code as string)
-	where chg.source_code='FI' 
+	where 1=1 --chg.source_code='FI' 
 	  and to_date(a.end_dt)<=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),0))
 	  and to_date(a.end_dt)>=to_date(date_add(from_unixtime(unix_timestamp(cast(${ETL_DATE} as string),'yyyyMMdd')),-13))
 ),
