@@ -1,10 +1,12 @@
 -- 同集团内上市发债企业 (同步方式：一天单批次插入) --
 -- /* 2022-12-10 创建corp_chg，hds.tr_ods_rmp_fi_x_news_tcrnwitcoded的副本，降低锁表几率*/
+-- /* 2023-1-11 增加 SQL 效率优化参数*/
 
 -- 入参：${ETL_DATE}(20220818 int)  ; ${BATCH} ('20220818' string)
 -- set hive.execution.engine=spark;  --编排很好mr
 -- set hive.exec.dynamic.partition=true;  --开启动态分区功能
 -- set hive.exec.dynamic.partition.mode=nostrick;  --允许全部分区都为动态
+
 
 --Part1 副本 --
 drop table if exists pth_rmp.tr_ods_rmp_fi_x_news_tcrnwitcode_ssfz;
@@ -13,8 +15,11 @@ as
 	select * from hds.tr_ods_rmp_fi_x_news_tcrnwitcode
 ;
 
-drop table if exists pth_rmp.corp_chg_skr;
-create table pth_rmp.corp_chg_skr stored as parquet 
+
+set hive.exec.parallel=true;
+
+drop table if exists pth_rmp.corp_chg_ssfz;
+create table pth_rmp.corp_chg_ssfz stored as parquet 
 as 
 	select distinct a.corp_id,b.corp_name,b.credit_code,a.source_id,a.source_code
 	from (select cid1.* from pth_rmp.rmp_company_id_relevance cid1 
@@ -30,6 +35,7 @@ as
 ;
 
 
+set hive.exec.parallel=true;
 -- Part2 --
 with 
 compy_range as 
@@ -43,7 +49,7 @@ compy_range as
 corp_chg as 
 (
 	select *
-	from pth_rmp.corp_chg_skr
+	from pth_rmp.corp_chg_ssfz
 ),
 cm_property as
 (	select 

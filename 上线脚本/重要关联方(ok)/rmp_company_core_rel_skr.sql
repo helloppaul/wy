@@ -1,5 +1,6 @@
 -- 实际控制人 rmp_company_core_rel_skr (同步方式：一天单批次插入) --
 -- /* 2022-12-10 创建corp_chg，hds.tr_ods_rmp_fi_x_news_tcrnwitcoded的副本，降低锁表几率*/
+-- /* 2023-1-11 增加 SQL 效率优化参数*/
 
 -- 入参：${ETL_DATE}(20220818 int)
 -- set hive.execution.engine=spark;  --编排很好mr
@@ -13,6 +14,8 @@ create table pth_rmp.tr_ods_rmp_fi_x_news_tcrnwitcode_skr stored as parquet
 as 
 	select * from hds.tr_ods_rmp_fi_x_news_tcrnwitcode
 ;
+
+set hive.exec.parallel=true;
 
 drop table if exists pth_rmp.corp_chg_skr;
 create table pth_rmp.corp_chg_skr stored as parquet 
@@ -31,6 +34,7 @@ as
 ;
 
 
+set hive.exec.parallel=true;
 -- Part2 --
 with 
 compy_range as 
