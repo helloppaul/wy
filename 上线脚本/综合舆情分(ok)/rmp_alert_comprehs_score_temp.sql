@@ -15,6 +15,7 @@
 -- /* 2023-01-06 修改重要关联方表取数逻辑*/
 -- /* 2023-01-10 SQL性能调优 */
 -- /* 2023-01-10 update_time取对应最大批次，防止追批重复数据 */
+-- /* 2023-02-10 修复综合舆情分最后输出batch_dt 时间部分都为00:00:00 */
 
 
 
@@ -74,7 +75,8 @@ RMP_ALERT_SCORE_SUMM_ as --取距离当前ETL_date最近的14天单主体舆情�
 	-- UNION ALL 
 	select distinct
 		1 as his_flag,
-		score_dt as batch_dt,
+		batch_dt,
+		-- score_dt as batch_dt,
 		corp_id,corp_nm,credit_code,score_dt,score,yq_num,score_hit_ci,score_hit_yq,score_hit,label_hit,alert,fluctuated,model_version,delete_flag,update_time
      from pth_rmp.RMP_ALERT_SCORE_SUMM
     where delete_flag=0
